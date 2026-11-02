@@ -1,0 +1,364 @@
+@model WebApplication1.Models.InstructorProfile
+
+@{
+    ViewBag.Title = "Verify Instructor - " + Model.FullName;
+    var checklist = Model.GetChecklist();
+}
+
+<div class="mb-3">
+    <a href="@Url.Action("VerifySellers", "Admin")" class="lms-back-btn">
+        <i class="bi bi-arrow-left"></i> Back to Seller Verification Center
+    </a>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <h1 class="lms-page-title m-0">Accreditation Review: @Model.FullName</h1>
+            @if (Model.IsApprovedStatus)
+            {
+                <span class="badge bg-success px-3 py-1 rounded-pill small">Approved & Verified</span>
+            }
+            else if (Model.IsActionRequired)
+            {
+                <span class="badge bg-primary px-3 py-1 rounded-pill small">Action Required (Feedback Sent)</span>
+            }
+            else if (Model.IsRejectedStatus)
+            {
+                <span class="badge bg-danger px-3 py-1 rounded-pill small">Application Rejected</span>
+            }
+            else
+            {
+                <span class="badge bg-warning text-dark px-3 py-1 rounded-pill small">Pending Admin Review</span>
+            }
+        </div>
+        <p class="text-muted mb-0">Registered on @Model.RegisteredAt.ToString("MMMM dd, yyyy HH:mm") &bull; Instructor ID: #@Model.UserId &bull; @Model.Email</p>
+    </div>
+    <div>
+        <span class="badge bg-light text-dark border px-3 py-2 rounded-pill fs-6">
+            Profile Completion: <strong class="@(Model.CompletionPercentage >= 90 ? "text-success" : "text-warning")">@Model.CompletionPercentage%</strong>
+        </span>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show mb-4 rounded-3 shadow-sm border-0" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show mb-4 rounded-3 shadow-sm border-0" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="row g-4">
+    <!-- LEFT COLUMN: Comprehensive Professional Credentials -->
+    <div class="col-12 col-lg-8">
+        <!-- Identity & Current Role -->
+        <div class="card border-0 shadow-sm p-4 rounded-4 mb-4" style="background: #ffffff;">
+            <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold overflow-hidden shadow-sm" 
+                         style="width: 60px; height: 60px; background: #3b82f6; font-size: 1.4rem;">
+                        @if (!string.IsNullOrWhiteSpace(Model.ProfilePictureUrl))
+                        {
+                            <img src="@Url.Content(Model.ProfilePictureUrl)" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'" />
+                        }
+                        else
+                        {
+                            <span>@(string.IsNullOrWhiteSpace(Model.FullName) ? "I" : Model.FullName.Substring(0, 1))</span>
+                        }
+                    </div>
+                    <div>
+                        <h4 class="fw-bold text-dark mb-0">@Model.FullName</h4>
+                        <div class="text-primary fw-semibold small">@(string.IsNullOrWhiteSpace(Model.Headline) ? "Headline not provided" : Model.Headline)</div>
+                        <div class="text-muted small">@Model.Email &bull; @(string.IsNullOrWhiteSpace(Model.PhoneNumber) ? "No phone" : Model.PhoneNumber)</div>
+                    </div>
+                </div>
+                <div class="text-end">
+                    <span class="badge bg-light text-muted border px-2 py-1 small">
+                        <i class="bi bi-geo-alt me-1"></i> @(string.IsNullOrWhiteSpace(Model.City) && string.IsNullOrWhiteSpace(Model.Country) ? "Location Not Set" : $"{Model.City}, {Model.Country}")
+                    </span>
+                </div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <span class="text-muted small text-uppercase fw-bold d-block">Current Position</span>
+                    <strong class="text-dark">@(string.IsNullOrWhiteSpace(Model.CurrentJobTitle) ? "Not Specified" : Model.CurrentJobTitle)</strong>
+                </div>
+                <div class="col-md-6">
+                    <span class="text-muted small text-uppercase fw-bold d-block">Current Organization / Employer</span>
+                    <strong class="text-dark">@(string.IsNullOrWhiteSpace(Model.CurrentOrganization) ? "Not Specified" : Model.CurrentOrganization)</strong>
+                </div>
+                <div class="col-md-6">
+                    <span class="text-muted small text-uppercase fw-bold d-block">Total Industry Experience</span>
+                    <strong class="text-dark">@(Model.TotalExperienceYears.HasValue ? $"{Model.TotalExperienceYears} Years" : "Not Provided")</strong>
+                </div>
+                <div class="col-md-6">
+                    <span class="text-muted small text-uppercase fw-bold d-block">Primary Domain Expertise</span>
+                    <strong class="text-dark">@(string.IsNullOrWhiteSpace(Model.PrimaryExpertise) ? "Not Specified" : Model.PrimaryExpertise)</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Experience & Bio -->
+        <div class="card border-0 shadow-sm p-4 rounded-4 mb-4" style="background: #ffffff;">
+            <h5 class="fw-bold text-dark mb-3">
+                <i class="bi bi-mortarboard-fill text-primary me-2"></i> Past Teaching Experience & Professional Bio
+            </h5>
+
+            <div class="mb-4">
+                <label class="form-label text-muted small text-uppercase fw-bold mb-1">Past Teaching / Mentoring Experience</label>
+                <div class="p-3 bg-light rounded-3 border small" style="white-space: pre-wrap;">
+                    @(string.IsNullOrWhiteSpace(Model.PastTeachingExperience) ? "No past teaching experience documented." : Model.PastTeachingExperience)
+                </div>
+            </div>
+
+            <div>
+                <label class="form-label text-muted small text-uppercase fw-bold mb-1">Comprehensive Professional Biography</label>
+                <div class="p-3 bg-light rounded-3 border small" style="white-space: pre-wrap;">
+                    @(string.IsNullOrWhiteSpace(Model.Bio) ? "No professional biography documented." : Model.Bio)
+                </div>
+            </div>
+        </div>
+
+        <!-- Education & Qualifications -->
+        <div class="card border-0 shadow-sm p-4 rounded-4 mb-4" style="background: #ffffff;">
+            <h5 class="fw-bold text-dark mb-3">
+                <i class="bi bi-award-fill text-warning me-2"></i> Education & Academic Credentials
+            </h5>
+            <div class="row g-3">
+                <div class="col-md-5">
+                    <span class="text-muted small text-uppercase fw-bold d-block">Highest Degree Earned</span>
+                    <strong class="text-dark">@(string.IsNullOrWhiteSpace(Model.HighestDegree) ? "Not Specified" : Model.HighestDegree)</strong>
+                </div>
+                <div class="col-md-5">
+                    <span class="text-muted small text-uppercase fw-bold d-block">College / University / Institution</span>
+                    <strong class="text-dark">@(string.IsNullOrWhiteSpace(Model.InstitutionName) ? "Not Specified" : Model.InstitutionName)</strong>
+                </div>
+                <div class="col-md-2">
+                    <span class="text-muted small text-uppercase fw-bold d-block">Graduation</span>
+                    <strong class="text-dark">@(Model.GraduationYear.HasValue ? Model.GraduationYear.ToString() : "N/A")</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Planned Courses, Curriculum Offerings & Pricing Intent -->
+        <div class="card border-0 shadow-sm p-4 rounded-4 mb-4" style="background: #ffffff;">
+            <h5 class="fw-bold text-dark mb-3">
+                <i class="bi bi-journal-code text-success me-2"></i> Course Offerings & Pricing Intent
+            </h5>
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <span class="text-muted small text-uppercase fw-bold d-block">Target Student Level</span>
+                    <span class="badge bg-secondary px-3 py-1 rounded-pill">@Model.TargetLevel</span>
+                </div>
+                <div class="col-md-6">
+                    <span class="text-muted small text-uppercase fw-bold d-block">Proposed Course Price</span>
+                    <span class="badge bg-success px-3 py-1 rounded-pill fs-6">
+                        @(Model.ProposedPricing.HasValue ? "$" + Model.ProposedPricing.Value.ToString("0.00") : "Free")
+                    </span>
+                </div>
+            </div>
+
+            <div>
+                <label class="form-label text-muted small text-uppercase fw-bold mb-1">Courses Planned to Teach</label>
+                <div class="p-3 bg-light rounded-3 border small" style="white-space: pre-wrap;">
+                    @(string.IsNullOrWhiteSpace(Model.PlannedCourses) ? "No planned courses listed." : Model.PlannedCourses)
+                </div>
+            </div>
+        </div>
+
+        <!-- Digital Signature & Identity Verification Section -->
+        <div class="card border-0 shadow-sm p-4 rounded-4 mb-4" style="background: #ffffff;">
+            <h5 class="fw-bold text-dark mb-3">
+                <i class="bi bi-pen-fill text-danger me-2"></i> Digital Signature & Portfolios
+            </h5>
+
+            <div class="row g-3 align-items-center">
+                <div class="col-md-6">
+                    <label class="form-label text-muted small text-uppercase fw-bold mb-1">Digital Signature (For Student Certificates)</label>
+                    <div class="p-3 border rounded-3 bg-light text-center" style="min-height: 85px;">
+                        @if (!string.IsNullOrWhiteSpace(Model.DigitalSignatureUrl))
+                        {
+                            <img src="@Url.Content(Model.DigitalSignatureUrl)" alt="Digital Signature" style="max-height: 55px; max-width: 100%; object-fit: contain;" />
+                            <div class="text-success small mt-1 fw-semibold"><i class="bi bi-patch-check-fill me-1"></i> Signature Attached</div>
+                        }
+                        else
+                        {
+                            <div class="text-danger small py-3"><i class="bi bi-x-circle me-1"></i> No signature on file (Required for certificates)</div>
+                        }
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label text-muted small text-uppercase fw-bold mb-2">Social & Professional Links</label>
+                    <div class="d-flex flex-column gap-2">
+                        @if (!string.IsNullOrWhiteSpace(Model.LinkedInUrl))
+                        {
+                            <a href="@Model.LinkedInUrl" target="_blank" class="btn btn-outline-primary btn-sm rounded-pill text-truncate">
+                                <i class="bi bi-linkedin me-1"></i> LinkedIn Profile
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="text-muted small"><i class="bi bi-dash-circle me-1"></i> No LinkedIn provided</span>
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(Model.GitHubOrPortfolioUrl))
+                        {
+                            <a href="@Model.GitHubOrPortfolioUrl" target="_blank" class="btn btn-outline-dark btn-sm rounded-pill text-truncate">
+                                <i class="bi bi-github me-1"></i> GitHub / Portfolio
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="text-muted small"><i class="bi bi-dash-circle me-1"></i> No GitHub/Portfolio provided</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT COLUMN: Accreditation Decision Form & Feedback Engine -->
+    <div class="col-12 col-lg-4">
+        <!-- Decision Panel Sticky Card -->
+        <div class="card border-0 shadow-sm p-4 rounded-4 mb-4 sticky-top" style="top: 85px; background: #ffffff;">
+            <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
+                <span class="badge bg-danger rounded-circle p-2 text-white" style="width: 32px; height: 32px;">
+                    <i class="bi bi-shield-check"></i>
+                </span>
+                <h5 class="fw-bold text-dark m-0">Accreditation Decision</h5>
+            </div>
+
+            <!-- Existing Feedback Notice if present -->
+            @if (!string.IsNullOrWhiteSpace(Model.AdminFeedback))
+            {
+                <div class="p-3 rounded-3 mb-3 border @(Model.IsActionRequired ? "bg-warning-subtle border-warning" : "bg-light")">
+                    <div class="small fw-bold text-dark mb-1">
+                        <i class="bi bi-chat-left-quote-fill me-1 text-primary"></i> Last Admin Feedback Released:
+                    </div>
+                    <div class="small text-muted mb-1" style="white-space: pre-wrap;">@Model.AdminFeedback</div>
+                    @if (Model.ReviewedAt.HasValue)
+                    {
+                        <div class="text-muted small" style="font-size: 0.7rem;">
+                            Reviewed on @Model.ReviewedAt.Value.ToString("dd MMM yyyy, hh:mm tt")
+                            @(!string.IsNullOrWhiteSpace(Model.ReviewerName) ? $" by {Model.ReviewerName}" : "")
+                        </div>
+                    }
+                </div>
+            }
+
+            @using (Html.BeginForm("ReviewInstructorWithFeedback", "Admin", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="UserId" value="@Model.UserId" />
+
+                <!-- Action Radio Selection -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold small text-dark mb-2">Select Accreditation Action</label>
+                    
+                    <div class="form-check p-3 border rounded-3 mb-2 bg-light bg-opacity-50">
+                        <input class="form-check-input" type="radio" name="Action" id="act_approve" value="Approve" 
+                               @(Model.IsApprovedStatus ? "checked" : "") onchange="updateFeedbackPlaceholder('Approve')" />
+                        <label class="form-check-label fw-semibold small text-success cursor-pointer" for="act_approve">
+                            <i class="bi bi-check-circle-fill me-1"></i> Approve & Verify Instructor
+                        </label>
+                        <div class="text-muted" style="font-size: 0.72rem;">Instantly certifies creator and unlocks course publishing studio.</div>
+                    </div>
+
+                    <div class="form-check p-3 border rounded-3 mb-2 bg-light bg-opacity-50">
+                        <input class="form-check-input" type="radio" name="Action" id="act_request" value="RequestChanges" 
+                               @(Model.IsActionRequired || (!Model.IsApprovedStatus && !Model.IsRejectedStatus) ? "checked" : "") onchange="updateFeedbackPlaceholder('RequestChanges')" />
+                        <label class="form-check-label fw-semibold small text-primary cursor-pointer" for="act_request">
+                            <i class="bi bi-chat-square-dots-fill me-1"></i> Request Changes / Send Feedback
+                        </label>
+                        <div class="text-muted" style="font-size: 0.72rem;">Requires instructor to make specific profile revisions before approval.</div>
+                    </div>
+
+                    <div class="form-check p-3 border rounded-3 mb-2 bg-light bg-opacity-50">
+                        <input class="form-check-input" type="radio" name="Action" id="act_reject" value="Reject" 
+                               @(Model.IsRejectedStatus ? "checked" : "") onchange="updateFeedbackPlaceholder('Reject')" />
+                        <label class="form-check-label fw-semibold small text-danger cursor-pointer" for="act_reject">
+                            <i class="bi bi-x-circle-fill me-1"></i> Reject Application
+                        </label>
+                        <div class="text-muted" style="font-size: 0.72rem;">Denies seller accreditation on the platform.</div>
+                    </div>
+                </div>
+
+                <!-- Admin Feedback Textarea -->
+                <div class="mb-4">
+                    <label class="form-label fw-bold small text-dark mb-1">
+                        Reviewer Feedback & Actionable Notes
+                        <span class="text-danger">*</span>
+                    </label>
+                    <textarea name="AdminFeedback" id="feedbackInput" class="form-control" rows="5" 
+                              placeholder="Describe what the instructor must improve (e.g. upload high-contrast signature image, expand upon practical teaching experience, add institution graduation year)..." required>@Model.AdminFeedback</textarea>
+                    <div class="form-text" style="font-size: 0.72rem;">
+                        This feedback will be accessible to the instructor on their self-service Application Status check page and inside their profile studio.
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="lms-cta-btn justify-content-center py-2 shadow-sm text-white">
+                        <i class="bi bi-send-check-fill me-1"></i> Submit Decision & Release Feedback
+                    </button>
+                </div>
+            }
+
+            <!-- Profile Completion Checklist Widget -->
+            <div class="mt-4 pt-3 border-top">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="small fw-bold text-dark">Profile Completion Gate</span>
+                    <span class="badge @(Model.CompletionPercentage >= 90 ? "bg-success" : "bg-warning text-dark")">@Model.CompletionPercentage%</span>
+                </div>
+                <div class="progress mb-3" style="height: 8px;">
+                    <div class="progress-bar @(Model.CompletionPercentage >= 90 ? "bg-success" : "bg-warning")" style="width: @Model.CompletionPercentage%;"></div>
+                </div>
+
+                <div class="checklist-items" style="max-height: 240px; overflow-y: auto;">
+                    @foreach (var item in checklist)
+                    {
+                        <div class="d-flex align-items-center justify-content-between py-1 border-bottom" style="font-size: 0.75rem;">
+                            <span class="@(item.IsCompleted ? "text-dark" : "text-muted")">
+                                <i class="bi @(item.IsCompleted ? "bi-check-circle-fill text-success" : "bi-dash-circle text-muted") me-1"></i>
+                                @item.Label
+                            </span>
+                            <span class="badge @(item.IsCompleted ? "bg-success-subtle text-success" : "bg-light text-muted border")">
+                                +@item.Weight%
+                            </span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    function updateFeedbackPlaceholder(action) {
+        var textarea = document.getElementById('feedbackInput');
+        if (!textarea) return;
+
+        if (action === 'Approve') {
+            textarea.placeholder = "Optional congratulations or welcome notes for the instructor...";
+            textarea.removeAttribute('required');
+        } else if (action === 'RequestChanges') {
+            textarea.placeholder = "Explain clearly what specific items the instructor must update (e.g. Please upload a clearer signature, complete past teaching experience, or link your portfolio)...";
+            textarea.setAttribute('required', 'required');
+        } else {
+            textarea.placeholder = "State the reason for rejecting this application...";
+            textarea.setAttribute('required', 'required');
+        }
+    }
+</script>
+}

@@ -1,0 +1,125 @@
+@model WebApplication1.Models.RegisterViewModel
+
+@{
+    ViewBag.Title = "Create an Account";
+}
+
+<div class="row justify-content-center py-4">
+    <div class="col-12 col-md-7 col-lg-6">
+        <div class="card border-0 shadow-sm p-4 p-md-5" style="border-radius: 20px; border: 1px solid #e2e8f0 !important;">
+            <div class="text-center mb-4">
+                <div class="lms-brand-icon mx-auto mb-3" style="width: 48px; height: 48px; font-size: 1.5rem;">
+                    <i class="bi bi-person-plus-fill"></i>
+                </div>
+                <h2 class="fw-bold text-dark">Join EduPulse LMS</h2>
+                <p class="text-muted small">Choose your learning or teaching journey</p>
+            </div>
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger py-2 small rounded-3">
+                    @Html.ValidationSummary(true, "", new { @class = "mb-0" })
+                </div>
+            }
+
+            @using (Html.BeginForm("Register", "Account", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+
+                <!-- Role Selector -->
+                <div class="mb-4">
+                    <label class="form-label fw-semibold text-dark small">I want to join as:</label>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="card h-100 p-3 text-center border cursor-pointer role-option" id="roleStudentCard" style="border-radius: 12px; cursor: pointer;">
+                                <input type="radio" name="Role" value="Student" class="d-none" id="roleStudent" checked />
+                                <div class="fs-4 text-primary mb-1"><i class="bi bi-mortarboard"></i></div>
+                                <div class="fw-bold small text-dark">Student / Learner</div>
+                                <div class="text-muted" style="font-size: 0.75rem;">Instant auto-access</div>
+                            </label>
+                        </div>
+                        <div class="col-6">
+                            <label class="card h-100 p-3 text-center border cursor-pointer role-option" id="roleInstructorCard" style="border-radius: 12px; cursor: pointer;">
+                                <input type="radio" name="Role" value="Instructor" class="d-none" id="roleInstructor" />
+                                <div class="fs-4 text-warning mb-1"><i class="bi bi-person-badge"></i></div>
+                                <div class="fw-bold small text-dark">Course Instructor</div>
+                                <div class="text-muted" style="font-size: 0.75rem;">Admin review required</div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    @Html.LabelFor(m => m.FullName, new { @class = "form-label fw-semibold text-dark small" })
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0 text-muted">
+                            <i class="bi bi-person"></i>
+                        </span>
+                        @Html.TextBoxFor(m => m.FullName, new { @class = "form-control border-start-0 ps-0", placeholder = "e.g. John Doe" })
+                    </div>
+                    @Html.ValidationMessageFor(m => m.FullName, "", new { @class = "text-danger small" })
+                </div>
+
+                <div class="mb-3">
+                    @Html.LabelFor(m => m.Email, new { @class = "form-label fw-semibold text-dark small" })
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0 text-muted">
+                            <i class="bi bi-envelope"></i>
+                        </span>
+                        @Html.TextBoxFor(m => m.Email, new { @class = "form-control border-start-0 ps-0", placeholder = "john@example.com" })
+                    </div>
+                    @Html.ValidationMessageFor(m => m.Email, "", new { @class = "text-danger small" })
+                </div>
+
+                <div class="row g-2 mb-3">
+                    <div class="col-12 col-md-6">
+                        @Html.LabelFor(m => m.Password, new { @class = "form-label fw-semibold text-dark small" })
+                        @Html.PasswordFor(m => m.Password, new { @class = "form-control", placeholder = "At least 4 chars" })
+                        @Html.ValidationMessageFor(m => m.Password, "", new { @class = "text-danger small" })
+                    </div>
+                    <div class="col-12 col-md-6">
+                        @Html.LabelFor(m => m.ConfirmPassword, new { @class = "form-label fw-semibold text-dark small" })
+                        @Html.PasswordFor(m => m.ConfirmPassword, new { @class = "form-control", placeholder = "Confirm password" })
+                        @Html.ValidationMessageFor(m => m.ConfirmPassword, "", new { @class = "text-danger small" })
+                    </div>
+                </div>
+
+                <div class="alert alert-info py-2 small rounded-3 mb-4" id="instructorNotice" style="display: none;">
+                    <i class="bi bi-info-circle-fill me-1"></i>
+                    <strong>Notice for Instructors:</strong> To ensure high course quality, new instructor accounts must be reviewed and verified by an administrator before publishing courses.
+                </div>
+
+                <button type="submit" class="lms-cta-btn w-100 justify-content-center py-2 fs-6">
+                    Create Account <i class="bi bi-arrow-right"></i>
+                </button>
+            }
+
+            <div class="text-center mt-4 pt-3 border-top">
+                <span class="text-muted small">Already have an account?</span>
+                <a href="@Url.Action("Login", "Account")" class="text-primary fw-semibold small text-decoration-none ms-1">Sign In</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        $(document).ready(function () {
+            function updateRoleStyle() {
+                var selected = $('input[name="Role"]:checked').val();
+                if (selected === 'Student') {
+                    $('#roleStudentCard').addClass('border-primary bg-primary bg-opacity-10').removeClass('border-warning bg-warning bg-opacity-10');
+                    $('#roleInstructorCard').removeClass('border-warning bg-warning bg-opacity-10 border-primary bg-primary bg-opacity-10');
+                    $('#instructorNotice').slideUp();
+                } else {
+                    $('#roleInstructorCard').addClass('border-warning bg-warning bg-opacity-10').removeClass('border-primary bg-primary bg-opacity-10');
+                    $('#roleStudentCard').removeClass('border-primary bg-primary bg-opacity-10 border-warning bg-warning bg-opacity-10');
+                    $('#instructorNotice').slideDown();
+                }
+            }
+
+            $('input[name="Role"]').on('change', updateRoleStyle);
+            updateRoleStyle();
+        });
+    </script>
+}

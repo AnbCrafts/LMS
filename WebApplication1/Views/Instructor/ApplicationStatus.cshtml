@@ -1,0 +1,240 @@
+@model WebApplication1.Models.InstructorApplicationStatusViewModel
+
+@{
+    ViewBag.Title = "Instructor Application Status & Review Feedback";
+}
+
+<div class="row justify-content-center py-4">
+    <div class="col-12 col-lg-8">
+        <!-- Top Header & Accreditation Badge -->
+        <div class="text-center mb-4">
+            <div class="d-inline-flex align-items-center gap-2 px-3 py-1 bg-primary-subtle text-primary rounded-pill small fw-bold mb-2">
+                <i class="bi bi-patch-check-fill"></i> Instructor Accreditation & Onboarding
+            </div>
+            <h1 class="fw-bold text-dark mb-2">Check Instructor Application Status</h1>
+            <p class="text-muted mx-auto" style="max-width: 580px;">
+                Since email notifications are not active, enter your registered email address below to inspect your live registration status, profile completion progress, and administrator feedback notes.
+            </p>
+        </div>
+
+        <!-- Email Search Input Card -->
+        <div class="card border-0 shadow-sm p-4 rounded-4 mb-4" style="background: #ffffff; border: 1.5px solid #e2e8f0 !important;">
+            @using (Html.BeginForm("ApplicationStatus", "Instructor", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                <label class="form-label fw-bold text-dark small mb-2">
+                    <i class="bi bi-envelope-at-fill text-primary me-1"></i> Your Registered Instructor Email Address
+                </label>
+                <div class="input-group input-group-lg mb-2">
+                    <span class="input-group-text bg-white border-end-0 text-muted">
+                        <i class="bi bi-envelope"></i>
+                    </span>
+                    @Html.TextBoxFor(m => m.Email, new { 
+                        @class = "form-control border-start-0 ps-0 fs-6", 
+                        placeholder = "e.g. yourname@domain.com", 
+                        required = "required", 
+                        type = "email" 
+                    })
+                    <button type="submit" class="btn btn-primary px-4 fw-semibold fs-6">
+                        <i class="bi bi-search me-1"></i> Check Status
+                    </button>
+                </div>
+                @Html.ValidationMessageFor(m => m.Email, "", new { @class = "text-danger small" })
+                <div class="form-text small text-muted">
+                    Enter the exact email used when submitting your instructor registration.
+                </div>
+            }
+        </div>
+
+        <!-- Search Results Panel -->
+        @if (Model != null && Model.IsSearched)
+        {
+            if (Model.IsFound && Model.Profile != null)
+            {
+                var prof = Model.Profile;
+
+                <!-- Status Banner Card -->
+                <div class="card border-0 shadow-sm p-4 rounded-4 mb-4" style="background: #ffffff;">
+                    <div class="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom flex-wrap gap-2">
+                        <div>
+                            <span class="text-muted small text-uppercase fw-bold">Applicant Name</span>
+                            <h3 class="fw-bold text-dark mb-0">@prof.FullName</h3>
+                            <div class="text-muted small">@prof.Email</div>
+                        </div>
+                        <div>
+                            @if (prof.IsApprovedStatus)
+                            {
+                                <div class="badge bg-success px-4 py-2 rounded-pill fs-6">
+                                    <i class="bi bi-check-circle-fill me-1"></i> Verified & Approved
+                                </div>
+                            }
+                            else if (prof.IsActionRequired)
+                            {
+                                <div class="badge bg-primary px-4 py-2 rounded-pill fs-6 text-white">
+                                    <i class="bi bi-chat-dots-fill me-1"></i> Action Required
+                                </div>
+                            }
+                            else if (prof.IsRejectedStatus)
+                            {
+                                <div class="badge bg-danger px-4 py-2 rounded-pill fs-6">
+                                    <i class="bi bi-x-circle-fill me-1"></i> Application Not Approved
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="badge bg-warning text-dark px-4 py-2 rounded-pill fs-6">
+                                    <i class="bi bi-hourglass-split me-1"></i> Pending Verification
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Condition 1: ACTION REQUIRED WITH ADMIN FEEDBACK -->
+                    @if (prof.IsActionRequired)
+                    {
+                        <div class="alert alert-warning border-0 p-4 rounded-4 mb-4 shadow-sm" style="background: #fffbeb; border: 2px solid #f59e0b !important;">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <span class="badge bg-warning text-dark rounded-circle p-2" style="width: 32px; height: 32px;">
+                                    <i class="bi bi-exclamation-triangle-fill"></i>
+                                </span>
+                                <h5 class="fw-bold text-dark m-0">Revisions Requested by Administrator</h5>
+                            </div>
+                            <p class="text-muted small mb-3">
+                                Our review team has reviewed your application and requested the following improvements before certifying your instructor account:
+                            </p>
+
+                            <!-- Feedback Blockquote Box -->
+                            <div class="p-3 bg-white rounded-3 border mb-3">
+                                <div class="small fw-bold text-dark mb-1">
+                                    <i class="bi bi-chat-quote-fill text-warning me-1"></i> Reviewer Feedback & Instructions:
+                                </div>
+                                <div class="text-dark small fw-semibold" style="white-space: pre-wrap; line-height: 1.6;">
+                                    @(string.IsNullOrWhiteSpace(prof.AdminFeedback) ? "Please complete all required profile fields, past teaching experience, and digital signature." : prof.AdminFeedback)
+                                </div>
+                                @if (prof.ReviewedAt.HasValue)
+                                {
+                                    <div class="text-muted small mt-2 pt-2 border-top" style="font-size: 0.72rem;">
+                                        <i class="bi bi-clock me-1"></i> Reviewed on @prof.ReviewedAt.Value.ToString("dd MMMM yyyy, hh:mm tt")
+                                        @(!string.IsNullOrWhiteSpace(prof.ReviewerName) ? $" by {prof.ReviewerName}" : "")
+                                    </div>
+                                }
+                            </div>
+
+                            <div class="d-flex gap-2 flex-wrap">
+                                <a href="@Url.Action("Login", "Account", new { returnUrl = Url.Action("Profile", "Instructor") })" class="btn btn-warning fw-bold px-4 rounded-pill shadow-sm">
+                                    <i class="bi bi-box-arrow-in-right me-1"></i> Log In & Update Your Profile Now
+                                </a>
+                                <a href="@Url.Action("Profile", "Instructor")" class="btn btn-outline-secondary px-3 rounded-pill">
+                                    Go to Profile Studio
+                                </a>
+                            </div>
+                        </div>
+                    }
+                    <!-- Condition 2: APPROVED -->
+                    else if (prof.IsApprovedStatus)
+                    {
+                        <div class="alert alert-success border-0 p-4 rounded-4 mb-4 shadow-sm" style="background: #f0fdf4; border: 2px solid #22c55e !important;">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <span class="badge bg-success rounded-circle p-2 text-white" style="width: 32px; height: 32px;">
+                                    <i class="bi bi-patch-check-fill"></i>
+                                </span>
+                                <h5 class="fw-bold text-dark m-0">Congratulations! Your Application is Approved</h5>
+                            </div>
+                            <p class="text-muted small mb-3">
+                                You are an officially verified course creator and mentor. You can now publish courses, design modular video lessons, and evaluate student project submissions.
+                            </p>
+                            @if (!string.IsNullOrWhiteSpace(prof.AdminFeedback))
+                            {
+                                <div class="p-3 bg-white rounded-3 border mb-3 small">
+                                    <strong>Admin Welcome Notes:</strong> @prof.AdminFeedback
+                                </div>
+                            }
+                            <a href="@Url.Action("Index", "Instructor")" class="btn btn-success fw-bold px-4 rounded-pill shadow-sm">
+                                <i class="bi bi-speedometer2 me-1"></i> Open Instructor Studio & Dashboard
+                            </a>
+                        </div>
+                    }
+                    <!-- Condition 3: PENDING REVIEW -->
+                    else if (prof.IsPendingReview)
+                    {
+                        <div class="alert alert-info border-0 p-4 rounded-4 mb-4 shadow-sm" style="background: #eff6ff; border: 2px solid #3b82f6 !important;">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <span class="badge bg-primary rounded-circle p-2 text-white" style="width: 32px; height: 32px;">
+                                    <i class="bi bi-hourglass-split"></i>
+                                </span>
+                                <h5 class="fw-bold text-dark m-0">Application Under Verification</h5>
+                            </div>
+                            <p class="text-muted small mb-3">
+                                Your application has been received and placed into the accreditation queue. Admin reviews take 24–48 hours. Ensure your profile completion meter is at least 90% so that publishing is unlocked immediately upon approval.
+                            </p>
+                            <a href="@Url.Action("Login", "Account", new { returnUrl = Url.Action("Profile", "Instructor") })" class="btn btn-primary fw-semibold px-4 rounded-pill shadow-sm">
+                                <i class="bi bi-pencil-square me-1"></i> Review or Complete Profile
+                            </a>
+                        </div>
+                    }
+                    <!-- Condition 4: REJECTED -->
+                    else
+                    {
+                        <div class="alert alert-danger border-0 p-4 rounded-4 mb-4 shadow-sm" style="background: #fef2f2; border: 2px solid #ef4444 !important;">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <span class="badge bg-danger rounded-circle p-2 text-white" style="width: 32px; height: 32px;">
+                                    <i class="bi bi-x-circle-fill"></i>
+                                </span>
+                                <h5 class="fw-bold text-dark m-0">Application Not Approved</h5>
+                            </div>
+                            <p class="text-muted small mb-2">
+                                Regrettably, your instructor application does not currently meet our course accreditation standards.
+                            </p>
+                            @if (!string.IsNullOrWhiteSpace(prof.AdminFeedback))
+                            {
+                                <div class="p-3 bg-white rounded-3 border mb-3 small">
+                                    <strong>Admin Reason:</strong> @prof.AdminFeedback
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    <!-- Profile Snapshot Details -->
+                    <h5 class="fw-bold text-dark mb-3 mt-2">
+                        <i class="bi bi-person-badge text-primary me-2"></i> Application Snapshot
+                    </h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <span class="text-muted small text-uppercase fw-bold d-block">Headline</span>
+                            <span class="text-dark small fw-semibold">@(string.IsNullOrWhiteSpace(prof.Headline) ? "Not set" : prof.Headline)</span>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="text-muted small text-uppercase fw-bold d-block">Current Job Title</span>
+                            <span class="text-dark small fw-semibold">@(string.IsNullOrWhiteSpace(prof.CurrentJobTitle) ? "Not set" : prof.CurrentJobTitle) @(!string.IsNullOrWhiteSpace(prof.CurrentOrganization) ? $"at {prof.CurrentOrganization}" : "")</span>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="text-muted small text-uppercase fw-bold d-block">Target Curriculum Offerings</span>
+                            <span class="text-dark small">@(string.IsNullOrWhiteSpace(prof.PlannedCourses) ? "Not listed" : prof.PlannedCourses)</span>
+                        </div>
+                        <div class="col-md-3">
+                            <span class="text-muted small text-uppercase fw-bold d-block">Proposed Pricing</span>
+                            <span class="badge bg-light text-dark border small fw-bold">@(prof.ProposedPricing.HasValue ? "$" + prof.ProposedPricing.Value.ToString("0.00") : "N/A")</span>
+                        </div>
+                        <div class="col-md-3">
+                            <span class="text-muted small text-uppercase fw-bold d-block">Profile Score</span>
+                            <span class="badge @(prof.CompletionPercentage >= 90 ? "bg-success" : "bg-warning text-dark") small fw-bold">@prof.CompletionPercentage% Complete</span>
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-warning border-0 p-4 rounded-4 shadow-sm text-center">
+                    <i class="bi bi-search text-warning fs-1 mb-2 d-block"></i>
+                    <h5 class="fw-bold text-dark">No Instructor Application Found</h5>
+                    <p class="text-muted small mb-3">
+                        @Model.SearchMessage
+                    </p>
+                    <a href="@Url.Action("Register", "Account")" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                        <i class="bi bi-person-plus-fill me-1"></i> Register as an Instructor
+                    </a>
+                </div>
+            }
+        }
+    </div>
+</div>

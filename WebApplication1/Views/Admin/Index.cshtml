@@ -1,0 +1,307 @@
+@{
+    ViewBag.Title = "Administrator Dashboard";
+    var pendingInstructors = ViewBag.PendingInstructors as IEnumerable<WebApplication1.Models.User>;
+    var allInstructors = ViewBag.AllInstructors as IEnumerable<WebApplication1.Models.User>;
+    var allInvoices = ViewBag.AllInvoices as IEnumerable<WebApplication1.Models.InvoiceViewModel> ?? new List<WebApplication1.Models.InvoiceViewModel>();
+
+    decimal totalGross = ViewBag.TotalGrossVolume != null ? (decimal)ViewBag.TotalGrossVolume : 0m;
+    decimal adminCommission = ViewBag.AdminCommission != null ? (decimal)ViewBag.AdminCommission : 0m;
+    decimal instructorPayouts = ViewBag.InstructorPayouts != null ? (decimal)ViewBag.InstructorPayouts : 0m;
+    int totalOrders = ViewBag.TotalOrders != null ? (int)ViewBag.TotalOrders : 0;
+    int pendingCount = pendingInstructors != null ? pendingInstructors.Count() : 0;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div>
+        <h1 class="lms-page-title">Admin Management & Revenue Portal</h1>
+        <p class="text-muted mb-0">Platform financial revenue oversight, 10% platform fee tracking & instructor verifications</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="@Url.Action("VerifySellers", "Admin")" class="btn btn-primary rounded-pill px-3 shadow-sm">
+            <i class="bi bi-shield-check me-1"></i> Verify Sellers
+        </a>
+        <a href="@Url.Action("Invoices", "Payment")" class="btn btn-outline-secondary rounded-pill px-3 shadow-sm">
+            <i class="bi bi-receipt me-1"></i> Full Ledger
+        </a>
+        <span class="badge bg-danger px-3 py-2 fs-6 rounded-pill d-flex align-items-center">
+            <i class="bi bi-shield-lock-fill me-1"></i> Admin Privileges
+        </span>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show mb-4 rounded-3 shadow-sm border-0" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show mb-4 rounded-3 shadow-sm border-0" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<!-- Section 1: Financial & Platform KPI Cards -->
+<div class="lms-kpi-grid mb-4">
+    <!-- Admin 10% Share Card -->
+    <div class="lms-kpi-card" style="border: 2px solid #8b5cf6 !important; background: linear-gradient(135deg, #ffffff 0%, #f5f3ff 100%);">
+        <div class="lms-kpi-icon" style="background: #ede9fe; color: #7c3aed;">
+            <i class="bi bi-pie-chart-fill"></i>
+        </div>
+        <div>
+            <div class="lms-kpi-number" style="color: #6d28d9;">$@adminCommission.ToString("0.00")</div>
+            <div class="lms-kpi-label fw-bold text-dark">Platform Charges (10% Cut)</div>
+            <div class="text-muted small" style="font-size: 0.72rem;">Admin Platform Revenue</div>
+        </div>
+    </div>
+
+    <!-- Gross Sales Volume -->
+    <div class="lms-kpi-card">
+        <div class="lms-kpi-icon icon-emerald">
+            <i class="bi bi-currency-dollar"></i>
+        </div>
+        <div>
+            <div class="lms-kpi-number">$@totalGross.ToString("0.00")</div>
+            <div class="lms-kpi-label">Gross Course Volume</div>
+            <div class="text-muted small" style="font-size: 0.72rem;">Total Buyer Payments</div>
+        </div>
+    </div>
+
+    <!-- Instructor 90% Share -->
+    <div class="lms-kpi-card">
+        <div class="lms-kpi-icon icon-indigo">
+            <i class="bi bi-cash-stack"></i>
+        </div>
+        <div>
+            <div class="lms-kpi-number">$@instructorPayouts.ToString("0.00")</div>
+            <div class="lms-kpi-label">Seller Payouts (90%)</div>
+            <div class="text-muted small" style="font-size: 0.72rem;">Disbursed to Instructors</div>
+        </div>
+    </div>
+
+    <!-- Total Invoices / Orders -->
+    <div class="lms-kpi-card">
+        <div class="lms-kpi-icon icon-blue">
+            <i class="bi bi-receipt-cutoff"></i>
+        </div>
+        <div>
+            <div class="lms-kpi-number">@totalOrders</div>
+            <div class="lms-kpi-label">Orders Settled</div>
+            <div class="text-muted small" style="font-size: 0.72rem;">100% Collected</div>
+        </div>
+    </div>
+</div>
+
+<!-- Section 2: Platform Revenue & 10% Split Settlement Ledger -->
+<div class="lms-table-card mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="fw-bold text-dark m-0">
+                <i class="bi bi-cash-coin text-primary me-2"></i> Platform Transactions & 10% Revenue Breakdown
+            </h4>
+            <div class="text-muted small">Live ledger of student course enrollments and automated 10% platform charge splits</div>
+        </div>
+        <span class="badge bg-light text-muted border px-3 py-2 rounded-pill">@allInvoices.Count() Transactions</span>
+    </div>
+
+    @if (allInvoices.Any())
+    {
+        <div class="table-responsive">
+            <table class="lms-modern-table">
+                <thead>
+                    <tr>
+                        <th style="width: 15%;">Invoice #</th>
+                        <th style="width: 22%;">Course</th>
+                        <th style="width: 15%;">Learner (Buyer)</th>
+                        <th style="width: 15%;">Instructor (Seller)</th>
+                        <th style="width: 11%;">Gross ($)</th>
+                        <th style="width: 11%; color: #7c3aed;">10% Admin Fee</th>
+                        <th style="width: 11%; color: #059669;">90% Payout</th>
+                        <th style="width: 10%; text-align: right;">Invoice</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var inv in allInvoices)
+                    {
+                        <tr>
+                            <td>
+                                <span class="fw-bold text-primary">@inv.InvoiceNumber</span>
+                                <div class="text-muted small">@inv.PaymentDate.ToString("MMM dd, yyyy")</div>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark">@inv.CourseTitle</div>
+                            </td>
+                            <td>
+                                <span class="text-dark small">@inv.StudentName</span>
+                            </td>
+                            <td>
+                                <span class="text-dark small fw-medium">@inv.InstructorName</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border px-2 py-1 fw-bold">
+                                    $@inv.Amount.ToString("0.00")
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-purple px-2 py-1 fw-bold" style="background: #ede9fe; color: #7c3aed; border: 1px solid #ddd6fe;">
+                                    +$@inv.PlatformFee.ToString("0.00")
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success px-2 py-1 fw-bold">
+                                    $@inv.InstructorShare.ToString("0.00")
+                                </span>
+                            </td>
+                            <td style="text-align: right;">
+                                <a href="@Url.Action("Invoice", "Payment", new { id = inv.InvoiceNumber })" class="btn btn-outline-primary btn-sm rounded-pill px-2 py-1" title="View Full Tax Receipt">
+                                    <i class="bi bi-file-earmark-pdf"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-4 text-muted">
+            <i class="bi bi-receipt fs-2 d-block mb-1"></i>
+            <span>No paid course transactions recorded yet.</span>
+        </div>
+    }
+</div>
+
+<!-- Section 3: Pending Instructor Applications -->
+<div class="lms-table-card mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="fw-bold text-dark m-0">
+            <i class="bi bi-person-exclamation text-warning me-2"></i> Pending Instructor Approvals
+        </h4>
+        <span class="badge bg-warning text-dark px-3 py-2 rounded-pill">
+            @pendingCount Awaiting Verification
+        </span>
+    </div>
+
+    @if (pendingInstructors != null && pendingInstructors.Any())
+    {
+        <div class="table-responsive">
+            <table class="lms-modern-table">
+                <thead>
+                    <tr>
+                        <th>Instructor</th>
+                        <th>Email</th>
+                        <th>Registered Date</th>
+                        <th>Status</th>
+                        <th style="width: 200px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var inst in pendingInstructors)
+                    {
+                        <tr>
+                            <td>
+                                <div class="fw-bold text-dark">@inst.FullName</div>
+                                <span class="badge bg-light text-muted border">ID: @inst.UserId</span>
+                            </td>
+                            <td>
+                                <a href="mailto:@inst.Email" class="text-primary text-decoration-none">@inst.Email</a>
+                            </td>
+                            <td class="text-muted small">
+                                @inst.CreatedAt.ToString("dd MMM yyyy, hh:mm tt")
+                            </td>
+                            <td>
+                                <span class="badge bg-warning text-dark">Pending Review</span>
+                            </td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <a href="@Url.Action("VerifyInstructor", "Admin", new { id = inst.UserId })" class="btn btn-primary btn-sm px-3 rounded-pill fw-semibold shadow-sm">
+                                        <i class="bi bi-search"></i> Inspect & Review
+                                    </a>
+
+                                    @using (Html.BeginForm("ReviewInstructor", "Admin", FormMethod.Post, new { @class = "d-inline m-0" }))
+                                    {
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="userId" value="@inst.UserId" />
+                                        <input type="hidden" name="action" value="Approve" />
+                                        <button type="submit" class="btn btn-outline-success btn-sm px-3 rounded-pill fw-semibold">
+                                            <i class="bi bi-check-lg"></i> Quick Approve
+                                        </button>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-4 text-muted">
+            <i class="bi bi-check2-all text-success fs-2 d-block mb-2"></i>
+            <span>No pending instructor approval requests! All registered course sellers are verified.</span>
+        </div>
+    }
+</div>
+
+<!-- Section 4: All Platform Instructors Directory -->
+<div class="lms-table-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="fw-bold text-dark m-0">
+            <i class="bi bi-people-fill text-primary me-2"></i> Registered Course Sellers
+        </h4>
+        <span class="badge bg-light text-muted border px-3 py-2 rounded-pill">
+            @(allInstructors != null ? allInstructors.Count() : 0) Total Instructors
+        </span>
+    </div>
+
+    @if (allInstructors != null && allInstructors.Any())
+    {
+        <div class="table-responsive">
+            <table class="lms-modern-table">
+                <thead>
+                    <tr>
+                        <th>Instructor</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Account Status</th>
+                        <th>Member Since</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var inst in allInstructors)
+                    {
+                        <tr>
+                            <td>
+                                <div class="fw-bold text-dark">@inst.FullName</div>
+                                <span class="badge bg-light text-muted border">ID: @inst.UserId</span>
+                            </td>
+                            <td>@inst.Email</td>
+                            <td><span class="badge bg-primary bg-opacity-10 text-primary">@inst.Role</span></td>
+                            <td>
+                                @if (inst.IsApproved)
+                                {
+                                    <span class="badge bg-success"><i class="bi bi-check-circle"></i> Approved</span>
+                                }
+                                else if (inst.ApprovalStatus == "Rejected")
+                                {
+                                    <span class="badge bg-danger"><i class="bi bi-x-circle"></i> Rejected</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark"><i class="bi bi-hourglass-split"></i> Pending</span>
+                                }
+                            </td>
+                            <td class="text-muted small">@inst.CreatedAt.ToString("MMM dd, yyyy")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

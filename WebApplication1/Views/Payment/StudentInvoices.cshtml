@@ -1,0 +1,79 @@
+@model IEnumerable<WebApplication1.Models.InvoiceViewModel>
+
+@{
+    ViewBag.Title = "My Invoices & Receipts";
+    int count = Model != null ? Model.Count() : 0;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div>
+        <h1 class="lms-page-title">My Invoices & Receipts</h1>
+        <p class="text-muted mb-0">Review your past course enrollment payments and download tax invoices.</p>
+    </div>
+    <a href="@Url.Action("Index", "Dashboard")" class="btn btn-outline-secondary rounded-pill px-3">
+        <i class="bi bi-speedometer2 me-1"></i> Dashboard
+    </a>
+</div>
+
+<div class="lms-table-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="fw-bold text-dark m-0">Purchase History</h4>
+        <span class="badge bg-light text-muted border px-3 py-2 rounded-pill">@count Records</span>
+    </div>
+
+    @if (Model != null && Model.Any())
+    {
+        <div class="table-responsive">
+            <table class="lms-modern-table">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Invoice Number</th>
+                        <th style="width: 35%;">Course</th>
+                        <th style="width: 15%;">Amount</th>
+                        <th style="width: 15%;">Payment Date</th>
+                        <th style="width: 15%; text-align: right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var inv in Model)
+                    {
+                        <tr>
+                            <td>
+                                <span class="fw-bold text-primary">@inv.InvoiceNumber</span>
+                                <div class="text-muted small">@inv.PaymentMethod</div>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark">@inv.CourseTitle</div>
+                                <div class="text-muted small">Instructor: @inv.InstructorName</div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border px-2 py-1 fw-bold fs-6">
+                                    $@inv.Amount.ToString("0.00")
+                                </span>
+                            </td>
+                            <td class="text-muted small">
+                                @inv.PaymentDate.ToString("MMM dd, yyyy")
+                            </td>
+                            <td style="text-align: right;">
+                                <a href="@Url.Action("Invoice", "Payment", new { id = inv.InvoiceNumber })" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                                    <i class="bi bi-file-earmark-pdf me-1"></i> View / PDF
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <i class="bi bi-receipt text-muted" style="font-size: 3rem;"></i>
+            <h5 class="fw-bold text-dark mt-3">No payment records found</h5>
+            <p class="text-muted mb-3">When you enroll in courses, your tax invoices and receipts will appear here.</p>
+            <a href="@Url.Action("Index", "Courses")" class="btn btn-primary rounded-pill px-4">
+                Explore Courses
+            </a>
+        </div>
+    }
+</div>

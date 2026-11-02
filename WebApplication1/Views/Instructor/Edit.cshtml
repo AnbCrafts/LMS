@@ -1,0 +1,97 @@
+@model WebApplication1.Models.Course
+
+@{
+    ViewBag.Title = "Edit Course - " + Model.Title;
+}
+
+<a href="@Url.Action("Index", "Instructor")" class="lms-back-btn">
+    <i class="bi bi-arrow-left"></i> Back to Studio
+</a>
+
+<div class="row justify-content-center">
+    <div class="col-12 col-lg-8">
+        <div class="card border-0 shadow-sm p-4 p-md-5" style="border-radius: 20px; border: 1px solid #e2e8f0 !important;">
+            <div class="mb-4">
+                <h2 class="fw-bold text-dark">Edit Course Details</h2>
+                <p class="text-muted small">Update course information, category, pricing, and curriculum syllabus</p>
+            </div>
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger py-2 small rounded-3 mb-4">
+                    @Html.ValidationSummary(false, "", new { @class = "mb-0" })
+                </div>
+            }
+
+            @using (Html.BeginForm("Edit", "Instructor", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                @Html.HiddenFor(m => m.CourseId)
+
+                <div class="mb-3">
+                    @Html.LabelFor(m => m.Title, new { @class = "form-label fw-semibold text-dark small" })
+                    @Html.TextBoxFor(m => m.Title, new { @class = "form-control", required = "required" })
+                    @Html.ValidationMessageFor(m => m.Title, "", new { @class = "text-danger small" })
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-12 col-md-6">
+                        @Html.LabelFor(m => m.Category, new { @class = "form-label fw-semibold text-dark small" })
+                        @{
+                            var existingCats = ViewBag.ExistingCategories as List<string> ?? new List<string> { "Frontend", "Backend", "Fullstack", "DevOps" };
+                        }
+                        <input type="text" name="Category" value="@Model.Category" class="form-control" list="existingCategoriesList" placeholder="Select or type new category..." required autocomplete="off" />
+                        <datalist id="existingCategoriesList">
+                            @foreach (var cat in existingCats)
+                            {
+                                <option value="@cat" />
+                            }
+                        </datalist>
+                        <div class="form-text" style="font-size: 0.72rem;">Choose an existing category from DB or type any new custom category.</div>
+                        @Html.ValidationMessageFor(m => m.Category, "", new { @class = "text-danger small" })
+                    </div>
+                    <div class="col-12 col-md-6">
+                        @Html.LabelFor(m => m.Price, new { @class = "form-label fw-semibold text-dark small" })
+                        <div class="input-group">
+                            <span class="input-group-text bg-white text-muted">$</span>
+                            @Html.TextBoxFor(m => m.Price, new { @class = "form-control border-start-0", type = "number", step = "0.01", min = "0" })
+                        </div>
+                        <span class="text-muted small" style="font-size: 0.72rem;">Enter 0 for free course</span>
+                        @Html.ValidationMessageFor(m => m.Price, "", new { @class = "text-danger small" })
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-12 col-md-6">
+                        @Html.LabelFor(m => m.Level, new { @class = "form-label fw-semibold text-dark small" })
+                        @Html.DropDownListFor(m => m.Level, new SelectList(new[] { "Beginner", "Intermediate", "Advanced" }, Model.Level), new { @class = "form-select" })
+                        @Html.ValidationMessageFor(m => m.Level, "", new { @class = "text-danger small" })
+                    </div>
+                    <div class="col-12 col-md-6">
+                        @Html.LabelFor(m => m.DurationWeeks, new { @class = "form-label fw-semibold text-dark small" })
+                        <div class="input-group">
+                            @Html.TextBoxFor(m => m.DurationWeeks, new { @class = "form-control", type = "number", min = "1", max = "52" })
+                            <span class="input-group-text bg-white text-muted">Weeks</span>
+                        </div>
+                        @Html.ValidationMessageFor(m => m.DurationWeeks, "", new { @class = "text-danger small" })
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    @Html.LabelFor(m => m.Description, new { @class = "form-label fw-semibold text-dark small" })
+                    @Html.TextAreaFor(m => m.Description, new { @class = "form-control", rows = "5", required = "required" })
+                    @Html.ValidationMessageFor(m => m.Description, "", new { @class = "text-danger small" })
+                </div>
+
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="@Url.Action("Index", "Instructor")" class="btn btn-light px-4 py-2 border rounded-3 fw-semibold">
+                        Cancel
+                    </a>
+                    <button type="submit" class="lms-cta-btn px-4 py-2">
+                        <i class="bi bi-check2-circle me-1"></i> Save Changes
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+</div>

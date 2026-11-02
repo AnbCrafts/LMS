@@ -1,0 +1,114 @@
+@model WebApplication1.Models.User
+
+@{
+    ViewBag.Title = "My Profile";
+    var pwdModel = ViewBag.ChangePasswordModel as WebApplication1.Models.ChangePasswordViewModel ?? new WebApplication1.Models.ChangePasswordViewModel();
+
+    string initials = "U";
+    if (!string.IsNullOrWhiteSpace(Model.FullName))
+    {
+        var parts = Model.FullName.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        initials = parts.Length >= 2 
+            ? $"{parts[0][0]}{parts[1][0]}".ToUpper() 
+            : parts[0].Substring(0, Math.Min(2, parts[0].Length)).ToUpper();
+    }
+}
+
+<div class="row justify-content-center py-2">
+    <div class="col-12 col-lg-8">
+        <h1 class="lms-page-title mb-4">Account Settings</h1>
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show mb-4 rounded-3 shadow-sm border-0" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show mb-4 rounded-3 shadow-sm border-0" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["ErrorMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        <!-- Profile Information Card -->
+        <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 18px; border: 1px solid #e2e8f0 !important;">
+            <div class="d-flex align-items-center gap-3 pb-3 mb-3 border-bottom">
+                <div class="lms-user-avatar" style="width: 54px; height: 54px; font-size: 1.3rem;">
+                    @initials
+                </div>
+                <div>
+                    <h4 class="fw-bold text-dark m-0">@Model.FullName</h4>
+                    <div class="text-muted small">@Model.Email</div>
+                </div>
+                <div class="ms-auto text-end">
+                    <span class="badge bg-primary px-3 py-2 rounded-pill">@Model.Role</span>
+                    @if (Model.Role == "Instructor")
+                    {
+                        <div class="mt-1">
+                            @if (Model.IsApproved)
+                            {
+                                <span class="badge bg-success small"><i class="bi bi-shield-check"></i> Approved</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-warning text-dark small"><i class="bi bi-hourglass-split"></i> Pending Verification</span>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-12 col-md-4">
+                    <div class="text-muted small">User ID</div>
+                    <div class="fw-semibold text-dark">#@Model.UserId</div>
+                </div>
+                <div class="col-12 col-md-4">
+                    <div class="text-muted small">Email Address</div>
+                    <div class="fw-semibold text-dark">@Model.Email</div>
+                </div>
+                <div class="col-12 col-md-4">
+                    <div class="text-muted small">Member Since</div>
+                    <div class="fw-semibold text-dark">@Model.CreatedAt.ToString("dd MMMM yyyy")</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Change Password Card -->
+        <div class="card border-0 shadow-sm p-4" style="border-radius: 18px; border: 1px solid #e2e8f0 !important;">
+            <h5 class="fw-bold text-dark mb-1">
+                <i class="bi bi-shield-lock-fill text-primary me-2"></i> Change Password
+            </h5>
+            <p class="text-muted small mb-4">Ensure your account is using a secure and memorable password.</p>
+
+            @using (Html.BeginForm("ChangePassword", "Account", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold text-dark small">Current Password</label>
+                    <input type="password" name="CurrentPassword" class="form-control" placeholder="Enter current password" required />
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-12 col-md-6">
+                        <label class="form-label fw-semibold text-dark small">New Password</label>
+                        <input type="password" name="NewPassword" class="form-control" placeholder="At least 4 characters" required />
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label fw-semibold text-dark small">Confirm New Password</label>
+                        <input type="password" name="ConfirmNewPassword" class="form-control" placeholder="Re-enter new password" required />
+                    </div>
+                </div>
+
+                <button type="submit" class="lms-cta-btn px-4 py-2">
+                    <i class="bi bi-check2"></i> Update Password
+                </button>
+            }
+        </div>
+    </div>
+</div>

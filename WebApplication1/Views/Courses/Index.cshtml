@@ -1,0 +1,440 @@
+@model WebApplication1.Models.CourseFilterViewModel
+
+@{
+    ViewBag.Title = "Course Catalog & Learning Paths";
+    int? currentUserId = Session["UserId"] != null && int.TryParse(Session["UserId"].ToString(), out int uid) ? uid : (int?)null;
+    var topCategories = Model.AvailableCategories.Take(5).ToList();
+}
+
+<!-- Page Header & Mobile Filter Toggle -->
+<div class="lms-page-header d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+    <div>
+        <h1 class="lms-page-title mb-1">Explore Courses</h1>
+        <p class="text-muted mb-0">Learn verified skills from software engineering specialists and industry practitioners.</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <!-- Mobile Filter Toggle Button -->
+        <button class="btn btn-outline-primary d-lg-none rounded-pill px-3 shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#filterSidebarCollapse">
+            <i class="bi bi-funnel-fill me-1"></i> Filters 
+            @if (Model.HasActiveFilters)
+            {
+                <span class="badge bg-primary text-white rounded-pill ms-1">Active</span>
+            }
+        </button>
+    </div>
+</div>
+
+<!-- Main 2-Column Catalog Layout -->
+<div class="row g-4">
+    <!-- LEFT SIDEBAR: FILTERS PANEL (Desktop Sticky + Mobile Collapse) -->
+    <div class="col-12 col-lg-3">
+        <div class="collapse d-lg-block" id="filterSidebarCollapse">
+            <div class="card border-0 shadow-sm p-4 rounded-4 sticky-lg-top" style="top: 85px; z-index: 5; background: #ffffff;">
+                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-primary-subtle text-primary p-2 rounded-circle" style="width: 32px; height: 32px;">
+                            <i class="bi bi-funnel-fill"></i>
+                        </span>
+                        <h5 class="fw-bold text-dark m-0">Course Filters</h5>
+                    </div>
+                    @if (Model.HasActiveFilters)
+                    {
+                        <a href="@Url.Action("Index", "Courses")" class="small text-danger text-decoration-none fw-semibold">
+                            <i class="bi bi-arrow-counterclockwise"></i> Reset All
+                        </a>
+                    }
+                </div>
+
+                @using (Html.BeginForm("Index", "Courses", FormMethod.Get, new { id = "catalogFilterForm" }))
+                {
+                    <!-- Search Input -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-dark small mb-1">
+                            <i class="bi bi-search me-1 text-primary"></i> Keyword Search
+                        </label>
+                        <div class="input-group input-group-sm">
+                            <input type="text" name="search" value="@Model.Search" class="form-control" placeholder="Title, topic, mentor..." />
+                            @if (!string.IsNullOrWhiteSpace(Model.Search))
+                            {
+                                <button type="button" class="btn btn-outline-secondary" onclick="document.getElementsByName('search')[0].value=''; document.getElementById('catalogFilterForm').submit();">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- DYNAMIC CATEGORIES FILTER (Searchable, Multi-Select, Scrollable for 100+ categories) -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="form-label fw-bold text-dark small m-0">
+                                <i class="bi bi-tags-fill me-1 text-primary"></i> Categories (@Model.AvailableCategories.Count)
+                            </label>
+                            @if (Model.SelectedCategories.Any())
+                            {
+                                <span class="badge bg-primary text-white rounded-pill" style="font-size: 0.7rem;">
+                                    @Model.SelectedCategories.Count active
+                                </span>
+                            }
+                        </div>
+
+                        <!-- Instant Filter Search Input (Handles 100+ categories instantly) -->
+                        <div class="input-group input-group-sm mb-2">
+                            <span class="input-group-text bg-light border-end-0 py-1 text-muted" style="font-size: 0.75rem;">
+                                <i class="bi bi-filter"></i>
+                            </span>
+                            <input type="text" id="catQuickSearch" class="form-control bg-light border-start-0 py-1" 
+                                   placeholder="Filter @Model.AvailableCategories.Count categories..." 
+                                   style="font-size: 0.8rem;" 
+                                   onkeyup="filterCategoryList(this.value)" autocomplete="off" />
+                        </div>
+
+                        <!-- Scrollable Category Checkboxes List -->
+                        <div class="category-scroll-container border rounded-3 p-2 bg-light bg-opacity-50" 
+                             id="categoryCheckboxList" 
+                             style="max-height: 210px; overflow-y: auto;">
+                            @if (Model.AvailableCategories.Any())
+                            {
+                                for (int i = 0; i < Model.AvailableCategories.Count; i++)
+                                {
+                                    var cat = Model.AvailableCategories[i];
+                                    bool isChecked = Model.SelectedCategories.Contains(cat.CategoryName, StringComparer.OrdinalIgnoreCase);
+                                    <div class="form-check d-flex align-items-center justify-content-between py-1 category-checkbox-row" 
+                                         data-cat-name="@cat.CategoryName.ToLower()">
+                                        <div class="d-flex align-items-center overflow-hidden me-2">
+                                            <input class="form-check-input mt-0 me-2" type="checkbox" name="categories" 
+                                                   value="@cat.CategoryName" id="cat_check_@i" 
+                                                   @(isChecked ? "checked" : "") onchange="this.form.submit()" />
+                                            <label class="form-check-label small text-dark text-truncate cursor-pointer" for="cat_check_@i" title="@cat.CategoryName">
+                                                @cat.CategoryName
+                                            </label>
+                                        </div>
+                                        <span class="badge bg-white text-muted border small flex-shrink-0" style="font-size: 0.68rem;">
+                                            @cat.CourseCount
+                                        </span>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div class="text-muted small text-center py-2">No categories found</div>
+                            }
+                            <div id="noCatMatchMsg" class="text-muted small text-center py-2 d-none">
+                                <i class="bi bi-exclamation-circle me-1"></i> No matching categories
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SKILL LEVEL FILTER -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-dark small mb-2">
+                            <i class="bi bi-bar-chart-fill me-1 text-success"></i> Difficulty Level
+                        </label>
+                        <select name="level" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <option value="All" @(Model.Level == "All" ? "selected" : "")>All Levels</option>
+                            <option value="Beginner" @(Model.Level == "Beginner" ? "selected" : "")>Beginner</option>
+                            <option value="Intermediate" @(Model.Level == "Intermediate" ? "selected" : "")>Intermediate</option>
+                            <option value="Advanced" @(Model.Level == "Advanced" ? "selected" : "")>Advanced</option>
+                        </select>
+                    </div>
+
+                    <!-- PRICING FILTER -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-dark small mb-2">
+                            <i class="bi bi-cash-stack me-1 text-warning"></i> Pricing
+                        </label>
+                        <div class="d-flex flex-column gap-1">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="price" id="price_all" value="All" 
+                                       @(Model.PriceFilter == "All" ? "checked" : "") onchange="this.form.submit()" />
+                                <label class="form-check-label small text-dark cursor-pointer" for="price_all">All Pricing</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="price" id="price_free" value="Free" 
+                                       @(Model.PriceFilter == "Free" ? "checked" : "") onchange="this.form.submit()" />
+                                <label class="form-check-label small text-dark cursor-pointer" for="price_free">Free Courses ($0)</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="price" id="price_under50" value="Under50" 
+                                       @(Model.PriceFilter == "Under50" ? "checked" : "") onchange="this.form.submit()" />
+                                <label class="form-check-label small text-dark cursor-pointer" for="price_under50">Under $50</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="price" id="price_over50" value="Over50" 
+                                       @(Model.PriceFilter == "Over50" ? "checked" : "") onchange="this.form.submit()" />
+                                <label class="form-check-label small text-dark cursor-pointer" for="price_over50">$50 and Above</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SORT BY FILTER -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-dark small mb-2">
+                            <i class="bi bi-arrow-down-up me-1 text-info"></i> Sort Results By
+                        </label>
+                        <select name="sortBy" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <option value="Popular" @(Model.SortBy == "Popular" ? "selected" : "")>Most Popular (Enrollments)</option>
+                            <option value="Newest" @(Model.SortBy == "Newest" ? "selected" : "")>Newest Release Date</option>
+                            <option value="PriceAsc" @(Model.SortBy == "PriceAsc" ? "selected" : "")>Price: Low to High</option>
+                            <option value="PriceDesc" @(Model.SortBy == "PriceDesc" ? "selected" : "")>Price: High to Low</option>
+                            <option value="TitleAsc" @(Model.SortBy == "TitleAsc" ? "selected" : "")>Title: A to Z</option>
+                        </select>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="lms-cta-btn justify-content-center py-2 text-white small shadow-sm">
+                            <i class="bi bi-funnel-fill me-1"></i> Apply Filters
+                        </button>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT MAIN CONTENT: POPULAR PILLS, ACTIVE FILTERS BAR & COURSES GRID -->
+    <div class="col-12 col-lg-9">
+        <!-- Top Popular Quick Category Pills Bar (Dynamically derived from DB) -->
+        <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+            <span class="text-muted small fw-bold me-1">
+                <i class="bi bi-fire text-danger me-1"></i> Popular:
+            </span>
+
+            @{
+                bool isAllSelected = !Model.SelectedCategories.Any();
+            }
+            <a href="@Url.Action("Index", "Courses", new { search = Model.Search, level = Model.Level, price = Model.PriceFilter, sortBy = Model.SortBy })" 
+               class="btn btn-sm rounded-pill px-3 shadow-sm @(isAllSelected ? "btn-primary" : "btn-outline-secondary")">
+                All (@Model.TotalCatalogCount)
+            </a>
+
+            @foreach (var topCat in topCategories)
+            {
+                bool isCatActive = Model.SelectedCategories.Contains(topCat.CategoryName, StringComparer.OrdinalIgnoreCase);
+                <a href="@Url.Action("Index", "Courses", new { category = topCat.CategoryName, search = Model.Search, level = Model.Level, price = Model.PriceFilter, sortBy = Model.SortBy })" 
+                   class="btn btn-sm rounded-pill px-3 shadow-sm @(isCatActive ? "btn-primary" : "btn-outline-secondary")">
+                    @topCat.CategoryName <span class="badge @(isCatActive ? "bg-white text-primary" : "bg-light text-muted border") ms-1">@topCat.CourseCount</span>
+                </a>
+            }
+        </div>
+
+        <!-- Active Filter Tags Row -->
+        @if (Model.HasActiveFilters)
+        {
+            <div class="d-flex align-items-center gap-2 mb-3 p-3 bg-light rounded-3 border flex-wrap">
+                <span class="small fw-bold text-dark">Active Filters:</span>
+
+                @if (!string.IsNullOrWhiteSpace(Model.Search))
+                {
+                    <span class="badge bg-white text-dark border px-3 py-2 rounded-pill shadow-sm small">
+                        Keyword: "@Model.Search"
+                        <a href="@Url.Action("Index", "Courses", new { level = Model.Level, categories = Model.SelectedCategories.ToArray(), price = Model.PriceFilter, sortBy = Model.SortBy })" class="text-danger ms-1 text-decoration-none">&times;</a>
+                    </span>
+                }
+
+                @foreach (var selCat in Model.SelectedCategories)
+                {
+                    var remCats = Model.SelectedCategories.Where(c => !c.Equals(selCat, StringComparison.OrdinalIgnoreCase)).ToArray();
+                    <span class="badge bg-primary px-3 py-2 rounded-pill shadow-sm small text-white">
+                        Category: @selCat
+                        <a href="@Url.Action("Index", "Courses", new { search = Model.Search, level = Model.Level, categories = remCats, price = Model.PriceFilter, sortBy = Model.SortBy })" class="text-white ms-1 text-decoration-none fw-bold">&times;</a>
+                    </span>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(Model.Level) && Model.Level != "All")
+                {
+                    <span class="badge bg-white text-dark border px-3 py-2 rounded-pill shadow-sm small">
+                        Level: @Model.Level
+                        <a href="@Url.Action("Index", "Courses", new { search = Model.Search, categories = Model.SelectedCategories.ToArray(), price = Model.PriceFilter, sortBy = Model.SortBy })" class="text-danger ms-1 text-decoration-none">&times;</a>
+                    </span>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(Model.PriceFilter) && Model.PriceFilter != "All")
+                {
+                    <span class="badge bg-white text-dark border px-3 py-2 rounded-pill shadow-sm small">
+                        Price: @Model.PriceFilter
+                        <a href="@Url.Action("Index", "Courses", new { search = Model.Search, categories = Model.SelectedCategories.ToArray(), level = Model.Level, sortBy = Model.SortBy })" class="text-danger ms-1 text-decoration-none">&times;</a>
+                    </span>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(Model.SortBy) && Model.SortBy != "Popular")
+                {
+                    <span class="badge bg-white text-dark border px-3 py-2 rounded-pill shadow-sm small">
+                        Sorted: @Model.SortBy
+                        <a href="@Url.Action("Index", "Courses", new { search = Model.Search, categories = Model.SelectedCategories.ToArray(), level = Model.Level, price = Model.PriceFilter })" class="text-danger ms-1 text-decoration-none">&times;</a>
+                    </span>
+                }
+
+                <a href="@Url.Action("Index", "Courses")" class="small text-danger fw-semibold text-decoration-none ms-auto">
+                    <i class="bi bi-x-circle me-1"></i> Clear All
+                </a>
+            </div>
+        }
+
+        <!-- Results Counter & Status Summary -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="text-muted small">
+                Showing <strong class="text-dark">@Model.FilteredCount</strong> of <strong class="text-dark">@Model.TotalCatalogCount</strong> courses
+                @if (Model.SelectedCategories.Any())
+                {
+                    <span>in <strong>@string.Join(", ", Model.SelectedCategories)</strong></span>
+                }
+            </div>
+        </div>
+
+        <!-- Courses Grid -->
+        <div class="row g-4">
+            @if (Model.Courses != null && Model.Courses.Any())
+            {
+                foreach (var course in Model.Courses)
+                {
+                    string badgeClass = "badge-beginner";
+                    if (course.Level == "Intermediate") { badgeClass = "badge-intermediate"; }
+                    else if (course.Level == "Advanced") { badgeClass = "badge-advanced"; }
+
+                    // Dynamic category color mapping
+                    string catBadgeClass = "bg-primary";
+                    string catLower = (course.Category ?? "").ToLower();
+                    if (catLower.Contains("backend")) { catBadgeClass = "bg-success"; }
+                    else if (catLower.Contains("fullstack")) { catBadgeClass = "bg-info text-dark"; }
+                    else if (catLower.Contains("devops") || catLower.Contains("cloud")) { catBadgeClass = "bg-warning text-dark"; }
+                    else if (catLower.Contains("mobile") || catLower.Contains("android") || catLower.Contains("ios")) { catBadgeClass = "bg-purple text-white"; }
+                    else if (catLower.Contains("data") || catLower.Contains("ai") || catLower.Contains("ml")) { catBadgeClass = "bg-danger text-white"; }
+
+                    // Generate initials for instructor avatar
+                    string initials = "IN";
+                    if (!string.IsNullOrWhiteSpace(course.InstructorName))
+                    {
+                        var parts = course.InstructorName.Split(new[] { ' ', '.' }, StringSplitOptions.RemoveEmptyEntries);
+                        initials = parts.Length >= 2 
+                            ? $"{parts[0][0]}{parts[1][0]}" 
+                            : parts[0].Substring(0, Math.Min(2, parts[0].Length)).ToUpper();
+                    }
+
+                    <div class="col-12 col-md-6">
+                        <div class="lms-course-card-pro h-100 d-flex flex-column justify-content-between">
+                            <div>
+                                <!-- Top Row: Level + Dynamic Category + Duration -->
+                                <div class="lms-card-top-row mb-2">
+                                    <div class="d-flex align-items-center gap-1 flex-wrap">
+                                        <span class="@badgeClass">@course.Level</span>
+                                        <span class="badge @catBadgeClass px-2 py-1 rounded-pill small fw-bold">@course.Category</span>
+                                    </div>
+                                    <span class="lms-duration-chip">
+                                        <i class="bi bi-clock"></i> @course.DurationWeeks Wks
+                                    </span>
+                                </div>
+
+                                <!-- Course Title -->
+                                <h5 class="lms-pro-title mt-2 mb-2">@course.Title</h5>
+
+                                <!-- Description -->
+                                <p class="lms-pro-desc text-muted small">@course.Description</p>
+                            </div>
+
+                            <div class="pt-3 border-top mt-3">
+                                <!-- Rating, Students & Price Row -->
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <span class="text-warning small fw-bold">
+                                        <i class="bi bi-star-fill"></i> 4.9 
+                                        <span class="text-muted fw-normal">(180+)</span>
+                                    </span>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="text-muted small">
+                                            <i class="bi bi-people"></i> @course.TotalEnrolled Enrolled
+                                        </span>
+                                        <span class="badge bg-light text-dark border px-2 py-1 fw-bold fs-6">
+                                            @(course.Price > 0 ? "$" + course.Price.ToString("0.00") : "Free")
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- Instructor Row -->
+                                <div class="lms-instructor-row mb-3">
+                                    <div class="lms-instructor-avatar">@initials</div>
+                                    <div>
+                                        <div class="lms-instructor-name">@course.InstructorName</div>
+                                        <div class="lms-instructor-sub">Verified Instructor</div>
+                                    </div>
+                                </div>
+
+                                <!-- Action Button -->
+                                @{
+                                    bool isCourseOwner = currentUserId.HasValue && 
+                                        (course.InstructorId == currentUserId.Value || string.Equals(course.InstructorName, Session["UserName"] as string, StringComparison.OrdinalIgnoreCase));
+                                }
+                                @if (isCourseOwner)
+                                {
+                                    <a href="@Url.Action("Details", "Courses", new { id = course.CourseId })" class="lms-btn-action" style="background: #e0e7ff; color: #4338ca; border-color: #c7d2fe;">
+                                        <span><i class="bi bi-person-workspace me-1"></i> Manage Your Course</span>
+                                        <i class="bi bi-arrow-right"></i>
+                                    </a>
+                                }
+                                else
+                                {
+                                    <a href="@Url.Action("Details", "Courses", new { id = course.CourseId })" class="lms-btn-action">
+                                        <span>View Curriculum & Reviews</span>
+                                        <i class="bi bi-arrow-right"></i>
+                                    </a>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="col-12 text-center py-5">
+                    <div class="p-5 bg-light rounded-4 border">
+                        <div class="display-6 text-muted mb-3"><i class="bi bi-funnel"></i></div>
+                        <h4 class="fw-bold text-dark">No courses match your filter criteria</h4>
+                        <p class="text-muted small mb-3">Try clearing some category selections, resetting price brackets, or typing different search keywords.</p>
+                        <a href="@Url.Action("Index", "Courses")" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i> Reset All Filters
+                        </a>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    .cursor-pointer { cursor: pointer; }
+    .bg-purple { background-color: #9333ea !important; }
+    .category-scroll-container::-webkit-scrollbar {
+        width: 5px;
+    }
+    .category-scroll-container::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+</style>
+
+@section Scripts {
+<script>
+    // Real-time client-side instant category filter search (handles 100+ categories)
+    function filterCategoryList(query) {
+        var term = (query || '').toLowerCase().trim();
+        var rows = document.querySelectorAll('.category-checkbox-row');
+        var matchCount = 0;
+
+        rows.forEach(function(row) {
+            var catName = row.getAttribute('data-cat-name') || '';
+            if (term === '' || catName.indexOf(term) !== -1) {
+                row.style.setProperty('display', 'flex', 'important');
+                matchCount++;
+            } else {
+                row.style.setProperty('display', 'none', 'important');
+            }
+        });
+
+        var noMatchMsg = document.getElementById('noCatMatchMsg');
+        if (noMatchMsg) {
+            if (matchCount === 0 && term !== '') {
+                noMatchMsg.classList.remove('d-none');
+            } else {
+                noMatchMsg.classList.add('d-none');
+            }
+        }
+    }
+</script>
+}

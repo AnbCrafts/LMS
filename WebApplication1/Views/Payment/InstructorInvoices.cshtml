@@ -1,0 +1,138 @@
+@model IEnumerable<WebApplication1.Models.InvoiceViewModel>
+
+@{
+    ViewBag.Title = "Course Sales & Earnings";
+    int count = Model != null ? Model.Count() : 0;
+    decimal grossTotal = Model != null ? Model.Sum(i => i.Amount) : 0m;
+    decimal platformFeeTotal = Math.Round(grossTotal * 0.10m, 2);
+    decimal netEarningsTotal = grossTotal - platformFeeTotal;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div>
+        <h1 class="lms-page-title">Sales & Earnings Invoices</h1>
+        <p class="text-muted mb-0">Track course sales, 10% platform fee deductions, and 90% net take-home earnings</p>
+    </div>
+    <a href="@Url.Action("Index", "Instructor")" class="btn btn-outline-secondary rounded-pill px-3">
+        <i class="bi bi-person-workspace me-1"></i> Instructor Studio
+    </a>
+</div>
+
+<!-- KPI Cards -->
+<div class="lms-kpi-grid mb-4">
+    <div class="lms-kpi-card" style="border: 2px solid #10b981 !important; background: linear-gradient(135deg, #ffffff 0%, #ecfdf5 100%);">
+        <div class="lms-kpi-icon" style="background: #d1fae5; color: #059669;">
+            <i class="bi bi-wallet-fill"></i>
+        </div>
+        <div>
+            <div class="lms-kpi-number" style="color: #047857;">$@netEarningsTotal.ToString("0.00")</div>
+            <div class="lms-kpi-label fw-bold text-dark">Net Earnings (90%)</div>
+            <div class="text-muted small" style="font-size: 0.72rem;">Your Net Payout</div>
+        </div>
+    </div>
+
+    <div class="lms-kpi-card">
+        <div class="lms-kpi-icon icon-emerald">
+            <i class="bi bi-cash-stack"></i>
+        </div>
+        <div>
+            <div class="lms-kpi-number">$@grossTotal.ToString("0.00")</div>
+            <div class="lms-kpi-label">Gross Course Revenue</div>
+            <div class="text-muted small" style="font-size: 0.72rem;">Total Customer Purchases</div>
+        </div>
+    </div>
+
+    <div class="lms-kpi-card">
+        <div class="lms-kpi-icon" style="background: #ede9fe; color: #7c3aed;">
+            <i class="bi bi-pie-chart"></i>
+        </div>
+        <div>
+            <div class="lms-kpi-number text-muted">$@platformFeeTotal.ToString("0.00")</div>
+            <div class="lms-kpi-label">Platform Charges (10%)</div>
+            <div class="text-muted small" style="font-size: 0.72rem;">Admin Platform Service Share</div>
+        </div>
+    </div>
+
+    <div class="lms-kpi-card">
+        <div class="lms-kpi-icon icon-indigo">
+            <i class="bi bi-receipt"></i>
+        </div>
+        <div>
+            <div class="lms-kpi-number">@count</div>
+            <div class="lms-kpi-label">Total Transactions</div>
+            <div class="text-muted small" style="font-size: 0.72rem;">100% Settled</div>
+        </div>
+    </div>
+</div>
+
+<div class="lms-table-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="fw-bold text-dark m-0">Student Purchase Invoices & Settlement</h4>
+        <span class="badge bg-light text-muted border px-3 py-2 rounded-pill">@count Orders</span>
+    </div>
+
+    @if (Model != null && Model.Any())
+    {
+        <div class="table-responsive">
+            <table class="lms-modern-table">
+                <thead>
+                    <tr>
+                        <th style="width: 18%;">Invoice #</th>
+                        <th style="width: 25%;">Course Title</th>
+                        <th style="width: 17%;">Student Customer</th>
+                        <th style="width: 10%;">Gross ($)</th>
+                        <th style="width: 12%; color: #7c3aed;">Platform Cut (10%)</th>
+                        <th style="width: 12%; color: #059669;">Net Earned (90%)</th>
+                        <th style="width: 6%; text-align: right;">Receipt</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var inv in Model)
+                    {
+                        <tr>
+                            <td>
+                                <span class="fw-bold text-primary">@inv.InvoiceNumber</span>
+                                <div class="text-muted small">@inv.PaymentDate.ToString("MMM dd, yyyy")</div>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark">@inv.CourseTitle</div>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark small">@inv.StudentName</div>
+                                <div class="text-muted small">@inv.StudentEmail</div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border px-2 py-1 fw-bold">
+                                    $@inv.Amount.ToString("0.00")
+                                </span>
+                            </td>
+                            <td>
+                                <span class="text-muted small">
+                                    -$@inv.PlatformFee.ToString("0.00")
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success px-2 py-1 fw-bold fs-6">
+                                    +$@inv.InstructorShare.ToString("0.00")
+                                </span>
+                            </td>
+                            <td style="text-align: right;">
+                                <a href="@Url.Action("Invoice", "Payment", new { id = inv.InvoiceNumber })" class="btn btn-outline-primary btn-sm rounded-pill px-2 py-1" title="View PDF Tax Receipt">
+                                    <i class="bi bi-file-earmark-pdf"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="text-center py-5">
+            <i class="bi bi-piggy-bank text-muted" style="font-size: 3rem;"></i>
+            <h5 class="fw-bold text-dark mt-3">No sales transactions recorded yet</h5>
+            <p class="text-muted">Enrollments in your courses will automatically show here along with their downloadable tax receipts.</p>
+        </div>
+    }
+</div>

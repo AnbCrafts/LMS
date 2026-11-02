@@ -1,0 +1,147 @@
+@model WebApplication1.Models.Course
+
+@{
+    ViewBag.Title = "Checkout & Enrollment - " + Model.Title;
+}
+
+<div class="row justify-content-center py-4">
+    <div class="col-12 col-lg-10 col-xl-8">
+        <!-- Back Link -->
+        <a href="@Url.Action("Details", "Courses", new { id = Model.CourseId })" class="btn btn-outline-secondary btn-sm rounded-pill mb-3">
+            <i class="bi bi-arrow-left"></i> Back to Course
+        </a>
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show mb-4 rounded-3 shadow-sm border-0" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["ErrorMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        <div class="card border-0 shadow-lg rounded-4 overflow-hidden" style="border: 1px solid #e2e8f0 !important;">
+            <div class="card-header bg-white py-4 px-4 border-bottom">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <h2 class="fw-bold text-dark m-0">Secure Checkout</h2>
+                        <p class="text-muted small mb-0">Simulated payment gateway with instant enrollment & verified PDF receipt.</p>
+                    </div>
+                    <span class="badge bg-success bg-opacity-10 text-success border border-success px-3 py-2 rounded-pill fw-bold">
+                        <i class="bi bi-shield-lock-fill"></i> SSL 256-Bit Sandbox
+                    </span>
+                </div>
+            </div>
+
+            <div class="card-body p-4 p-md-5">
+                <div class="row g-4">
+                    <!-- Left: Payment Form -->
+                    <div class="col-12 col-md-7">
+                        <h5 class="fw-bold text-dark mb-3">Select Simulated Payment Method</h5>
+
+                        @using (Html.BeginForm("Process", "Payment", FormMethod.Post))
+                        {
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="courseId" value="@Model.CourseId" />
+
+                            <div class="mb-3">
+                                <div class="form-check p-3 border rounded-3 bg-light mb-2">
+                                    <input class="form-check-input ms-1 me-2" type="radio" name="paymentMethod" id="payMethodCard" value="Credit / Debit Card (Simulated)" checked />
+                                    <label class="form-check-label fw-bold text-dark" for="payMethodCard">
+                                        <i class="bi bi-credit-card-fill text-primary me-1"></i> Credit / Debit Card
+                                    </label>
+                                    <div class="text-muted small ms-4">Visa, MasterCard, Amex (Simulated)</div>
+                                </div>
+
+                                <div class="form-check p-3 border rounded-3 bg-light mb-2">
+                                    <input class="form-check-input ms-1 me-2" type="radio" name="paymentMethod" id="payMethodUPI" value="UPI Instant (Simulated)" />
+                                    <label class="form-check-label fw-bold text-dark" for="payMethodUPI">
+                                        <i class="bi bi-qr-code-scan text-success me-1"></i> UPI / QR Code Transfer
+                                    </label>
+                                    <div class="text-muted small ms-4">Google Pay, PhonePe, Paytm (Simulated)</div>
+                                </div>
+
+                                <div class="form-check p-3 border rounded-3 bg-light">
+                                    <input class="form-check-input ms-1 me-2" type="radio" name="paymentMethod" id="payMethodNet" value="Net Banking (Simulated)" />
+                                    <label class="form-check-label fw-bold text-dark" for="payMethodNet">
+                                        <i class="bi bi-bank text-info me-1"></i> Net Banking
+                                    </label>
+                                    <div class="text-muted small ms-4">All Indian and International Banks (Simulated)</div>
+                                </div>
+                            </div>
+
+                            <!-- Dummy Card Inputs -->
+                            <div class="p-3 rounded-3 bg-white border mb-4">
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold text-muted">Cardholder Full Name</label>
+                                    <input type="text" class="form-control" value="@(Session["UserName"] ?? "Valued Student")" placeholder="Full name on card" />
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold text-muted">Card Number (Simulated)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light text-muted"><i class="bi bi-credit-card"></i></span>
+                                        <input type="text" class="form-control" value="4532 &bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; 8892" readonly />
+                                    </div>
+                                </div>
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <label class="form-label small fw-bold text-muted">Expiry</label>
+                                        <input type="text" class="form-control" value="12/28" readonly />
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label small fw-bold text-muted">CVV</label>
+                                        <input type="text" class="form-control" value="888" readonly />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="lms-cta-btn w-100 justify-content-center py-3 fs-6 shadow-sm">
+                                <i class="bi bi-lock-fill me-1"></i> Complete Dummy Payment & Generate Invoice
+                            </button>
+                        }
+                    </div>
+
+                    <!-- Right: Order Summary Sidebar -->
+                    <div class="col-12 col-md-5">
+                        <div class="card border-0 bg-light p-4 rounded-4">
+                            <h5 class="fw-bold text-dark mb-3">Order Summary</h5>
+
+                            <div class="border-bottom pb-3 mb-3">
+                                <div class="fw-bold text-dark fs-6 mb-1">@Model.Title</div>
+                                <div class="text-muted small mb-2">
+                                    By @Model.InstructorName &middot; <span class="badge bg-secondary">@Model.Category</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="text-muted small">Course Duration</span>
+                                    <span class="fw-bold text-dark small">@Model.DurationWeeks Weeks</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="text-muted small">Curriculum Level</span>
+                                    <span class="fw-bold text-dark small">@Model.Level</span>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="text-muted">Item Subtotal</span>
+                                <span class="fw-bold text-dark">@(Model.Price > 0 ? "$" + Model.Price.ToString("0.00") : "Free")</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="text-muted">Estimated Tax / GST</span>
+                                <span class="text-success fw-bold">$0.00</span>
+                            </div>
+
+                            <div class="border-top pt-3 mt-2 d-flex justify-content-between align-items-center">
+                                <span class="fw-bold text-dark fs-5">Total Due</span>
+                                <span class="fw-bold text-primary fs-4">@(Model.Price > 0 ? "$" + Model.Price.ToString("0.00") : "Free")</span>
+                            </div>
+
+                            <div class="mt-4 p-3 rounded-3 bg-white border text-center small text-muted">
+                                <i class="bi bi-receipt-cutoff text-primary fs-4 d-block mb-1"></i>
+                                An itemized PDF invoice will be generated and saved to your account automatically upon checkout.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

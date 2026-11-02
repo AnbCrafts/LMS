@@ -1,0 +1,95 @@
+@{
+    ViewBag.Title = "Welcome";
+    var topCats = ViewBag.TopCategories as List<WebApplication1.Models.CategoryFilterItem> ?? new List<WebApplication1.Models.CategoryFilterItem>();
+    int totalCoursesCount = ViewBag.TotalCourses != null ? (int)ViewBag.TotalCourses : 5;
+}
+
+<!-- Hero Banner Section -->
+<div class="lms-hero-wrapper">
+    <div class="lms-tag-badge">
+        <i class="bi bi-stars"></i> Next-Gen Learning Experience
+    </div>
+    <h1 class="lms-hero-title">
+        Master Modern Tech with <br />
+        <span class="lms-gradient-text">World-Class Courses</span>
+    </h1>
+    <p class="lms-hero-subtitle">
+        Accelerate your career in software engineering, frontend frameworks, and cloud APIs with hands-on, instructor-led curriculums.
+    </p>
+    <div class="d-flex justify-content-center gap-3 flex-wrap">
+        <a href="@Url.Action("Index", "Courses")" class="lms-cta-btn">
+            <i class="bi bi-compass"></i> Explore All Courses
+        </a>
+        <a href="@Url.Action("Index", "Dashboard")" class="lms-secondary-btn">
+            <i class="bi bi-person-workspace"></i> My Dashboard
+        </a>
+    </div>
+
+    <!-- Dynamic Category Discovery Pills -->
+    @if (topCats.Any())
+    {
+        <div class="d-flex align-items-center justify-content-center gap-2 mt-4 flex-wrap">
+            <span class="text-muted small fw-semibold me-1">
+                <i class="bi bi-tags-fill text-primary me-1"></i> Popular Learning Paths:
+            </span>
+            @foreach (var c in topCats)
+            {
+                <a href="@Url.Action("Index", "Courses", new { category = c.CategoryName })" 
+                   class="btn btn-sm btn-white bg-white border rounded-pill px-3 shadow-sm text-dark fw-semibold" style="font-size: 0.8rem;">
+                    @c.CategoryName <span class="badge bg-light text-primary border ms-1">@c.CourseCount</span>
+                </a>
+            }
+        </div>
+    }
+</div>
+
+<!-- Platform Stats Grid -->
+<div class="lms-stats-grid">
+    <div class="lms-stat-card">
+        <div class="lms-stat-number">@(totalCoursesCount)+</div>
+        <div class="lms-stat-label">In-Demand Courses</div>
+    </div>
+    <div class="lms-stat-card">
+        <div class="lms-stat-number">1,250+</div>
+        <div class="lms-stat-label">Active Learners</div>
+    </div>
+    <div class="lms-stat-card">
+        <div class="lms-stat-number">98%</div>
+        <div class="lms-stat-label">Completion Rate</div>
+    </div>
+    <div class="lms-stat-card">
+        <div class="lms-stat-number">4.9 ★</div>
+        <div class="lms-stat-label">Student Satisfaction</div>
+    </div>
+</div>
+
+<!-- Why Choose Us Features Row -->
+<div class="row g-4 mt-2">
+    <div class="col-12 col-md-4">
+        <div class="card h-100 border-0 p-4 shadow-sm" style="border-radius: 16px;">
+            <div class="d-inline-flex p-3 rounded-3 mb-3" style="background: #eff6ff; color: #2563eb; width: fit-content; font-size: 1.5rem;">
+                <i class="bi bi-lightning-charge-fill"></i>
+            </div>
+            <h5 class="fw-bold text-dark">Industry Ready Projects</h5>
+            <p class="text-muted small mb-0">Build full-stack applications with React, modern JavaScript, and scalable backend REST APIs.</p>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="card h-100 border-0 p-4 shadow-sm" style="border-radius: 16px;">
+            <div class="d-inline-flex p-3 rounded-3 mb-3" style="background: #ecfdf5; color: #059669; width: fit-content; font-size: 1.5rem;">
+                <i class="bi bi-patch-check-fill"></i>
+            </div>
+            <h5 class="fw-bold text-dark">Verified Mentors</h5>
+            <p class="text-muted small mb-0">Learn directly from vetted industry veterans whose curriculums are rigorously reviewed.</p>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="card h-100 border-0 p-4 shadow-sm" style="border-radius: 16px;">
+            <div class="d-inline-flex p-3 rounded-3 mb-3" style="background: #fdf4ff; color: #c026d3; width: fit-content; font-size: 1.5rem;">
+                <i class="bi bi-graph-up-arrow"></i>
+            </div>
+            <h5 class="fw-bold text-dark">Live Progress Tracking</h5>
+            <p class="text-muted small mb-0">Monitor your milestone achievements and completion status with your personal real-time dashboard.</p>
+        </div>
+    </div>
+</div>

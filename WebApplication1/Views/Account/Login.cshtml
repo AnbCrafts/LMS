@@ -1,0 +1,199 @@
+@model WebApplication1.Models.LoginViewModel
+
+@{
+    ViewBag.Title = "Sign In & Demo Access";
+}
+
+<div class="row justify-content-center py-4 g-4">
+    <!-- Left Column: Standard Credentials Form -->
+    <div class="col-12 col-lg-5">
+        <div class="card border-0 shadow-sm p-4 p-md-5 h-100" style="border-radius: 20px; border: 1px solid #e2e8f0 !important;">
+            <div class="text-center mb-4">
+                <div class="lms-brand-icon mx-auto mb-3" style="width: 48px; height: 48px; font-size: 1.5rem;">
+                    <i class="bi bi-shield-lock-fill"></i>
+                </div>
+                <h2 class="fw-bold text-dark">Welcome Back</h2>
+                <p class="text-muted small">Sign in with email and password or use one-click demo login</p>
+            </div>
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger py-2 small rounded-3">
+                    @Html.ValidationSummary(true, "", new { @class = "mb-0" })
+                </div>
+            }
+
+            @using (Html.BeginForm("Login", "Account", new { returnUrl = Model.ReturnUrl }, FormMethod.Post, new { id = "standardLoginForm" }))
+            {
+                @Html.AntiForgeryToken()
+
+                <div class="mb-3">
+                    @Html.LabelFor(m => m.Email, new { @class = "form-label fw-semibold text-dark small" })
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0 text-muted">
+                            <i class="bi bi-envelope"></i>
+                        </span>
+                        @Html.TextBoxFor(m => m.Email, new { @class = "form-control border-start-0 ps-0", placeholder = "student@lms.com", id = "loginEmail" })
+                    </div>
+                    @Html.ValidationMessageFor(m => m.Email, "", new { @class = "text-danger small" })
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        @Html.LabelFor(m => m.Password, new { @class = "form-label fw-semibold text-dark small" })
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0 text-muted">
+                            <i class="bi bi-key"></i>
+                        </span>
+                        @Html.PasswordFor(m => m.Password, new { @class = "form-control border-start-0 ps-0", placeholder = "&bull;&bull;&bull;&bull;&bull;&bull;", id = "loginPassword" })
+                    </div>
+                    @Html.ValidationMessageFor(m => m.Password, "", new { @class = "text-danger small" })
+                </div>
+
+                <div class="mb-4 form-check">
+                    @Html.CheckBoxFor(m => m.RememberMe, new { @class = "form-check-input" })
+                    @Html.LabelFor(m => m.RememberMe, new { @class = "form-check-label text-muted small" })
+                </div>
+
+                <button type="submit" class="lms-cta-btn w-100 justify-content-center py-2 fs-6">
+                    Sign In to Portal <i class="bi bi-arrow-right"></i>
+                </button>
+            }
+
+            <div class="text-center mt-4 pt-3 border-top">
+                <div class="mb-2">
+                    <span class="text-muted small">Don't have an account yet?</span>
+                    <a href="@Url.Action("Register", "Account")" class="text-primary fw-semibold small text-decoration-none ms-1">Create Account</a>
+                </div>
+                <div>
+                    <a href="@Url.Action("ApplicationStatus", "Instructor")" class="text-secondary small text-decoration-none">
+                        <i class="bi bi-patch-question me-1"></i> Applied as Instructor? Check Application Status & Admin Feedback
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: One-Click Instant Demo Login Personas -->
+    <div class="col-12 col-lg-6">
+        <div class="card border-0 shadow-sm p-4 p-md-5 h-100" style="border-radius: 20px; border: 1.5px solid #c7d2fe !important; background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);">
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="badge bg-primary px-3 py-1 rounded-pill fw-bold">
+                    <i class="bi bi-lightning-charge-fill me-1"></i> Testing Mode
+                </span>
+                <span class="text-muted small">Instant Single-Click Login</span>
+            </div>
+            <h3 class="fw-bold text-dark mb-1">One-Click Persona Login</h3>
+            <p class="text-muted small mb-4">Click any test role below to immediately log in without typing credentials:</p>
+
+            <div class="d-flex flex-column gap-3">
+                <!-- 1. Student Button -->
+                @using (Html.BeginForm("QuickLogin", "Account", FormMethod.Post, new { @class = "m-0" }))
+                {
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="persona" value="Student" />
+                    <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+                    <button type="submit" class="btn btn-outline-primary text-start w-100 p-3 rounded-4 shadow-sm hover-shadow d-flex align-items-center justify-content-between" style="border-width: 1.5px;">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center bg-primary text-white" style="width: 44px; height: 44px; font-size: 1.2rem;">
+                                <i class="bi bi-mortarboard-fill"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold text-dark">Login as Student (John Doe)</div>
+                                <div class="text-muted small">student@lms.com &bull; Enrolled in 4 courses with quizzes</div>
+                            </div>
+                        </div>
+                        <span class="badge bg-primary bg-opacity-10 text-primary fw-bold px-3 py-2 rounded-pill">
+                            Sign In <i class="bi bi-box-arrow-in-right ms-1"></i>
+                        </span>
+                    </button>
+                }
+
+                <!-- 2. Instructor Button (Approved) -->
+                @using (Html.BeginForm("QuickLogin", "Account", FormMethod.Post, new { @class = "m-0" }))
+                {
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="persona" value="Instructor" />
+                    <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+                    <button type="submit" class="btn btn-outline-success text-start w-100 p-3 rounded-4 shadow-sm hover-shadow d-flex align-items-center justify-content-between" style="border-width: 1.5px;">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center bg-success text-white" style="width: 44px; height: 44px; font-size: 1.2rem;">
+                                <i class="bi bi-person-workspace"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold text-dark">Login as Instructor (A. Sharma)</div>
+                                <div class="text-muted small">asharma@lms.com &bull; Verified seller, 90% net earnings studio</div>
+                            </div>
+                        </div>
+                        <span class="badge bg-success bg-opacity-10 text-success fw-bold px-3 py-2 rounded-pill">
+                            Sign In <i class="bi bi-box-arrow-in-right ms-1"></i>
+                        </span>
+                    </button>
+                }
+
+                <!-- 3. Admin Button -->
+                @using (Html.BeginForm("QuickLogin", "Account", FormMethod.Post, new { @class = "m-0" }))
+                {
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="persona" value="Admin" />
+                    <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+                    <button type="submit" class="btn btn-outline-danger text-start w-100 p-3 rounded-4 shadow-sm hover-shadow d-flex align-items-center justify-content-between" style="border-width: 1.5px;">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center bg-danger text-white" style="width: 44px; height: 44px; font-size: 1.2rem;">
+                                <i class="bi bi-shield-check"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold text-dark">Login as Administrator (Admin User)</div>
+                                <div class="text-muted small">admin@lms.com &bull; 10% platform charges ledger & verifications</div>
+                            </div>
+                        </div>
+                        <span class="badge bg-danger bg-opacity-10 text-danger fw-bold px-3 py-2 rounded-pill">
+                            Sign In <i class="bi bi-box-arrow-in-right ms-1"></i>
+                        </span>
+                    </button>
+                }
+
+                <!-- 4. Pending Instructor Button -->
+                @using (Html.BeginForm("QuickLogin", "Account", FormMethod.Post, new { @class = "m-0" }))
+                {
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="persona" value="PendingInstructor" />
+                    <input type="hidden" name="returnUrl" value="@Model.ReturnUrl" />
+                    <button type="submit" class="btn btn-outline-warning text-start w-100 p-3 rounded-4 shadow-sm hover-shadow d-flex align-items-center justify-content-between" style="border-width: 1.5px;">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center bg-warning text-dark" style="width: 44px; height: 44px; font-size: 1.2rem;">
+                                <i class="bi bi-hourglass-split"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold text-dark">Login as Pending Instructor (Pooja Mehta)</div>
+                                <div class="text-muted small">pmehta@lms.com &bull; Locked publishing until Admin approves</div>
+                            </div>
+                        </div>
+                        <span class="badge bg-warning bg-opacity-10 text-dark fw-bold px-3 py-2 rounded-pill">
+                            Sign In <i class="bi bi-box-arrow-in-right ms-1"></i>
+                        </span>
+                    </button>
+                }
+            </div>
+
+            <!-- Auto-Fill Helpers -->
+            <div class="mt-4 pt-3 border-top">
+                <span class="text-muted small fw-bold me-2"><i class="bi bi-magic me-1"></i> Or autofill form inputs:</span>
+                <div class="d-inline-flex gap-1 flex-wrap mt-2">
+                    <button type="button" class="btn btn-sm btn-light border rounded-pill px-2" onclick="fillForm('student@lms.com', 'Pass@123')">Student</button>
+                    <button type="button" class="btn btn-sm btn-light border rounded-pill px-2" onclick="fillForm('asharma@lms.com', 'Pass@123')">Instructor</button>
+                    <button type="button" class="btn btn-sm btn-light border rounded-pill px-2" onclick="fillForm('admin@lms.com', 'Admin@123')">Admin</button>
+                    <button type="button" class="btn btn-sm btn-light border rounded-pill px-2" onclick="fillForm('pmehta@lms.com', 'Pass@123')">Pending Inst.</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function fillForm(email, password) {
+        document.getElementById('loginEmail').value = email;
+        document.getElementById('loginPassword').value = password;
+    }
+</script>

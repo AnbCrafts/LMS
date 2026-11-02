@@ -1,0 +1,225 @@
+@model IEnumerable<WebApplication1.Models.CourseModule>
+
+@{
+    ViewBag.Title = "Course Modules & Curriculum Builder";
+    var course = ViewBag.Course as WebApplication1.Models.Course;
+    int nextModuleNumber = (Model != null && Model.Any()) ? Model.Max(m => m.ModuleNumber) + 1 : 1;
+}
+
+<div class="container py-4">
+    <!-- Header & Navigation -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="@Url.Action("Index", "Instructor")">Instructor Studio</a></li>
+                    <li class="breadcrumb-item active">Curriculum Modules</li>
+                </ol>
+            </nav>
+            <h2 class="fw-bold text-dark mb-0">Curriculum & Project Modules</h2>
+            <p class="text-muted small mb-0">Course: <strong class="text-primary">@(course?.Title)</strong></p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="lms-cta-btn shadow-sm" data-bs-toggle="modal" data-bs-target="#moduleModal" onclick="prepareAddModule(@nextModuleNumber)">
+                <i class="bi bi-plus-circle me-1"></i> Add New Module
+            </button>
+            <a href="@Url.Action("Index", "Instructor")" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i> Back to Courses
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show rounded-3 shadow-sm border-0 mb-4" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show rounded-3 shadow-sm border-0 mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Modules List -->
+    @if (Model != null && Model.Any())
+    {
+        <div class="row g-4">
+            @foreach (var mod in Model)
+            {
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm p-4" style="border-radius: 16px; border-left: 5px solid #2563eb !important;">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+                            <div>
+                                <span class="badge bg-primary px-3 py-1 rounded-pill mb-2">Module @mod.ModuleNumber</span>
+                                <span class="badge bg-light text-muted border ms-1"><i class="bi bi-clock me-1"></i> @mod.FormattedDuration</span>
+                                <h4 class="fw-bold text-dark mb-1">@mod.Title</h4>
+                                <p class="text-muted small mb-0">@mod.Description</p>
+                            </div>
+                            <div class="btn-group btn-group-sm">
+                                <button type="button" class="btn btn-outline-primary" onclick="prepareEditModule(@mod.ModuleId, @mod.ModuleNumber, '@Html.Raw(HttpUtility.JavaScriptStringEncode(mod.Title))', '@Html.Raw(HttpUtility.JavaScriptStringEncode(mod.Description ?? ""))', @mod.DurationMinutes, '@Html.Raw(HttpUtility.JavaScriptStringEncode(mod.ContentMarkdown ?? ""))', '@Html.Raw(HttpUtility.JavaScriptStringEncode(mod.VideoOrResourceUrl ?? ""))', '@Html.Raw(HttpUtility.JavaScriptStringEncode(mod.AssignmentPrompt ?? ""))')">
+                                    <i class="bi bi-pencil me-1"></i> Edit
+                                </button>
+                                <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModModal-@mod.ModuleId">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Module Details Accordion/Preview -->
+                        <div class="row g-3 pt-2 border-top">
+                            @if (!string.IsNullOrWhiteSpace(mod.VideoOrResourceUrl))
+                            {
+                                <div class="col-12 col-md-6">
+                                    <div class="small fw-bold text-dark mb-1"><i class="bi bi-play-btn-fill text-danger me-1"></i> Video Resource:</div>
+                                    <a href="@mod.VideoOrResourceUrl" target="_blank" class="small text-truncate d-inline-block text-primary" style="max-width: 100%;">
+                                        @mod.VideoOrResourceUrl
+                                    </a>
+                                </div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(mod.AssignmentPrompt))
+                            {
+                                <div class="col-12 col-md-6">
+                                    <div class="small fw-bold text-dark mb-1"><i class="bi bi-pencil-square text-success me-1"></i> Assignment Task:</div>
+                                    <div class="small text-muted text-truncate">@mod.AssignmentPrompt</div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Delete Modal -->
+                <div class="modal fade" id="deleteModModal-@mod.ModuleId" tabindex="-1">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content border-0 shadow">
+                            <div class="modal-header">
+                                <h5 class="modal-title fw-bold text-danger">Delete Module @mod.ModuleNumber</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                Are you sure you want to remove <strong>@mod.Title</strong> from this course?
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                                @using (Html.BeginForm("DeleteModule", "Instructor", FormMethod.Post))
+                                {
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="moduleId" value="@mod.ModuleId" />
+                                    <input type="hidden" name="courseId" value="@mod.CourseId" />
+                                    <button type="submit" class="btn btn-danger btn-sm">Delete Module</button>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="card border-0 shadow-sm p-5 text-center" style="border-radius: 16px;">
+            <i class="bi bi-stack fs-1 text-muted"></i>
+            <h5 class="fw-bold text-dark mt-3">No modules in this curriculum yet</h5>
+            <p class="text-muted small">Design your curriculum by adding modules with learning content, video references, and student assignments.</p>
+            <div>
+                <button class="lms-cta-btn" data-bs-toggle="modal" data-bs-target="#moduleModal" onclick="prepareAddModule(1)">
+                    <i class="bi bi-plus-circle me-1"></i> Add Module 1
+                </button>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Modal: Add / Edit Module -->
+<div class="modal fade" id="moduleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+            @using (Html.BeginForm("SaveModule", "Instructor", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="CourseId" value="@(course?.CourseId)" />
+                <input type="hidden" name="ModuleId" id="modalModuleId" value="0" />
+
+                <div class="modal-header border-0 pb-0 pt-4 px-4">
+                    <h5 class="modal-title fw-bold text-dark" id="moduleModalTitle">
+                        <i class="bi bi-stack text-primary me-2"></i> Add Course Module
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-3">
+                            <label class="form-label fw-semibold small">Module #</label>
+                            <input type="number" name="ModuleNumber" id="modalModuleNumber" class="form-control" min="1" required />
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold small">Module Title</label>
+                            <input type="text" name="Title" id="modalTitle" class="form-control" placeholder="e.g. Asynchronous State Management" required />
+                        </div>
+                        <div class="col-12 col-md-3">
+                            <label class="form-label fw-semibold small">Est. Duration (Mins)</label>
+                            <input type="number" name="DurationMinutes" id="modalDuration" class="form-control" min="5" value="35" required />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Short Summary / Objective</label>
+                        <textarea name="Description" id="modalDescription" class="form-control" rows="2" placeholder="Brief outline of key takeaways from this module..."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Curriculum Content & Code Examples (Markdown)</label>
+                        <textarea name="ContentMarkdown" id="modalMarkdown" class="form-control font-monospace" rows="6" placeholder="### Overview&#10;Write comprehensive lecture notes, architecture diagrams, and code snippets here..."></textarea>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold small">Video Embed / Resource URL (Optional)</label>
+                            <input type="url" name="VideoOrResourceUrl" id="modalVideo" class="form-control" placeholder="https://www.youtube.com/embed/... or CDN link" />
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold small">Module Assignment Task / Prompt (Optional)</label>
+                            <input type="text" name="AssignmentPrompt" id="modalAssignment" class="form-control" placeholder="e.g. Build a custom debounced search input component" />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0 px-4 pb-4">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="lms-cta-btn">Save Module</button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<script>
+    function prepareAddModule(num) {
+        document.getElementById('moduleModalTitle').innerHTML = '<i class="bi bi-stack text-primary me-2"></i> Add Course Module';
+        document.getElementById('modalModuleId').value = 0;
+        document.getElementById('modalModuleNumber').value = num;
+        document.getElementById('modalTitle').value = '';
+        document.getElementById('modalDescription').value = '';
+        document.getElementById('modalDuration').value = 35;
+        document.getElementById('modalMarkdown').value = '';
+        document.getElementById('modalVideo').value = '';
+        document.getElementById('modalAssignment').value = '';
+    }
+
+    function prepareEditModule(id, num, title, desc, duration, md, video, assignment) {
+        document.getElementById('moduleModalTitle').innerHTML = '<i class="bi bi-pencil-square text-primary me-2"></i> Edit Course Module';
+        document.getElementById('modalModuleId').value = id;
+        document.getElementById('modalModuleNumber').value = num;
+        document.getElementById('modalTitle').value = title;
+        document.getElementById('modalDescription').value = desc;
+        document.getElementById('modalDuration').value = duration;
+        document.getElementById('modalMarkdown').value = md;
+        document.getElementById('modalVideo').value = video;
+        document.getElementById('modalAssignment').value = assignment;
+        var modal = new bootstrap.Modal(document.getElementById('moduleModal'));
+        modal.show();
+    }
+</script>

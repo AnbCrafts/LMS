@@ -1,0 +1,688 @@
+/* ==========================================================================
+   LMS Portal - Modern Premium Design System
+   Font: Plus Jakarta Sans / Inter
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css');
+
+:root {
+    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    
+    /* Brand & Accent Colors */
+    --primary: #4f46e5;
+    --primary-hover: #4338ca;
+    --primary-light: #eef2ff;
+    --primary-glow: rgba(79, 70, 229, 0.15);
+    
+    --accent: #06b6d4;
+    --accent-light: #ecfeff;
+    
+    /* Neutrals */
+    --bg-page: #f8fafc;
+    --bg-card: #ffffff;
+    --text-heading: #0f172a;
+    --text-body: #334155;
+    --text-muted: #64748b;
+    --border-subtle: #e2e8f0;
+    --border-card: #f1f5f9;
+
+    /* Semantic Status */
+    --beginner-bg: #ecfdf5;
+    --beginner-text: #059669;
+    --beginner-border: #a7f3d0;
+
+    --intermediate-bg: #fffbeb;
+    --intermediate-text: #d97706;
+    --intermediate-border: #fde68a;
+
+    --advanced-bg: #f5f3ff;
+    --advanced-text: #7c3aed;
+    --advanced-border: #ddd6fe;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    --shadow-lg: 0 10px 25px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
+    --shadow-hover: 0 20px 30px -4px rgba(79, 70, 229, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+}
+
+body {
+    font-family: var(--font-sans);
+    background-color: var(--bg-page);
+    color: var(--text-body);
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* ==========================================================================
+   1. Modern Navigation Header
+   ========================================================================== */
+.lms-navbar {
+    background: #ffffff;
+    border-bottom: 1px solid var(--border-subtle);
+    padding: 14px 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.lms-brand {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: var(--text-heading) !important;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: -0.4px;
+}
+
+.lms-brand-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--primary), #818cf8);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    font-size: 1.15rem;
+    box-shadow: 0 4px 10px rgba(79, 70, 229, 0.25);
+}
+
+.lms-nav-link {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-muted) !important;
+    padding: 8px 16px !important;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.lms-nav-link:hover {
+    color: var(--primary) !important;
+    background-color: var(--primary-light);
+}
+
+.lms-nav-link.active {
+    color: var(--primary) !important;
+    background-color: var(--primary-light);
+    font-weight: 600;
+}
+
+.lms-user-pill {
+    background-color: #f1f5f9;
+    border: 1px solid var(--border-subtle);
+    padding: 5px 12px;
+    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-heading);
+}
+
+.lms-user-avatar {
+    width: 24px;
+    height: 24px;
+    background: linear-gradient(135deg, #06b6d4, #3b82f6);
+    color: #ffffff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+/* Container */
+.lms-main-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 36px 20px 80px 20px;
+}
+
+/* ==========================================================================
+   2. Home / Hero Page
+   ========================================================================== */
+.lms-hero-wrapper {
+    background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.08), transparent 50%),
+                radial-gradient(circle at bottom left, rgba(6, 182, 212, 0.06), transparent 50%),
+                #ffffff;
+    border: 1px solid var(--border-subtle);
+    border-radius: 20px;
+    padding: 70px 40px;
+    text-align: center;
+    margin-bottom: 40px;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    overflow: hidden;
+}
+
+.lms-tag-badge {
+    background: var(--primary-light);
+    color: var(--primary);
+    border: 1px solid #c7d2fe;
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.lms-hero-title {
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--text-heading);
+    line-height: 1.18;
+    margin-bottom: 18px;
+    letter-spacing: -0.8px;
+}
+
+.lms-gradient-text {
+    background: linear-gradient(135deg, var(--primary) 0%, #06b6d4 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.lms-hero-subtitle {
+    font-size: 1.18rem;
+    color: var(--text-muted);
+    max-width: 650px;
+    margin: 0 auto 32px auto;
+    line-height: 1.6;
+}
+
+.lms-cta-btn {
+    background: linear-gradient(135deg, var(--primary) 0%, #6366f1 100%);
+    color: #ffffff !important;
+    padding: 13px 28px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 10px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.lms-cta-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(79, 70, 229, 0.45);
+    color: #ffffff !important;
+    text-decoration: none;
+}
+
+.lms-secondary-btn {
+    background: #ffffff;
+    color: var(--text-heading) !important;
+    border: 1px solid var(--border-subtle);
+    padding: 13px 26px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 10px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.15s ease;
+}
+
+.lms-secondary-btn:hover {
+    background-color: #f8fafc;
+    border-color: #cbd5e1;
+    color: var(--text-heading) !important;
+    text-decoration: none;
+}
+
+/* Stats Row */
+.lms-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.lms-stat-card {
+    background: #ffffff;
+    border: 1px solid var(--border-subtle);
+    border-radius: 14px;
+    padding: 24px;
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s ease;
+}
+
+.lms-stat-card:hover {
+    transform: translateY(-3px);
+}
+
+.lms-stat-number {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--primary);
+    line-height: 1;
+    margin-bottom: 6px;
+}
+
+.lms-stat-label {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+/* ==========================================================================
+   3. Course Cards & Catalog
+   ========================================================================== */
+.lms-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.lms-page-title {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--text-heading);
+    margin: 0;
+    letter-spacing: -0.5px;
+}
+
+.lms-course-card-pro {
+    background: #ffffff;
+    border: 1px solid var(--border-subtle);
+    border-radius: 16px;
+    padding: 24px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+}
+
+.lms-course-card-pro:hover {
+    transform: translateY(-6px);
+    border-color: #c7d2fe;
+    box-shadow: var(--shadow-hover);
+}
+
+.lms-card-top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+/* Level Badges */
+.badge-beginner {
+    background-color: var(--beginner-bg);
+    color: var(--beginner-text);
+    border: 1px solid var(--beginner-border);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.3px;
+}
+
+.badge-intermediate {
+    background-color: var(--intermediate-bg);
+    color: var(--intermediate-text);
+    border: 1px solid var(--intermediate-border);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.3px;
+}
+
+.badge-advanced {
+    background-color: var(--advanced-bg);
+    color: var(--advanced-text);
+    border: 1px solid var(--advanced-border);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.3px;
+}
+
+.lms-duration-chip {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 500;
+}
+
+.lms-pro-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-heading);
+    margin-bottom: 8px;
+    line-height: 1.35;
+}
+
+.lms-pro-desc {
+    font-size: 0.92rem;
+    color: var(--text-muted);
+    line-height: 1.55;
+    margin-bottom: 20px;
+}
+
+.lms-instructor-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-top: 14px;
+    margin-top: auto;
+    border-top: 1px solid #f1f5f9;
+    margin-bottom: 16px;
+}
+
+.lms-instructor-avatar {
+    width: 32px;
+    height: 32px;
+    background: #e2e8f0;
+    color: var(--text-heading);
+    font-size: 0.8rem;
+    font-weight: 700;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lms-instructor-name {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-heading);
+}
+
+.lms-instructor-sub {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.lms-btn-action {
+    background: #f8fafc;
+    color: var(--primary) !important;
+    border: 1px solid #e2e8f0;
+    width: 100%;
+    text-align: center;
+    padding: 10px 16px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    border-radius: 10px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.lms-btn-action:hover {
+    background: var(--primary);
+    color: #ffffff !important;
+    border-color: var(--primary);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+    text-decoration: none;
+}
+
+/* ==========================================================================
+   4. Course Details View (2-Column Pro Layout)
+   ========================================================================== */
+.lms-back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.92rem;
+    font-weight: 600;
+    margin-bottom: 24px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    background: #ffffff;
+    border: 1px solid var(--border-subtle);
+    transition: all 0.15s ease;
+}
+
+.lms-back-btn:hover {
+    color: var(--primary);
+    border-color: #c7d2fe;
+    text-decoration: none;
+}
+
+.lms-detail-hero {
+    background: #ffffff;
+    border: 1px solid var(--border-subtle);
+    border-radius: 20px;
+    padding: 36px;
+    margin-bottom: 30px;
+    box-shadow: var(--shadow-sm);
+}
+
+.lms-detail-heading {
+    font-size: 2.4rem;
+    font-weight: 800;
+    color: var(--text-heading);
+    margin-bottom: 12px;
+    letter-spacing: -0.6px;
+}
+
+.lms-highlight-box {
+    background: var(--primary-light);
+    border: 1px solid #c7d2fe;
+    border-radius: 14px;
+    padding: 24px;
+    margin: 24px 0;
+}
+
+.lms-checklist-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 12px;
+    font-size: 0.95rem;
+    color: var(--text-body);
+}
+
+.lms-check-icon {
+    color: #10b981;
+    font-size: 1.15rem;
+}
+
+/* Sticky Enrollment Card */
+.lms-sticky-card {
+    background: #ffffff;
+    border: 1px solid var(--border-subtle);
+    border-radius: 18px;
+    padding: 28px;
+    box-shadow: var(--shadow-md);
+    position: sticky;
+    top: 90px;
+}
+
+.lms-sticky-price {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--text-heading);
+    margin-bottom: 18px;
+}
+
+.lms-spec-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 0.92rem;
+}
+
+.lms-spec-label {
+    color: var(--text-muted);
+}
+
+.lms-spec-val {
+    font-weight: 600;
+    color: var(--text-heading);
+}
+
+/* ==========================================================================
+   5. Dashboard (Student Command Center)
+   ========================================================================== */
+.lms-dashboard-header {
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+    color: #ffffff;
+    border-radius: 20px;
+    padding: 36px 32px;
+    margin-bottom: 32px;
+    box-shadow: 0 10px 25px -5px rgba(30, 27, 75, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.lms-dashboard-header h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 6px;
+}
+
+.lms-dashboard-header p {
+    color: #cbd5e1;
+    font-size: 1.05rem;
+    margin: 0;
+}
+
+.lms-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    margin-bottom: 32px;
+}
+
+.lms-kpi-card {
+    background: #ffffff;
+    border: 1px solid var(--border-subtle);
+    border-radius: 14px;
+    padding: 20px 24px;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.lms-kpi-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+}
+
+.icon-blue { background: #eff6ff; color: #2563eb; }
+.icon-emerald { background: #ecfdf5; color: #059669; }
+.icon-indigo { background: #eef2ff; color: #4f46e5; }
+
+.lms-kpi-number {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--text-heading);
+    line-height: 1.1;
+}
+
+.lms-kpi-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+/* Dashboard Table */
+.lms-table-card {
+    background: #ffffff;
+    border: 1px solid var(--border-subtle);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
+}
+
+.lms-modern-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.lms-modern-table th {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    padding: 14px 16px;
+    border-bottom: 2px solid var(--border-subtle);
+}
+
+.lms-modern-table td {
+    padding: 18px 16px;
+    vertical-align: middle;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.lms-modern-table tr:last-child td {
+    border-bottom: none;
+}
+
+.lms-modern-table tr:hover td {
+    background-color: #fafbfc;
+}
+
+/* Modern Gradient Progress Bar */
+.lms-bar-track {
+    background-color: #f1f5f9;
+    border-radius: 30px;
+    height: 12px;
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+}
+
+.lms-bar-fill {
+    height: 100%;
+    border-radius: 30px;
+    background: linear-gradient(90deg, #4f46e5, #06b6d4);
+    transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.lms-progress-badge {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-heading);
+    min-width: 45px;
+    text-align: right;
+}

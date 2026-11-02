@@ -1,0 +1,54 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "F:\\MCC_Practice\\Projects\\Assignments\\LMSPractice\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{E3F2E54A-5B03-4142-8986-C25162EECB5F}|WebApplication1\\WebApplication1.csproj|f:\\mcc_practice\\projects\\assignments\\lmspractice\\webapplication1\\models\\quizquestion.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E3F2E54A-5B03-4142-8986-C25162EECB5F}|WebApplication1\\WebApplication1.csproj|solutionrelative:webapplication1\\models\\quizquestion.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E3F2E54A-5B03-4142-8986-C25162EECB5F}|WebApplication1\\WebApplication1.csproj|f:\\mcc_practice\\projects\\assignments\\lmspractice\\webapplication1\\models\\accountviewmodels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E3F2E54A-5B03-4142-8986-C25162EECB5F}|WebApplication1\\WebApplication1.csproj|solutionrelative:webapplication1\\models\\accountviewmodels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "QuizQuestion.cs",
+              "DocumentMoniker": "F:\\MCC_Practice\\Projects\\Assignments\\LMSPractice\\WebApplication1\\Models\\QuizQuestion.cs",
+              "RelativeDocumentMoniker": "WebApplication1\\Models\\QuizQuestion.cs",
+              "ToolTip": "F:\\MCC_Practice\\Projects\\Assignments\\LMSPractice\\WebApplication1\\Models\\QuizQuestion.cs",
+              "RelativeToolTip": "WebApplication1\\Models\\QuizQuestion.cs",
+              "ViewState": "AgIAAAkAAAAAAAAAAAA1wAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-11-01T12:56:06.61Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "AccountViewModels.cs",
+              "DocumentMoniker": "F:\\MCC_Practice\\Projects\\Assignments\\LMSPractice\\WebApplication1\\Models\\AccountViewModels.cs",
+              "RelativeDocumentMoniker": "WebApplication1\\Models\\AccountViewModels.cs",
+              "ToolTip": "F:\\MCC_Practice\\Projects\\Assignments\\LMSPractice\\WebApplication1\\Models\\AccountViewModels.cs",
+              "RelativeToolTip": "WebApplication1\\Models\\AccountViewModels.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAsAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-11-01T04:11:23.162Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

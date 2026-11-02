@@ -1,0 +1,127 @@
+@{
+    ViewBag.Title = "Course Completion Certificate";
+    var course = ViewBag.Course as WebApplication1.Models.Course;
+    var student = ViewBag.Student as WebApplication1.Models.User;
+    var instructor = ViewBag.InstructorProfile as WebApplication1.Models.InstructorProfile;
+    string issueDate = ViewBag.IssueDate as string ?? DateTime.Now.ToString("MMMM dd, yyyy");
+    string certificateId = ViewBag.CertificateId as string ?? "CERT-0001";
+}
+
+<div class="container py-4 text-center">
+    <!-- Controls (Hidden on Print) -->
+    <div class="d-flex justify-content-between align-items-center mb-4 no-print flex-wrap gap-2">
+        <a href="@Url.Action("Index", "Instructor")" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i> Back to Studio
+        </a>
+        <button onclick="window.print()" class="btn btn-primary btn-sm rounded-pill px-4 shadow-sm">
+            <i class="bi bi-printer me-1"></i> Print / Download PDF
+        </button>
+    </div>
+
+    <!-- Authentic Certificate Frame -->
+    <div class="certificate-container mx-auto p-5 position-relative shadow-lg bg-white" 
+         style="max-width: 900px; border: 12px double #1e293b; border-radius: 8px; background: radial-gradient(circle at center, #ffffff 0%, #f8fafc 100%);">
+        
+        <!-- Corner Accents -->
+        <div style="position: absolute; top: 15px; left: 15px; width: 40px; height: 40px; border-top: 3px solid #2563eb; border-left: 3px solid #2563eb;"></div>
+        <div style="position: absolute; top: 15px; right: 15px; width: 40px; height: 40px; border-top: 3px solid #2563eb; border-right: 3px solid #2563eb;"></div>
+        <div style="position: absolute; bottom: 15px; left: 15px; width: 40px; height: 40px; border-bottom: 3px solid #2563eb; border-left: 3px solid #2563eb;"></div>
+        <div style="position: absolute; bottom: 15px; right: 15px; width: 40px; height: 40px; border-bottom: 3px solid #2563eb; border-right: 3px solid #2563eb;"></div>
+
+        <!-- EduPulse Crest & Header -->
+        <div class="mb-3">
+            <div class="d-inline-flex align-items-center justify-content-center p-3 rounded-circle mb-2" style="background: #eff6ff; color: #2563eb; width: 64px; height: 64px; font-size: 1.8rem;">
+                <i class="bi bi-award-fill"></i>
+            </div>
+            <div class="text-uppercase fw-bold text-muted tracking-widest" style="letter-spacing: 4px; font-size: 0.85rem;">
+                EduPulse Academy of Engineering
+            </div>
+            <h1 class="display-5 fw-bold text-dark mt-2" style="font-family: 'Georgia', serif;">
+                Certificate of Completion
+            </h1>
+            <p class="text-muted fst-italic">This is to proudly certify that</p>
+        </div>
+
+        <!-- Student Name -->
+        <div class="my-4">
+            <h2 class="display-6 fw-bold text-primary border-bottom border-2 border-primary d-inline-block px-4 pb-2" style="font-family: 'Georgia', serif;">
+                @(student?.FullName ?? "John Doe")
+            </h2>
+        </div>
+
+        <!-- Achievement Description -->
+        <p class="lead text-dark mx-auto mb-4" style="max-width: 650px; font-size: 1.05rem;">
+            has successfully completed all required modules, projects, practical exercises, and verified assessments for the curriculum
+        </p>
+
+        <!-- Course Title -->
+        <div class="my-3">
+            <h3 class="fw-bold text-dark text-uppercase" style="letter-spacing: 1px;">
+                @(course?.Title ?? "Modern Full-Stack Development")
+            </h3>
+            <span class="badge bg-secondary-subtle text-secondary px-3 py-1 rounded-pill mt-1">
+                Level: @(course?.Level ?? "Intermediate") &bull; @(course?.DurationWeeks ?? 6) Weeks Intensive
+            </span>
+        </div>
+
+        <!-- Signatures & Verification Row -->
+        <div class="row align-items-end mt-5 pt-4">
+            <!-- Left: Issue Date & Cert ID -->
+            <div class="col-4 text-start">
+                <div class="fw-bold text-dark small">@issueDate</div>
+                <div class="text-muted" style="font-size: 0.72rem;">DATE OF ISSUANCE</div>
+                <div class="text-muted mt-2" style="font-size: 0.68rem; font-family: monospace;">ID: @certificateId</div>
+            </div>
+
+            <!-- Middle: Gold Seal -->
+            <div class="col-4 text-center">
+                <div class="d-inline-flex flex-column align-items-center justify-content-center p-2 rounded-circle shadow-sm" 
+                     style="width: 80px; height: 80px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #fff; border: 3px solid #fef3c7;">
+                    <i class="bi bi-patch-check-fill fs-3"></i>
+                    <span style="font-size: 0.55rem; font-weight: bold; letter-spacing: 1px;">VERIFIED</span>
+                </div>
+            </div>
+
+            <!-- Right: Instructor Digital Signature -->
+            <div class="col-4 text-end">
+                <div class="mb-1" style="min-height: 50px;">
+                    @if (!string.IsNullOrWhiteSpace(instructor?.DigitalSignatureUrl))
+                    {
+                        <img src="@instructor.DigitalSignatureUrl" alt="Instructor Signature" style="max-height: 48px; max-width: 160px; object-fit: contain;" />
+                    }
+                    else
+                    {
+                        <div class="fst-italic text-dark fs-5" style="font-family: 'Brush Script MT', cursive;">
+                            @(course?.InstructorName ?? "Course Mentor")
+                        </div>
+                    }
+                </div>
+                <div class="border-top border-dark pt-1 fw-bold text-dark small">
+                    @(instructor?.FullName ?? course?.InstructorName ?? "A. Sharma")
+                </div>
+                <div class="text-muted" style="font-size: 0.72rem;">
+                    @(string.IsNullOrWhiteSpace(instructor?.Headline) ? "AUTHORIZED INSTRUCTOR" : instructor.Headline)
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    @@media print {
+        .no-print, nav, footer, header {
+            display: none !important;
+        }
+        body {
+            background: #ffffff !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        .certificate-container {
+            box-shadow: none !important;
+            border: 8px double #000 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+    }
+</style>

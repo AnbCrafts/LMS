@@ -1,0 +1,222 @@
+@model IEnumerable<WebApplication1.Models.QuizQuestion>
+
+@{
+    var course = ViewBag.Course as WebApplication1.Models.Course;
+    ViewBag.Title = "Manage Quizzes - " + (course != null ? course.Title : "Course");
+    int totalQuestions = Model != null ? Model.Count() : 0;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div>
+        <a href="@Url.Action("Index", "Instructor")" class="btn btn-outline-secondary btn-sm rounded-pill mb-2">
+            <i class="bi bi-arrow-left"></i> Back to Studio
+        </a>
+        <h1 class="lms-page-title mb-1">Manage Quizzes & Assessments</h1>
+        <p class="text-muted mb-0">Course: <strong>@(course != null ? course.Title : "")</strong> &middot; (@(course != null ? course.Category : ""))</p>
+    </div>
+    <div>
+        <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#addQuestionModal">
+            <i class="bi bi-plus-circle me-1"></i> Add Quiz Question
+        </button>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show mb-4 rounded-3 shadow-sm border-0" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show mb-4 rounded-3 shadow-sm border-0" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<!-- Summary Card -->
+<div class="card border-0 shadow-sm p-3 mb-4 rounded-3 bg-light">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-3">
+            <span class="badge bg-primary rounded-circle p-2" style="width: 36px; height: 36px;">
+                <i class="bi bi-question-circle fs-5"></i>
+            </span>
+            <div>
+                <span class="fw-bold text-dark">Active Questions:</span> <span class="badge bg-white text-dark border px-2 py-1">@totalQuestions</span>
+                <span class="text-muted ms-2 small">&bull; Students take a 3-question mini-quiz at the end of each lesson (passing score: 60%).</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Questions List Grouped by Lesson -->
+@if (Model != null && Model.Any())
+{
+    for (int lesson = 1; lesson <= 5; lesson++)
+    {
+        var lessonQuestions = Model.Where(q => q.LessonNumber == lesson).ToList();
+        
+        <div class="card border-0 shadow-sm mb-4 rounded-4 overflow-hidden" style="border: 1px solid #e2e8f0 !important;">
+            <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center border-bottom">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-primary px-3 py-2 rounded-pill fw-bold">Lesson @lesson</span>
+                    <h5 class="fw-bold text-dark m-0">End-of-Lesson Quiz Questions</h5>
+                </div>
+                <span class="badge bg-light text-muted border">@lessonQuestions.Count Questions</span>
+            </div>
+
+            <div class="card-body p-4">
+                @if (lessonQuestions.Any())
+                {
+                    <div class="d-flex flex-column gap-3">
+                        @foreach (var q in lessonQuestions)
+                        {
+                            <div class="p-3 rounded-3 border bg-light position-relative">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div class="fw-bold text-dark fs-6" style="max-width: 85%;">
+                                        <i class="bi bi-patch-question text-primary me-1"></i> @q.QuestionText
+                                    </div>
+                                    @using (Html.BeginForm("DeleteQuizQuestion", "Instructor", FormMethod.Post, new { @class = "d-inline m-0" }))
+                                    {
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="questionId" value="@q.QuestionId" />
+                                        <input type="hidden" name="courseId" value="@(course != null ? course.CourseId : 0)" />
+                                        <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3 py-1" onclick="return confirm('Delete this question?');">
+                                            <i class="bi bi-trash"></i> Delete
+                                        </button>
+                                    }
+                                </div>
+
+                                <div class="row g-2 mt-2">
+                                    <div class="col-12 col-md-6">
+                                        <div class="p-2 rounded-3 border @(q.CorrectOption == "A" ? "bg-success bg-opacity-10 border-success text-success fw-bold" : "bg-white text-muted")">
+                                            <span class="badge @(q.CorrectOption == "A" ? "bg-success" : "bg-secondary") me-1">A</span> @q.OptionA
+                                            @if (q.CorrectOption == "A") { <i class="bi bi-check-circle-fill float-end"></i> }
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <div class="p-2 rounded-3 border @(q.CorrectOption == "B" ? "bg-success bg-opacity-10 border-success text-success fw-bold" : "bg-white text-muted")">
+                                            <span class="badge @(q.CorrectOption == "B" ? "bg-success" : "bg-secondary") me-1">B</span> @q.OptionB
+                                            @if (q.CorrectOption == "B") { <i class="bi bi-check-circle-fill float-end"></i> }
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <div class="p-2 rounded-3 border @(q.CorrectOption == "C" ? "bg-success bg-opacity-10 border-success text-success fw-bold" : "bg-white text-muted")">
+                                            <span class="badge @(q.CorrectOption == "C" ? "bg-success" : "bg-secondary") me-1">C</span> @q.OptionC
+                                            @if (q.CorrectOption == "C") { <i class="bi bi-check-circle-fill float-end"></i> }
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <div class="p-2 rounded-3 border @(q.CorrectOption == "D" ? "bg-success bg-opacity-10 border-success text-success fw-bold" : "bg-white text-muted")">
+                                            <span class="badge @(q.CorrectOption == "D" ? "bg-success" : "bg-secondary") me-1">D</span> @q.OptionD
+                                            @if (q.CorrectOption == "D") { <i class="bi bi-check-circle-fill float-end"></i> }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-3 text-muted">
+                        <span class="small">No questions configured for Lesson @lesson yet. Click "Add Quiz Question" above to configure.</span>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+}
+else
+{
+    <div class="card border-0 shadow-sm p-5 text-center rounded-4">
+        <i class="bi bi-patch-question-fill text-muted" style="font-size: 3rem;"></i>
+        <h4 class="fw-bold text-dark mt-3">No Quiz Questions Configured Yet</h4>
+        <p class="text-muted">Engage your students by adding 3-question knowledge check quizzes for each lesson.</p>
+        <div>
+            <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#addQuestionModal">
+                <i class="bi bi-plus-circle me-1"></i> Add First Question
+            </button>
+        </div>
+    </div>
+}
+
+<!-- Add Question Modal -->
+<div class="modal fade" id="addQuestionModal" tabindex="-1" aria-labelledby="addQuestionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-bottom px-4 py-3">
+                <h5 class="modal-title fw-bold text-dark" id="addQuestionModalLabel">
+                    <i class="bi bi-plus-circle text-primary me-1"></i> Create Lesson Quiz Question
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            @using (Html.BeginForm("AddQuizQuestion", "Instructor", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="CourseId" value="@(course != null ? course.CourseId : 0)" />
+
+                <div class="modal-body px-4 py-3">
+                    <div class="row g-3">
+                        <div class="col-12 col-md-4">
+                            <label class="form-label fw-bold small text-muted">Lesson Module</label>
+                            <select name="LessonNumber" class="form-select" required>
+                                <option value="1">Lesson 1: Foundations & Architecture</option>
+                                <option value="2">Lesson 2: Core Components & Data Flows</option>
+                                <option value="3">Lesson 3: Advanced State & Async APIs</option>
+                                <option value="4">Lesson 4: Performance & Automated Testing</option>
+                                <option value="5">Lesson 5: Capstone Project</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-8">
+                            <label class="form-label fw-bold small text-muted">Question Text</label>
+                            <input type="text" name="QuestionText" class="form-control" placeholder="e.g. Which hook is best suited for component side-effects?" required />
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-bold small text-muted">Option A</label>
+                            <input type="text" name="OptionA" class="form-control" placeholder="First candidate choice" required />
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-bold small text-muted">Option B</label>
+                            <input type="text" name="OptionB" class="form-control" placeholder="Second candidate choice" required />
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-bold small text-muted">Option C</label>
+                            <input type="text" name="OptionC" class="form-control" placeholder="Third candidate choice" required />
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-bold small text-muted">Option D</label>
+                            <input type="text" name="OptionD" class="form-control" placeholder="Fourth candidate choice" required />
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-bold small text-muted">Correct Option</label>
+                            <select name="CorrectOption" class="form-select" required>
+                                <option value="A">Option A is Correct</option>
+                                <option value="B">Option B is Correct</option>
+                                <option value="C">Option C is Correct</option>
+                                <option value="D">Option D is Correct</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-bold small text-muted">Brief Explanation (Optional)</label>
+                            <input type="text" name="Explanation" class="form-control" placeholder="Brief note explaining the answer" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer px-4 py-3 bg-light border-top">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">
+                        <i class="bi bi-check2-circle me-1"></i> Save Question
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+</div>

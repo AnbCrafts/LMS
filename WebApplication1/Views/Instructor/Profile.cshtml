@@ -1,0 +1,461 @@
+@model WebApplication1.Models.InstructorProfile
+
+@{
+    ViewBag.Title = "Instructor Professional Profile";
+    var checklist = Model.GetChecklist();
+    bool isUnlocked = Model.CanUploadCourse;
+}
+
+<div class="container py-4">
+    <!-- Breadcrumb & Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item"><a href="@Url.Action("Index", "Instructor")">Instructor Studio</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Professional Profile</li>
+                </ol>
+            </nav>
+            <h2 class="fw-bold text-dark mb-0">Professional Profile & Credentials</h2>
+            <p class="text-muted small mb-0">Complete your professional background to unlock course creation (min. 90% required).</p>
+        </div>
+        <div>
+            <a href="@Url.Action("Index", "Instructor")" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i> Back to Studio
+            </a>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Model.AdminFeedback))
+    {
+        <div class="alert alert-warning border-0 p-4 rounded-4 mb-4 shadow-sm" style="background: #fffbeb; border: 2px solid #f59e0b !important;">
+            <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-warning text-dark rounded-circle p-2" style="width: 32px; height: 32px;">
+                        <i class="bi bi-chat-left-quote-fill"></i>
+                    </span>
+                    <h5 class="fw-bold text-dark m-0">Administrator Review Feedback</h5>
+                </div>
+                <span class="badge bg-warning text-dark px-3 py-1 rounded-pill">@(Model.ApprovalStatus ?? "Action Required")</span>
+            </div>
+            <div class="p-3 bg-white rounded-3 border mb-2 small text-dark fw-semibold" style="white-space: pre-wrap; line-height: 1.6;">
+                @Model.AdminFeedback
+            </div>
+            <div class="text-muted small" style="font-size: 0.75rem;">
+                Please update the specific items requested by the review team above and click <strong>"Save Profile Details"</strong> below to refresh your accreditation status.
+            </div>
+        </div>
+    }
+
+    <!-- 90% Completion Status Banner Card -->
+    <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 16px; background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%); border-left: 6px solid @(isUnlocked ? "#10b981" : "#f59e0b") !important;">
+        <div class="row align-items-center g-3">
+            <div class="col-12 col-md-8">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="badge @(isUnlocked ? "bg-success" : "bg-warning text-dark") px-3 py-2 rounded-pill fs-6">
+                        <i class="bi @(isUnlocked ? "bi-patch-check-fill" : "bi-lock-fill") me-1"></i>
+                        @(isUnlocked ? "Course Creation Unlocked (>= 90%)" : "Course Creation Locked (Needs 90%)")
+                    </span>
+                    <span class="text-muted small fw-semibold">Current Score: @Model.CompletionPercentage%</span>
+                </div>
+                <h5 class="fw-bold text-dark mb-1">
+                    @(isUnlocked 
+                        ? "Your profile meets all professional verification standards!" 
+                        : "Almost there! Complete missing details to unlock course publishing.")
+                </h5>
+                <p class="text-muted small mb-0">
+                    To maintain top educational quality, instructors must verify their experience, education, and digital signature before uploading curriculum.
+                </p>
+            </div>
+            <div class="col-12 col-md-4 text-md-end">
+                <div class="d-inline-flex flex-column align-items-center p-3 rounded-4 bg-white shadow-sm border">
+                    <div class="fs-2 fw-bold @(isUnlocked ? "text-success" : "text-warning")">
+                        @Model.CompletionPercentage%
+                    </div>
+                    <div class="text-muted small">Completion</div>
+                    <div class="progress w-100 mt-2" style="height: 8px; min-width: 120px;">
+                        <div class="progress-bar @(isUnlocked ? "bg-success" : "bg-warning") progress-bar-striped progress-bar-animated" 
+                             role="progressbar" 
+                             style="width: @Model.CompletionPercentage%;" 
+                             aria-valuenow="@Model.CompletionPercentage" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Checklist Accordion Toggle -->
+        <div class="mt-3 pt-3 border-top">
+            <button class="btn btn-sm btn-link text-decoration-none p-0 fw-semibold text-primary" type="button" data-bs-toggle="collapse" data-bs-target="#checklistCollapse" aria-expanded="false">
+                <i class="bi bi-list-check me-1"></i> View Profile Completion Checklist (@checklist.Count(c => c.IsCompleted) / @checklist.Count items completed)
+            </button>
+            <div class="collapse mt-3" id="checklistCollapse">
+                <div class="row g-2">
+                    @foreach (var item in checklist)
+                    {
+                        <div class="col-12 col-md-6 col-lg-4">
+                            <div class="p-2 rounded-3 border d-flex align-items-center gap-2 bg-white">
+                                <i class="bi @(item.IsCompleted ? "bi-check-circle-fill text-success" : "bi-dash-circle text-muted") fs-5"></i>
+                                <div class="small">
+                                    <div class="fw-semibold @(item.IsCompleted ? "text-dark" : "text-muted")">@item.Label</div>
+                                    <div class="text-muted" style="font-size: 0.72rem;">Weight: @item.Weight pts</div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Form -->
+    @using (Html.BeginForm("Profile", "Instructor", FormMethod.Post, new { enctype = "multipart/form-data" }))
+    {
+        @Html.AntiForgeryToken()
+        @Html.HiddenFor(m => m.ProfileId)
+        @Html.HiddenFor(m => m.UserId)
+        @Html.HiddenFor(m => m.ProfilePictureUrl)
+        @Html.HiddenFor(m => m.DigitalSignatureUrl)
+
+        <div class="row g-4">
+            <!-- Left Column: Details & Experience -->
+            <div class="col-12 col-lg-8">
+                <!-- Section 1: Professional Identity -->
+                <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 16px;">
+                    <h5 class="fw-bold text-dark mb-3">
+                        <i class="bi bi-person-badge-fill text-primary me-2"></i> Professional Identity
+                    </h5>
+                    
+                    <div class="mb-3">
+                        @Html.LabelFor(m => m.Headline, new { @class = "form-label fw-semibold small" })
+                        @Html.TextBoxFor(m => m.Headline, new { @class = "form-control", placeholder = "e.g. Principal Cloud Architect & Ex-Google Lead" })
+                        <div class="form-text" style="font-size: 0.75rem;">Your headline appears on your public courses and instructor card.</div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            @Html.LabelFor(m => m.PhoneNumber, new { @class = "form-label fw-semibold small" })
+                            @Html.TextBoxFor(m => m.PhoneNumber, new { @class = "form-control", placeholder = "+1 (555) 000-0000" })
+                        </div>
+                        <div class="col-12 col-md-3">
+                            @Html.LabelFor(m => m.City, new { @class = "form-label fw-semibold small" })
+                            @Html.TextBoxFor(m => m.City, new { @class = "form-control", placeholder = "City" })
+                        </div>
+                        <div class="col-12 col-md-3">
+                            @Html.LabelFor(m => m.Country, new { @class = "form-label fw-semibold small" })
+                            @Html.TextBoxFor(m => m.Country, new { @class = "form-control", placeholder = "Country" })
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Professional & Teaching Experience -->
+                <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 16px;">
+                    <h5 class="fw-bold text-dark mb-3">
+                        <i class="bi bi-briefcase-fill text-success me-2"></i> Professional & Teaching Experience
+                    </h5>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-6">
+                            @Html.LabelFor(m => m.CurrentJobTitle, new { @class = "form-label fw-semibold small" })
+                            @Html.TextBoxFor(m => m.CurrentJobTitle, new { @class = "form-control", placeholder = "e.g. Senior Software Engineer" })
+                        </div>
+                        <div class="col-12 col-md-6">
+                            @Html.LabelFor(m => m.CurrentOrganization, new { @class = "form-label fw-semibold small" })
+                            @Html.TextBoxFor(m => m.CurrentOrganization, new { @class = "form-control", placeholder = "e.g. Microsoft / Freelance" })
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-4">
+                            @Html.LabelFor(m => m.TotalExperienceYears, new { @class = "form-label fw-semibold small" })
+                            @Html.TextBoxFor(m => m.TotalExperienceYears, new { @class = "form-control", type = "number", min = "0", placeholder = "e.g. 7" })
+                        </div>
+                        <div class="col-12 col-md-8">
+                            @Html.LabelFor(m => m.PrimaryExpertise, new { @class = "form-label fw-semibold small" })
+                            @Html.TextBoxFor(m => m.PrimaryExpertise, new { @class = "form-control", placeholder = "e.g. React 18, ASP.NET Core, System Design, DevOps" })
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        @Html.LabelFor(m => m.PastTeachingExperience, new { @class = "form-label fw-semibold small" })
+                        @Html.TextAreaFor(m => m.PastTeachingExperience, new { @class = "form-control", rows = "3", placeholder = "Describe bootcamps, workshops, corporate mentoring, or university lectures you have conducted..." })
+                    </div>
+
+                    <div class="mb-0">
+                        @Html.LabelFor(m => m.Bio, new { @class = "form-label fw-semibold small" })
+                        @Html.TextAreaFor(m => m.Bio, new { @class = "form-control", rows = "4", placeholder = "Write a comprehensive biography for prospective students (teaching methodology, engineering background, awards)..." })
+                    </div>
+                </div>
+
+                <!-- Section 3: Education & Credentials -->
+                <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 16px;">
+                    <h5 class="fw-bold text-dark mb-3">
+                        <i class="bi bi-mortarboard-fill text-warning me-2"></i> Education & Academic Credentials
+                    </h5>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-12 col-md-5">
+                            @Html.LabelFor(m => m.HighestDegree, new { @class = "form-label fw-semibold small" })
+                            @Html.TextBoxFor(m => m.HighestDegree, new { @class = "form-control", placeholder = "e.g. B.Tech / M.S. in Computer Science" })
+                        </div>
+                        <div class="col-12 col-md-5">
+                            @Html.LabelFor(m => m.InstitutionName, new { @class = "form-label fw-semibold small" })
+                            @Html.TextBoxFor(m => m.InstitutionName, new { @class = "form-control", placeholder = "e.g. Stanford University / IIT Delhi" })
+                        </div>
+                        <div class="col-12 col-md-2">
+                            @Html.LabelFor(m => m.GraduationYear, new { @class = "form-label fw-semibold small" })
+                            @Html.TextBoxFor(m => m.GraduationYear, new { @class = "form-control", type = "number", placeholder = "2018" })
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 4: Course Offerings & Pricing Plan -->
+                <div class="card border-0 shadow-sm p-4" style="border-radius: 16px;">
+                    <h5 class="fw-bold text-dark mb-3">
+                        <i class="bi bi-journal-bookmark-fill text-info me-2"></i> Planned Course Offerings & Pricing
+                    </h5>
+
+                    <div class="mb-3">
+                        @Html.LabelFor(m => m.PlannedCourses, new { @class = "form-label fw-semibold small" })
+                        @Html.TextAreaFor(m => m.PlannedCourses, new { @class = "form-control", rows = "2", placeholder = "List 1-3 course titles you plan to create on EduPulse..." })
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            @Html.LabelFor(m => m.TargetLevel, new { @class = "form-label fw-semibold small" })
+                            @Html.DropDownListFor(m => m.TargetLevel, new[]
+                            {
+                                new SelectListItem { Text = "Beginner", Value = "Beginner" },
+                                new SelectListItem { Text = "Intermediate", Value = "Intermediate" },
+                                new SelectListItem { Text = "Advanced", Value = "Advanced" }
+                            }, new { @class = "form-select" })
+                        </div>
+                        <div class="col-12 col-md-6">
+                            @Html.LabelFor(m => m.ProposedPricing, new { @class = "form-label fw-semibold small" })
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                @Html.TextBoxFor(m => m.ProposedPricing, new { @class = "form-control", type = "number", step = "0.01", placeholder = "49.99" })
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Media, Signature & Links -->
+            <div class="col-12 col-lg-4">
+                <!-- Avatar & Headshot (Cloudinary) -->
+                <div class="card border-0 shadow-sm p-4 mb-4 text-center" style="border-radius: 16px;">
+                    <h6 class="fw-bold text-dark mb-3 text-start">
+                        <i class="bi bi-image text-primary me-2"></i> Profile Photo (Cloudinary)
+                    </h6>
+                    
+                    <div class="mb-3">
+                        <img src="@Url.Content(string.IsNullOrWhiteSpace(Model.ProfilePictureUrl) ? "https://ui-avatars.com/api/?name=" + Uri.EscapeDataString(Model.FullName ?? "Instructor") + "&background=2563eb&color=fff&size=140" : Model.ProfilePictureUrl)" 
+                             alt="Avatar" 
+                             class="rounded-circle shadow-sm border p-1" 
+                             style="width: 120px; height: 120px; object-fit: cover;" 
+                             id="avatarPreview"
+                             onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=@Uri.EscapeDataString(Model.FullName ?? "Instructor")&background=2563eb&color=fff&size=140';" />
+                    </div>
+
+                    <div class="mb-2">
+                        <label for="profilePhotoInput" class="btn btn-outline-primary btn-sm rounded-pill w-100">
+                            <i class="bi bi-cloud-arrow-up me-1"></i> Upload New Photo
+                        </label>
+                        <input type="file" name="profilePhoto" id="profilePhotoInput" class="d-none" accept="image/*" onchange="previewImage(this, 'avatarPreview')" />
+                    </div>
+                    <div class="text-muted" style="font-size: 0.72rem;">Uploaded directly via Cloudinary</div>
+                </div>
+
+                <!-- Digital Signature (For Certificate Verification) -->
+                <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 16px;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="fw-bold text-dark mb-0">
+                            <i class="bi bi-pen-fill text-danger me-2"></i> Digital Signature
+                        </h6>
+                        <span class="badge bg-danger-subtle text-danger small">For Certificates</span>
+                    </div>
+                    <p class="text-muted" style="font-size: 0.75rem;">
+                        This signature is stamped on your course completion certificates issued to passing students.
+                    </p>
+
+                    <!-- Existing Signature Preview -->
+                    <div class="p-3 border rounded-3 bg-light text-center mb-3" style="min-height: 80px;">
+                        @if (!string.IsNullOrWhiteSpace(Model.DigitalSignatureUrl))
+                        {
+                            <img src="@Model.DigitalSignatureUrl" alt="Digital Signature" style="max-height: 60px; max-width: 100%; object-fit: contain;" id="sigPreview" />
+                        }
+                        else
+                        {
+                            <div class="text-muted small py-2" id="sigPlaceholder">No signature on file yet</div>
+                            <img src="" alt="Digital Signature" class="d-none" style="max-height: 60px; max-width: 100%;" id="sigPreview" />
+                        }
+                    </div>
+
+                    <!-- Signature Tabs: Upload vs Draw -->
+                    <ul class="nav nav-pills nav-fill mb-2" id="sigTabs" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active py-1 px-2 small" id="upload-tab" data-bs-toggle="pill" data-bs-target="#tab-upload" type="button">Upload File</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link py-1 px-2 small" id="draw-tab" data-bs-toggle="pill" data-bs-target="#tab-draw" type="button">Draw On-Screen</button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content pt-2">
+                        <!-- Upload File Tab -->
+                        <div class="tab-pane fade show active" id="tab-upload">
+                            <label for="signatureFileInput" class="btn btn-outline-secondary btn-sm rounded-pill w-100">
+                                <i class="bi bi-upload me-1"></i> Choose Signature Image
+                            </label>
+                            <input type="file" name="digitalSignatureFile" id="signatureFileInput" class="d-none" accept="image/*" onchange="previewImage(this, 'sigPreview', 'sigPlaceholder')" />
+                        </div>
+
+                        <!-- Draw Tab -->
+                        <div class="tab-pane fade" id="tab-draw">
+                            <canvas id="sigCanvas" width="280" height="100" class="border rounded bg-white w-100 cursor-crosshair"></canvas>
+                            <input type="hidden" name="signatureDataUrl" id="signatureDataUrl" />
+                            <div class="d-flex justify-content-between mt-2">
+                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="clearSignatureCanvas()">Clear</button>
+                                <button type="button" class="btn btn-outline-success btn-sm" onclick="saveSignatureCanvas()">Apply Drawing</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Social & Professional Links -->
+                <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 16px;">
+                    <h6 class="fw-bold text-dark mb-3">
+                        <i class="bi bi-link-45deg text-secondary me-2"></i> Professional Links
+                    </h6>
+                    
+                    <div class="mb-3">
+                        @Html.LabelFor(m => m.LinkedInUrl, new { @class = "form-label fw-semibold small" })
+                        <div class="input-group">
+                            <span class="input-group-text bg-white"><i class="bi bi-linkedin text-primary"></i></span>
+                            @Html.TextBoxFor(m => m.LinkedInUrl, new { @class = "form-control", placeholder = "https://linkedin.com/in/username" })
+                        </div>
+                    </div>
+
+                    <div class="mb-0">
+                        @Html.LabelFor(m => m.GitHubOrPortfolioUrl, new { @class = "form-label fw-semibold small" })
+                        <div class="input-group">
+                            <span class="input-group-text bg-white"><i class="bi bi-github"></i></span>
+                            @Html.TextBoxFor(m => m.GitHubOrPortfolioUrl, new { @class = "form-control", placeholder = "https://github.com/username" })
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="card border-0 shadow-sm p-3" style="border-radius: 16px;">
+                    <button type="submit" class="lms-cta-btn w-100 justify-content-center py-2 fs-6">
+                        <i class="bi bi-check2-circle me-1"></i> Save Profile Details
+                    </button>
+                    @if (isUnlocked)
+                    {
+                        <a href="@Url.Action("Create", "Instructor")" class="btn btn-outline-success w-100 mt-2 py-2 small fw-semibold">
+                            <i class="bi bi-plus-circle me-1"></i> Proceed to Create Course
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+<script>
+    // Preview image on file select
+    function previewImage(input, previewId, placeholderId) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var img = document.getElementById(previewId);
+                img.src = e.target.result;
+                img.classList.remove('d-none');
+                if (placeholderId) {
+                    var ph = document.getElementById(placeholderId);
+                    if (ph) ph.classList.add('d-none');
+                }
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    // Signature Canvas Drawing
+    var canvas = document.getElementById('sigCanvas');
+    if (canvas) {
+        var ctx = canvas.getContext('2d');
+        var isDrawing = false;
+        ctx.strokeStyle = "#0f172a";
+        ctx.lineWidth = 2;
+        ctx.lineCap = "round";
+
+        function getPos(e) {
+            var rect = canvas.getBoundingClientRect();
+            var clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            var clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
+
+        canvas.addEventListener('mousedown', function(e) {
+            isDrawing = true;
+            var pos = getPos(e);
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+        });
+
+        canvas.addEventListener('mousemove', function(e) {
+            if (!isDrawing) return;
+            var pos = getPos(e);
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+        });
+
+        window.addEventListener('mouseup', function() { isDrawing = false; });
+
+        // Touch support
+        canvas.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            isDrawing = true;
+            var pos = getPos(e);
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
+        });
+        canvas.addEventListener('touchmove', function(e) {
+            e.preventDefault();
+            if (!isDrawing) return;
+            var pos = getPos(e);
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
+        });
+        canvas.addEventListener('touchend', function() { isDrawing = false; });
+    }
+
+    function clearSignatureCanvas() {
+        if (canvas && ctx) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            document.getElementById('signatureDataUrl').value = '';
+        }
+    }
+
+    function saveSignatureCanvas() {
+        if (canvas) {
+            var dataUrl = canvas.toDataURL('image/png');
+            document.getElementById('signatureDataUrl').value = dataUrl;
+            var preview = document.getElementById('sigPreview');
+            if (preview) {
+                preview.src = dataUrl;
+                preview.classList.remove('d-none');
+                var ph = document.getElementById('sigPlaceholder');
+                if (ph) ph.classList.add('d-none');
+            }
+            alert('Signature captured! Click "Save Profile Details" below to submit.');
+        }
+    }
+</script>
+}

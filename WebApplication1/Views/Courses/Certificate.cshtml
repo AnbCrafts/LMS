@@ -1,0 +1,341 @@
+@model WebApplication1.Models.Course
+
+@{
+    ViewBag.Title = "Certificate of Completion - " + Model.Title;
+    string studentName = ViewBag.StudentName as string ?? "Distinguished Student";
+    DateTime completionDate = ViewBag.CompletionDate != null ? (DateTime)ViewBag.CompletionDate : DateTime.Now;
+    string certNumber = ViewBag.CertificateNumber as string ?? ("CERT-LMS-" + Model.CourseId.ToString("D4") + "-0001");
+    var grade = ViewBag.GradeSummary as WebApplication1.Models.CourseGradeSummary;
+    var instructorProfile = ViewBag.InstructorProfile as WebApplication1.Models.InstructorProfile;
+}
+
+<div class="certificate-page-container py-4">
+    <!-- Top Action Toolbar (Hidden during print) -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3 no-print">
+        <a href="@Url.Action("Learn", "Courses", new { id = Model.CourseId })" class="btn btn-outline-secondary rounded-pill px-3">
+            <i class="bi bi-arrow-left"></i> Back to Classroom
+        </a>
+        <div class="d-flex gap-2">
+            <button onclick="window.print()" class="btn btn-success rounded-pill px-4 shadow-sm fw-bold">
+                <i class="bi bi-printer-fill me-1"></i> Print / Save as PDF
+            </button>
+            <a href="@Url.Action("Index", "Dashboard")" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                <i class="bi bi-speedometer2 me-1"></i> My Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Certificate Card Sheet -->
+    <div class="certificate-sheet shadow-lg mx-auto position-relative">
+        <!-- Inner Border Frame -->
+        <div class="certificate-frame">
+            <!-- Corner Ornaments -->
+            <div class="corner-ornament top-left"></div>
+            <div class="corner-ornament top-right"></div>
+            <div class="corner-ornament bottom-left"></div>
+            <div class="corner-ornament bottom-right"></div>
+
+            <!-- Top Header & Crest -->
+            <div class="text-center pt-2">
+                <div class="certificate-crest mb-2">
+                    <i class="bi bi-mortarboard-fill"></i>
+                </div>
+                <div class="certificate-org-name">EDUPULSE ACADEMY OF EXCELLENCE</div>
+                <div class="certificate-subtitle">OFFICIAL VERIFIED CERTIFICATE OF ACHIEVEMENT</div>
+                <div class="divider-line mx-auto my-3"></div>
+            </div>
+
+            <!-- Main Recipient & Degree Text -->
+            <div class="text-center my-3">
+                <div class="presented-to-text">THIS IS PROUDLY PRESENTED TO</div>
+                <h1 class="student-name-display my-2">@studentName</h1>
+                <p class="certificate-body-desc mx-auto">
+                    for successfully fulfilling all curriculum requirements, passing all lesson assessments, and mastering comprehensive practical coursework in
+                </p>
+                <h2 class="course-title-display my-2">@Model.Title</h2>
+                <div class="d-inline-flex align-items-center gap-2 px-3 py-1 bg-light rounded-pill border small fw-bold text-muted my-2">
+                    <span>Category: @Model.Category</span> &bull; 
+                    <span>Level: @Model.Level</span> &bull; 
+                    <span>Curriculum Duration: @Model.DurationWeeks Weeks</span>
+                </div>
+            </div>
+
+            <!-- Academic Performance & Evaluation Box -->
+            <div class="academic-evaluation-card my-2 mx-auto p-3 rounded-3">
+                <div class="row align-items-center text-center">
+                    <div class="col-3 border-end">
+                        <div class="eval-label text-muted text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 1px;">Academic Grade</div>
+                        <div class="eval-val fs-3 fw-bold @(grade != null && grade.IsDistinction ? "text-warning" : "text-primary")">
+                            @(grade?.LetterGrade ?? "A")
+                            @if (grade != null && grade.IsDistinction)
+                            {
+                                <span class="badge bg-warning text-dark ms-1 align-middle" style="font-size: 0.65rem;">Distinction</span>
+                            }
+                        </div>
+                    </div>
+                    <div class="col-3 border-end">
+                        <div class="eval-label text-muted text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 1px;">Overall Score</div>
+                        <div class="eval-val fs-4 fw-bold text-dark">
+                            @(grade != null ? grade.FinalScore.ToString("0.0") : "92.5")%
+                        </div>
+                        <div class="text-muted" style="font-size: 0.68rem;">Weighted Cumulative</div>
+                    </div>
+                    <div class="col-3 border-end">
+                        <div class="eval-label text-muted text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 1px;">Quizzes & Tests</div>
+                        <div class="eval-val fs-5 fw-bold text-success">
+                            @(grade != null ? grade.QuizAverage.ToString("0.0") : "95.0")%
+                        </div>
+                        <div class="text-muted" style="font-size: 0.68rem;">@(grade?.QuizzesPassed ?? 0) / @(grade?.QuizzesTaken ?? 0) Passed</div>
+                    </div>
+                    <div class="col-3">
+                        <div class="eval-label text-muted text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 1px;">Practical Labs</div>
+                        <div class="eval-val fs-5 fw-bold text-info">
+                            @(grade != null ? grade.AssignmentAverage.ToString("0.0") : "90.0")%
+                        </div>
+                        <div class="text-muted" style="font-size: 0.68rem;">@(grade?.AssignmentsApproved ?? 0) / @(grade?.AssignmentsSubmitted ?? 0) Approved</div>
+                    </div>
+                </div>
+                @if (grade != null && grade.HasPendingAssignments)
+                {
+                    <div class="text-center mt-2 small text-muted fst-italic" style="font-size: 0.7rem;">
+                        <i class="bi bi-clock-history text-warning me-1"></i> Some practical assignments are awaiting instructor review; provisional evaluation shown.
+                    </div>
+                }
+            </div>
+
+            <!-- Signatures, Date & Seal Section -->
+            <div class="row align-items-end justify-content-between pt-3 mt-1 px-4 certificate-footer">
+                <!-- Left: Instructor Signature -->
+                <div class="col-4 text-center">
+                    <div class="signature-line pb-1">
+                        @if (instructorProfile != null && !string.IsNullOrEmpty(instructorProfile.DigitalSignatureUrl))
+                        {
+                            <img src="@instructorProfile.DigitalSignatureUrl" alt="Instructor Signature" class="instructor-digital-sig-img" />
+                        }
+                        else
+                        {
+                            <span class="instructor-signature-font">@Model.InstructorName</span>
+                        }
+                    </div>
+                    <div class="fw-bold text-dark small">@Model.InstructorName</div>
+                    <div class="text-muted text-uppercase" style="font-size: 0.72rem; letter-spacing: 1px;">Course Lead Instructor</div>
+                </div>
+
+                <!-- Center: Official Seal Badge -->
+                <div class="col-4 text-center">
+                    <div class="certificate-official-seal mx-auto">
+                        <div class="seal-inner">
+                            <i class="bi bi-patch-check-fill seal-icon"></i>
+                            <div class="seal-text">VERIFIED</div>
+                            <div class="seal-sub">CREDENTIAL</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Date & Verification Authority -->
+                <div class="col-4 text-center">
+                    <div class="signature-line pb-1">
+                        <span class="fw-bold text-dark">@completionDate.ToString("MMMM dd, yyyy")</span>
+                    </div>
+                    <div class="fw-bold text-dark small">Issue Date</div>
+                    <div class="text-muted" style="font-size: 0.72rem; letter-spacing: 0.5px;">Certificate ID: @certNumber</div>
+                </div>
+            </div>
+
+            <!-- Bottom Footnote -->
+            <div class="text-center pt-3 text-muted" style="font-size: 0.7rem;">
+                This certificate can be validated electronically at <span class="text-primary">verify.edupulse.org/certs/@certNumber</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .certificate-sheet {
+        background: #ffffff;
+        width: 100%;
+        max-width: 950px;
+        min-height: 640px;
+        border-radius: 12px;
+        padding: 24px;
+        border: 12px solid #1e293b;
+        box-shadow: 0 20px 40px -15px rgba(0,0,0,0.15) !important;
+        position: relative;
+    }
+
+    .certificate-frame {
+        border: 2px solid #d97706;
+        border-radius: 6px;
+        padding: 30px 40px;
+        background: radial-gradient(circle at center, #ffffff 65%, #fdfbf7 100%);
+        position: relative;
+        min-height: 590px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .corner-ornament {
+        position: absolute;
+        width: 24px;
+        height: 24px;
+        border: 3px solid #d97706;
+    }
+    .corner-ornament.top-left { top: 6px; left: 6px; border-right: none; border-bottom: none; }
+    .corner-ornament.top-right { top: 6px; right: 6px; border-left: none; border-bottom: none; }
+    .corner-ornament.bottom-left { bottom: 6px; left: 6px; border-right: none; border-top: none; }
+    .corner-ornament.bottom-right { bottom: 6px; right: 6px; border-left: none; border-top: none; }
+
+    .certificate-crest {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+        color: #fff;
+        font-size: 1.6rem;
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+    }
+
+    .certificate-org-name {
+        font-size: 1.15rem;
+        font-weight: 800;
+        letter-spacing: 3px;
+        color: #1e293b;
+    }
+
+    .certificate-subtitle {
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 2px;
+        color: #d97706;
+        margin-top: 2px;
+    }
+
+    .divider-line {
+        width: 140px;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #d97706, transparent);
+    }
+
+    .presented-to-text {
+        font-size: 0.82rem;
+        font-weight: 600;
+        letter-spacing: 2px;
+        color: #64748b;
+    }
+
+    .student-name-display {
+        font-family: Georgia, 'Times New Roman', serif;
+        font-size: 2.6rem;
+        font-weight: 700;
+        color: #1e1b4b;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #e2e8f0;
+        display: inline-block;
+        padding-bottom: 6px;
+        min-width: 380px;
+    }
+
+    .certificate-body-desc {
+        max-width: 680px;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        color: #475569;
+    }
+
+    .course-title-display {
+        font-size: 1.7rem;
+        font-weight: 800;
+        color: #4338ca;
+    }
+
+    .signature-line {
+        border-bottom: 1.5px solid #94a3b8;
+        margin-bottom: 6px;
+        min-height: 38px;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+    }
+
+    .academic-evaluation-card {
+        background: #f8fafc;
+        border: 1px dashed #cbd5e1;
+        max-width: 680px;
+    }
+
+    .instructor-digital-sig-img {
+        max-height: 48px;
+        max-width: 170px;
+        object-fit: contain;
+        display: inline-block;
+        filter: contrast(110%);
+    }
+
+    .instructor-signature-font {
+        font-family: 'Brush Script MT', 'Lucida Handwriting', cursive;
+        font-size: 1.6rem;
+        color: #1e293b;
+    }
+
+    .certificate-official-seal {
+        width: 88px;
+        height: 88px;
+        border-radius: 50%;
+        border: 3px dashed #d97706;
+        padding: 4px;
+        background: #fffbeb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 10px rgba(217, 119, 6, 0.2);
+    }
+
+    .seal-inner {
+        text-align: center;
+    }
+
+    .seal-icon {
+        font-size: 1.4rem;
+        color: #d97706;
+        line-height: 1;
+    }
+
+    .seal-text {
+        font-size: 0.65rem;
+        font-weight: 800;
+        letter-spacing: 1px;
+        color: #b45309;
+        margin-top: 2px;
+    }
+
+    .seal-sub {
+        font-size: 0.55rem;
+        font-weight: 600;
+        color: #78350f;
+    }
+
+    @@media print {
+        body {
+            background: #fff !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        .no-print, header, footer, .lms-navbar {
+            display: none !important;
+        }
+        .certificate-page-container {
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        .certificate-sheet {
+            max-width: 100% !important;
+            box-shadow: none !important;
+            border: 8px solid #1e293b !important;
+            page-break-inside: avoid;
+        }
+    }
+</style>

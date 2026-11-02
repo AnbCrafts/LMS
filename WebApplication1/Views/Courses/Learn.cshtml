@@ -1,0 +1,450 @@
+@model WebApplication1.Models.CoursePlayerViewModel
+
+@{
+    ViewBag.Title = Model.Course.Title + " - Classroom Player";
+    int activeNum = Model.ActiveLesson.LessonNumber;
+    int nextProgress = Math.Min(100, activeNum * 20);
+    var quizQuestions = ViewBag.QuizQuestions as IEnumerable<WebApplication1.Models.QuizQuestion> ?? new List<WebApplication1.Models.QuizQuestion>();
+    bool hasQuiz = quizQuestions.Any();
+    bool isOwner = ViewBag.IsOwner != null && (bool)ViewBag.IsOwner;
+    bool isAdmin = ViewBag.IsAdmin != null && (bool)ViewBag.IsAdmin;
+    var activeSub = ViewBag.ActiveModuleSubmission as WebApplication1.Models.StudentSubmission;
+
+    bool hasPassedQuiz = ViewBag.HasPassedQuiz != null && (bool)ViewBag.HasPassedQuiz;
+    bool hasAssignment = ViewBag.HasAssignment != null && (bool)ViewBag.HasAssignment;
+    bool hasSubmittedAssignment = ViewBag.HasSubmittedAssignment != null && (bool)ViewBag.HasSubmittedAssignment;
+    bool canAdvanceModule = ViewBag.CanAdvanceModule != null && (bool)ViewBag.CanAdvanceModule;
+}
+
+<!-- Top Player Bar -->
+<div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom flex-wrap gap-3">
+    <div class="d-flex align-items-center gap-3">
+        @if (isOwner)
+        {
+            <a href="@Url.Action("Index", "Instructor")" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                <i class="bi bi-arrow-left"></i> Instructor Studio
+            </a>
+        }
+        else
+        {
+            <a href="@Url.Action("Index", "Dashboard")" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                <i class="bi bi-arrow-left"></i> Dashboard
+            </a>
+        }
+        <div>
+            <div class="d-flex align-items-center gap-2">
+                <h4 class="fw-bold text-dark m-0">@Model.Course.Title</h4>
+                @if (isOwner)
+                {
+                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary px-3 py-1 rounded-pill small">
+                        <i class="bi bi-person-workspace me-1"></i> Author Preview Mode
+                    </span>
+                }
+            </div>
+            <div class="text-muted small">
+                Instructor: @Model.Course.InstructorName &middot; Lesson @activeNum of @Model.Lessons.Count &middot; <span class="badge bg-light text-dark border">@Model.Course.Category</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overall Progress Badge & Certificate Trigger -->
+    <div class="d-flex align-items-center gap-3" style="min-width: 240px;">
+        <div class="flex-grow-1">
+            <div class="d-flex justify-content-between small text-muted mb-1">
+                <span>Course Progress</span>
+                <span class="fw-bold text-dark">@(Model.CurrentProgress)%</span>
+            </div>
+            <div class="lms-bar-track">
+                <div class="lms-bar-fill" style="width: @(Model.CurrentProgress)%;"></div>
+            </div>
+        </div>
+        @if (Model.CurrentProgress >= 100)
+        {
+            <a href="@Url.Action("Certificate", "Courses", new { id = Model.Course.CourseId })" class="btn btn-warning btn-sm rounded-pill px-3 fw-bold shadow-sm">
+                <i class="bi bi-award-fill"></i> View Certificate
+            </a>
+        }
+    </div>
+</div>
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show rounded-3 mb-4 shadow-sm" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show rounded-3 mb-4 shadow-sm" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["WarningMessage"] != null)
+{
+    <div class="alert alert-warning alert-dismissible fade show rounded-3 mb-4 shadow-sm" role="alert">
+        <i class="bi bi-exclamation-circle-fill me-2"></i> @TempData["WarningMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="row g-4">
+    <!-- Main Content Player (Left) -->
+    <div class="col-12 col-lg-8">
+        <!-- Video Player (Embedded or Simulated) -->
+        <div class="card border-0 shadow-sm overflow-hidden mb-4" style="border-radius: 18px; background: #0f172a;">
+            @if (!string.IsNullOrWhiteSpace(Model.ActiveLesson.VideoUrl))
+            {
+                <div class="ratio ratio-16x9">
+                    <iframe src="@Model.ActiveLesson.VideoUrl" title="@Model.ActiveLesson.Title" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+                </div>
+            }
+            else
+            {
+                <div class="position-relative d-flex align-items-center justify-content-center" style="min-height: 380px; background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);">
+                    <div class="text-center text-white p-4">
+                        <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3 shadow-lg" 
+                             style="width: 72px; height: 72px; background: rgba(79, 70, 229, 0.9); cursor: pointer;">
+                            <i class="bi bi-play-fill fs-1 text-white ms-1"></i>
+                        </div>
+                        <h5 class="fw-bold mb-1">Lesson @activeNum: @Model.ActiveLesson.Title</h5>
+                        <p class="text-white-50 small mb-0">HD Lecture &middot; @Model.ActiveLesson.Duration</p>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Lesson Description & Study Material -->
+        <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 18px; border: 1px solid #e2e8f0 !important;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3 class="fw-bold text-dark m-0">@Model.ActiveLesson.Title</h3>
+                @if (Model.ActiveLesson.IsCompleted)
+                {
+                    <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 rounded-pill fw-bold">
+                        <i class="bi bi-check-circle-fill"></i> Completed
+                    </span>
+                }
+            </div>
+
+            <p class="text-muted fs-6 mb-4">
+                @Model.ActiveLesson.ContentMarkdown
+            </p>
+
+            <div class="p-3 rounded-3 bg-light border mb-4">
+                <div class="fw-bold text-dark mb-1">
+                    <i class="bi bi-lightbulb-fill text-warning me-1"></i> Lesson Key Takeaway:
+                </div>
+                <div class="text-muted small">
+                    @Model.ActiveLesson.Summary
+                </div>
+            </div>
+
+            <!-- End-of-Lesson Mini Quiz Section -->
+            @if (hasQuiz)
+            {
+                <div class="card border-0 shadow-sm p-4 rounded-4 my-4" style="background: #f8fafc; border: 1.5px solid #cbd5e1 !important;">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-primary rounded-circle p-2" style="width: 32px; height: 32px;">
+                                <i class="bi bi-mortarboard"></i>
+                            </span>
+                            <div>
+                                <h5 class="fw-bold text-dark m-0">Lesson @activeNum Knowledge Check Quiz</h5>
+                                <div class="text-muted small">Pass with 60% or higher to advance your progress</div>
+                            </div>
+                        </div>
+                        <span class="badge bg-info text-dark fw-bold px-3 py-2 rounded-pill">
+                            @quizQuestions.Count() Questions
+                        </span>
+                    </div>
+
+                    @using (Html.BeginForm("SubmitQuiz", "Courses", FormMethod.Post))
+                    {
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="courseId" value="@Model.Course.CourseId" />
+                        <input type="hidden" name="lessonNumber" value="@activeNum" />
+
+                        int qIndex = 1;
+                        foreach (var q in quizQuestions)
+                        {
+                            <div class="card border-0 bg-white p-3 rounded-3 mb-3 shadow-sm">
+                                <div class="fw-bold text-dark mb-2">
+                                    <span class="badge bg-light text-primary border me-1">Q@(qIndex++)</span>
+                                    @q.QuestionText
+                                </div>
+                                <div class="row g-2">
+                                    <div class="col-12 col-md-6">
+                                        <div class="form-check p-2 border rounded-3 bg-light">
+                                            <input class="form-check-input ms-1 me-2" type="radio" name="question_@q.QuestionId" id="q_@(q.QuestionId)_A" value="A" required />
+                                            <label class="form-check-label small text-dark" for="q_@(q.QuestionId)_A">
+                                                <strong>A:</strong> @q.OptionA
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <div class="form-check p-2 border rounded-3 bg-light">
+                                            <input class="form-check-input ms-1 me-2" type="radio" name="question_@q.QuestionId" id="q_@(q.QuestionId)_B" value="B" required />
+                                            <label class="form-check-label small text-dark" for="q_@(q.QuestionId)_B">
+                                                <strong>B:</strong> @q.OptionB
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <div class="form-check p-2 border rounded-3 bg-light">
+                                            <input class="form-check-input ms-1 me-2" type="radio" name="question_@q.QuestionId" id="q_@(q.QuestionId)_C" value="C" required />
+                                            <label class="form-check-label small text-dark" for="q_@(q.QuestionId)_C">
+                                                <strong>C:</strong> @q.OptionC
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <div class="form-check p-2 border rounded-3 bg-light">
+                                            <input class="form-check-input ms-1 me-2" type="radio" name="question_@q.QuestionId" id="q_@(q.QuestionId)_D" value="D" required />
+                                            <label class="form-check-label small text-dark" for="q_@(q.QuestionId)_D">
+                                                <strong>D:</strong> @q.OptionD
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 py-2 fw-bold shadow-sm">
+                            <i class="bi bi-send-check-fill me-1"></i> Submit Quiz Answers & Complete Lesson
+                        </button>
+                    }
+                </div>
+            }
+
+            <!-- Hands-on Assignment & Practical Task Section -->
+            @if (!string.IsNullOrWhiteSpace(Model.ActiveLesson.AssignmentPrompt))
+            {
+                <div class="card border-0 shadow-sm p-4 rounded-4 my-4" style="background: #faf5ff; border: 1.5px solid #d8b4fe !important;">
+                    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-purple rounded-circle p-2 text-white" style="background: #9333ea; width: 32px; height: 32px;">
+                                <i class="bi bi-pencil-fill"></i>
+                            </span>
+                            <div>
+                                <h5 class="fw-bold text-dark m-0">Lesson @activeNum Practical Assignment</h5>
+                                <div class="text-muted small">Assigned by Instructor: @Model.Course.InstructorName</div>
+                            </div>
+                        </div>
+                        <div>
+                            @if (activeSub != null)
+                            {
+                                if (activeSub.IsPending)
+                                {
+                                    <span class="badge bg-warning text-dark px-3 py-2 rounded-pill shadow-sm">
+                                        <i class="bi bi-hourglass-split me-1"></i> Marks Pending (Submitted)
+                                    </span>
+                                }
+                                else if (activeSub.IsApproved)
+                                {
+                                    <span class="badge bg-success px-3 py-2 rounded-pill shadow-sm">
+                                        <i class="bi bi-patch-check-fill me-1"></i> Score: @activeSub.MarksObtained / 100 (Approved)
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger px-3 py-2 rounded-pill shadow-sm">
+                                        <i class="bi bi-x-circle me-1"></i> Needs Revision
+                                    </span>
+                                }
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Prompt Text -->
+                    <div class="p-3 bg-white rounded-3 border mb-3">
+                        <strong class="text-dark d-block mb-1"><i class="bi bi-card-checklist text-primary me-1"></i> Assignment Prompt:</strong>
+                        <div class="text-muted small">@Model.ActiveLesson.AssignmentPrompt</div>
+                    </div>
+
+                    @if (activeSub != null)
+                    {
+                        <!-- Current Submission Status & Locked Re-submission Notice -->
+                        <div class="p-3 bg-white rounded-3 border mb-3">
+                            <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
+                                <span class="badge bg-light text-secondary border px-3 py-2 rounded-pill">
+                                    <i class="bi bi-lock-fill text-muted me-1"></i> Assignment Finalized &bull; Re-submission Disabled
+                                </span>
+                                <span class="text-muted small">Submitted on @activeSub.SubmittedAt.ToString("MMM dd, yyyy HH:mm")</span>
+                            </div>
+                            <div class="fw-bold text-dark small mb-1">Your Submitted Solution:</div>
+                            <div class="text-muted small mb-2" style="white-space: pre-wrap;">@activeSub.SubmissionText</div>
+                            @if (!string.IsNullOrWhiteSpace(activeSub.SubmissionFileUrl))
+                            {
+                                <div class="small">
+                                    <strong>Project / Repository Link:</strong> <a href="@activeSub.SubmissionFileUrl" target="_blank" class="text-primary text-decoration-none">@activeSub.SubmissionFileUrl</a>
+                                </div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(activeSub.InstructorFeedback))
+                            {
+                                <div class="alert alert-info py-2 px-3 small mt-2 mb-0 rounded-3">
+                                    <strong><i class="bi bi-chat-quote-fill me-1"></i> Mentor Feedback:</strong> @activeSub.InstructorFeedback
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- Submission Form (Only accessible if student has not yet submitted) -->
+                        using (Html.BeginForm("SubmitAssignment", "Courses", FormMethod.Post))
+                        {
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="courseId" value="@Model.Course.CourseId" />
+                            <input type="hidden" name="moduleId" value="@Model.ActiveLesson.ModuleId" />
+                            <input type="hidden" name="lessonNumber" value="@activeNum" />
+                            <input type="hidden" name="submissionTitle" value="Lesson @activeNum: @Model.ActiveLesson.Title" />
+
+                            <div class="alert alert-warning py-2 px-3 small rounded-3 mb-3">
+                                <i class="bi bi-shield-exclamation me-1"></i> <strong>One-time Submission Notice:</strong> Re-submissions are not permitted once submitted. Please review your work and links carefully before submitting.
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold small text-dark">Your Solution / Architecture Details</label>
+                                <textarea name="submissionText" class="form-control" rows="3" placeholder="Explain your code implementation, component structure, or paste code snippets..." required></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold small text-dark">GitHub Repository or Deployed Demo Link</label>
+                                <input type="url" name="submissionFileUrl" class="form-control" placeholder="https://github.com/your-username/project or Vercel link" />
+                            </div>
+
+                            <button type="submit" class="btn btn-purple text-white rounded-pill px-4 py-2 fw-bold shadow-sm" style="background: #9333ea;">
+                                <i class="bi bi-upload me-1"></i> Submit Assignment (Final)
+                            </button>
+                        }
+                    }
+                </div>
+            }
+
+            <!-- Lesson Navigation Action Bar -->
+            <div class="d-flex justify-content-between align-items-center pt-3 border-top flex-wrap gap-2">
+                @if (activeNum > 1)
+                {
+                    <a href="@Url.Action("Learn", "Courses", new { id = Model.Course.CourseId, lesson = activeNum - 1 })" class="btn btn-outline-secondary rounded-pill px-4">
+                        <i class="bi bi-arrow-left"></i> Previous Lesson
+                    </a>
+                }
+                else
+                {
+                    <div></div>
+                }
+
+                <div class="d-flex gap-2">
+                    @if (isOwner || isAdmin)
+                    {
+                        if (activeNum < Model.Lessons.Count)
+                        {
+                            <a href="@Url.Action("Learn", "Courses", new { id = Model.Course.CourseId, lesson = activeNum + 1 })" class="lms-cta-btn px-4 py-2">
+                                Next Preview Lesson <i class="bi bi-arrow-right"></i>
+                            </a>
+                        }
+                    }
+                    else
+                    {
+                        if (canAdvanceModule)
+                        {
+                            using (Html.BeginForm("UpdateProgress", "Dashboard", FormMethod.Post, new { @class = "d-inline m-0" }))
+                            {
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="courseId" value="@Model.Course.CourseId" />
+                                <input type="hidden" name="progressPercentage" value="@nextProgress" />
+                                
+                                <button type="submit" class="lms-cta-btn px-4 py-2">
+                                    <i class="bi bi-check2-circle"></i> Mark Module Complete (@nextProgress%)
+                                </button>
+                            }
+                        }
+                        else
+                        {
+                            if (hasQuiz && !hasPassedQuiz && hasAssignment && !hasSubmittedAssignment)
+                            {
+                                <button class="btn btn-secondary rounded-pill px-4 py-2" disabled title="Pass quiz and submit assignment to finish this module">
+                                    <i class="bi bi-lock-fill me-1"></i> Quiz & Assignment Required
+                                </button>
+                            }
+                            else if (hasQuiz && !hasPassedQuiz)
+                            {
+                                <button class="btn btn-secondary rounded-pill px-4 py-2" disabled title="Pass quiz with 60% or higher to advance">
+                                    <i class="bi bi-lock-fill me-1"></i> Quiz Required (&ge; 60%)
+                                </button>
+                            }
+                            else if (hasAssignment && !hasSubmittedAssignment)
+                            {
+                                <button class="btn btn-secondary rounded-pill px-4 py-2" disabled title="Submit the hands-on assignment below to advance">
+                                    <i class="bi bi-lock-fill me-1"></i> Assignment Required
+                                </button>
+                            }
+                        }
+
+                        if (activeNum < Model.Lessons.Count && (Model.ActiveLesson.IsCompleted || canAdvanceModule))
+                        {
+                            <a href="@Url.Action("Learn", "Courses", new { id = Model.Course.CourseId, lesson = activeNum + 1 })" class="btn btn-primary rounded-pill px-4">
+                                Next Lesson <i class="bi bi-arrow-right"></i>
+                            </a>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Curriculum Sidebar (Right) -->
+    <div class="col-12 col-lg-4">
+        <div class="card border-0 shadow-sm p-4 sticky-top" style="border-radius: 18px; top: 90px; border: 1px solid #e2e8f0 !important;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold text-dark m-0">Curriculum Syllabus</h5>
+                <span class="badge bg-light text-muted border">@Model.Lessons.Count Lessons</span>
+            </div>
+
+            <div class="list-group list-group-flush border-top">
+                @foreach (var l in Model.Lessons)
+                {
+                    bool isActive = l.LessonNumber == activeNum;
+                    string bgClass = isActive ? "bg-primary bg-opacity-10 text-primary border-start border-4 border-primary" : "text-dark";
+
+                    <a href="@Url.Action("Learn", "Courses", new { id = Model.Course.CourseId, lesson = l.LessonNumber })" 
+                       class="list-group-item list-group-item-action d-flex align-items-center justify-content-between py-3 px-3 border-bottom @bgClass"
+                       style="border-radius: 8px; margin-bottom: 4px;">
+                        <div class="d-flex align-items-center gap-3">
+                            @if (l.IsCompleted)
+                            {
+                                <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                            }
+                            else if (isActive)
+                            {
+                                <i class="bi bi-play-circle-fill text-primary fs-5"></i>
+                            }
+                            else
+                            {
+                                <i class="bi bi-circle text-muted fs-5"></i>
+                            }
+                            <div>
+                                <div class="fw-bold small">Lesson @l.LessonNumber</div>
+                                <div class="text-truncate" style="max-width: 180px; font-size: 0.82rem;">@l.Title</div>
+                            </div>
+                        </div>
+                        <span class="text-muted small" style="font-size: 0.75rem;">@l.Duration</span>
+                    </a>
+                }
+            </div>
+
+            <!-- Certificate Banner if 100% -->
+            @if (Model.CurrentProgress >= 100)
+            {
+                <div class="mt-4 p-3 rounded-4 text-center" style="background: #ecfdf5; border: 1.5px solid #a7f3d0;">
+                    <i class="bi bi-patch-check-fill text-success fs-1 mb-1 d-block"></i>
+                    <h6 class="fw-bold text-success mb-1">Course 100% Completed!</h6>
+                    <p class="text-muted small mb-3">Congratulations on mastering this subject. Your verified certificate is ready.</p>
+                    <a href="@Url.Action("Certificate", "Courses", new { id = Model.Course.CourseId })" class="btn btn-success btn-sm rounded-pill px-4 fw-bold shadow-sm">
+                        <i class="bi bi-printer-fill me-1"></i> View / Print Certificate
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
