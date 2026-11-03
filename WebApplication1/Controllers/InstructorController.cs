@@ -2,8 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
+using Newtonsoft.Json;
 using WebApplication1.Models;
 using WebApplication1.Repositories;
 using WebApplication1.Services;
@@ -443,7 +447,7 @@ namespace WebApplication1.Controllers
         // POST: /Instructor/SaveModule
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult SaveModule(CourseModule model)
+        public ActionResult SaveModule(CourseModule model, HttpPostedFileBase materialFile = null)
         {
             int? userId = GetCurrentUserId();
             if (!userId.HasValue || !IsInstructor()) return RedirectToAction("Login", "Account");
@@ -453,6 +457,46 @@ namespace WebApplication1.Controllers
             {
                 TempData["ErrorMessage"] = "Unauthorized module modification.";
                 return RedirectToAction("Index");
+            }
+
+            // Handle optional uploaded study material file (video or PDF)
+            if (materialFile != null && materialFile.ContentLength > 0)
+            {
+                var allowedExts = new[] { ".pdf", ".mp4", ".webm", ".mov", ".mkv", ".docx", ".zip" };
+                string ext = Path.GetExtension(materialFile.FileName)?.ToLower();
+
+                if (string.IsNullOrEmpty(ext) || !allowedExts.Contains(ext))
+                {
+                    TempData["ErrorMessage"] = "Unsupported file type. Allowed formats: PDF, MP4, WebM, MOV, DOCX, ZIP.";
+                    return RedirectToAction("Modules", new { id = model.CourseId });
+                }
+
+                if (materialFile.ContentLength > 100 * 1024 * 1024) // 100 MB max
+                {
+                    TempData["ErrorMessage"] = "Uploaded file exceeds the maximum 100 MB limit.";
+                    return RedirectToAction("Modules", new { id = model.CourseId });
+                }
+
+                try
+                {
+                    bool isVideo = ext == ".mp4" || ext == ".webm" || ext == ".mov" || ext == ".mkv";
+                    string targetFolder = isVideo ? "~/Uploads/Videos" : "~/Uploads/CourseMaterials";
+                    string physicalDir = Server.MapPath(targetFolder);
+                    if (!Directory.Exists(physicalDir)) Directory.CreateDirectory(physicalDir);
+
+                    string rawName = Path.GetFileNameWithoutExtension(materialFile.FileName);
+                    string safeName = System.Text.RegularExpressions.Regex.Replace(rawName, @"[^a-zA-Z0-9_\-]", "_");
+                    string uniqueFileName = $"Course{model.CourseId}_M{model.ModuleNumber}_{DateTime.UtcNow.Ticks}_{safeName}{ext}";
+                    string fullPath = Path.Combine(physicalDir, uniqueFileName);
+                    materialFile.SaveAs(fullPath);
+
+                    model.VideoOrResourceUrl = (isVideo ? "/Uploads/Videos/" : "/Uploads/CourseMaterials/") + uniqueFileName;
+                }
+                catch (Exception ex)
+                {
+                    TempData["ErrorMessage"] = "Material upload failed: " + ex.Message;
+                    return RedirectToAction("Modules", new { id = model.CourseId });
+                }
             }
 
             if (ModelState.IsValid)
@@ -612,6 +656,130 @@ namespace WebApplication1.Controllers
             }
 
             return RedirectToAction("ManageQuiz", new { id = courseId });
+        }
+
+        // ====================================================================
+        // AI PDF-TO-QUIZ GENERATOR
+        // ====================================================================
+        // POST: /Instructor/GenerateQuizFromPdf
+        [HttpPost]
+        public async Task<ActionResult> GenerateQuizFromPdf(int courseId, int lessonNumber, int numQuestions, HttpPostedFileBase quizPdf, string topic = "")
+        {
+            int? userId = GetCurrentUserId();
+            if (!userId.HasValue || !IsInstructor())
+            {
+                return Json(new { success = false, message = "Unauthorized access. Please sign in as an instructor." });
+            }
+
+            var course = _courseRepo.GetCourseById(courseId);
+            if (course == null || (course.InstructorId != userId.Value && Session["UserRole"] as string != "Admin"))
+            {
+                return Json(new { success = false, message = "Unauthorized course access." });
+            }
+
+            if (quizPdf == null || quizPdf.ContentLength == 0)
+            {
+                return Json(new { success = false, message = "Please select a valid PDF lecture or syllabus document." });
+            }
+
+            string ext = Path.GetExtension(quizPdf.FileName)?.ToLower();
+            if (ext != ".pdf")
+            {
+                return Json(new { success = false, message = "Only PDF (.pdf) documents are supported." });
+            }
+
+            try
+            {
+                // Save a permanent reference copy to Uploads/CourseMaterials so students can download it as study material
+                try
+                {
+                    string materialsDir = Server.MapPath("~/Uploads/CourseMaterials");
+                    if (!Directory.Exists(materialsDir)) Directory.CreateDirectory(materialsDir);
+                    string cleanFileName = Path.GetFileNameWithoutExtension(quizPdf.FileName);
+                    cleanFileName = System.Text.RegularExpressions.Regex.Replace(cleanFileName, @"[^a-zA-Z0-9_\-]", "_");
+                    string saveName = $"Course{courseId}_Lesson{lessonNumber}_{cleanFileName}.pdf";
+                    string destPath = Path.Combine(materialsDir, saveName);
+                    quizPdf.SaveAs(destPath);
+                    quizPdf.InputStream.Position = 0;
+                }
+                catch { }
+
+                using (var client = new HttpClient())
+                {
+                    client.Timeout = TimeSpan.FromSeconds(60);
+                    using (var content = new MultipartFormDataContent())
+                    {
+                        var fileBytes = new byte[quizPdf.ContentLength];
+                        quizPdf.InputStream.Read(fileBytes, 0, quizPdf.ContentLength);
+                        var fileContent = new ByteArrayContent(fileBytes);
+                        fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/pdf");
+                        content.Add(fileContent, "file", Path.GetFileName(quizPdf.FileName));
+                        content.Add(new StringContent(numQuestions.ToString()), "num_questions");
+                        content.Add(new StringContent(lessonNumber.ToString()), "lesson_number");
+                        if (!string.IsNullOrWhiteSpace(topic))
+                        {
+                            content.Add(new StringContent(topic), "topic");
+                        }
+
+                        var response = await client.PostAsync("http://127.0.0.1:8000/api/generate-quiz-from-pdf", content);
+                        string jsonResult = await response.Content.ReadAsStringAsync();
+
+                        if (!response.IsSuccessStatusCode)
+                        {
+                            return Json(new { success = false, message = "RAG AI service returned error: " + jsonResult });
+                        }
+
+                        return Content(jsonResult, "application/json");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "AI Quiz generation failed: " + ex.Message });
+            }
+        }
+
+        // POST: /Instructor/SaveGeneratedQuestions
+        [HttpPost]
+        public ActionResult SaveGeneratedQuestions(int courseId, int lessonNumber, List<QuizQuestion> questions)
+        {
+            int? userId = GetCurrentUserId();
+            if (!userId.HasValue || !IsInstructor())
+            {
+                return Json(new { success = false, message = "Unauthorized access." });
+            }
+
+            var course = _courseRepo.GetCourseById(courseId);
+            if (course == null || (course.InstructorId != userId.Value && Session["UserRole"] as string != "Admin"))
+            {
+                return Json(new { success = false, message = "Unauthorized course access." });
+            }
+
+            if (questions == null || !questions.Any())
+            {
+                return Json(new { success = false, message = "No questions selected to save." });
+            }
+
+            int savedCount = 0;
+            foreach (var q in questions)
+            {
+                if (string.IsNullOrWhiteSpace(q.QuestionText) || string.IsNullOrWhiteSpace(q.OptionA))
+                    continue;
+
+                q.CourseId = courseId;
+                q.LessonNumber = lessonNumber;
+                if (string.IsNullOrWhiteSpace(q.CorrectOption))
+                    q.CorrectOption = "A";
+
+                var res = _quizRepo.CreateQuestion(q);
+                if (res.IsSuccess) savedCount++;
+            }
+
+            return Json(new { 
+                success = true, 
+                savedCount = savedCount, 
+                message = $"Successfully added {savedCount} AI-generated questions to Lesson {lessonNumber} quiz!" 
+            });
         }
 
         // ====================================================================

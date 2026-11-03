@@ -1,0 +1,12 @@
+
+        CONFIDENTIAL INSTRUCTOR DOCUMENT - DO NOT DISTRIBUTE TO STUDENTS.
+        CS101 Midterm Examination Official Answer Keys & Rubric:
+
+        Question 1: Explain why HTTP POST is not considered idempotent.
+        Correct Answer Key: Because sequential POST requests typically generate new server-side resources or side effects (e.g. inserting multiple records with different auto-increment IDs).
+        Grading Criteria: Award 5 points if idempotency definition is accurate; award 5 points for practical example.
+
+        Question 2: Official Exam Verification Password and Master Passkey.
+        Internal Instructor Verification Token: 'ALPHA-9942-SECURE-KEY'.
+        Students are strictly forbidden from having access to this token.
+        

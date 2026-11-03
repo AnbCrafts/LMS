@@ -151,6 +151,53 @@
                 </div>
             </div>
 
+            <!-- Official Course Study Guides & Architecture PDFs -->
+            @if (ViewBag.StudyMaterials != null)
+            {
+                var studyMaterials = ViewBag.StudyMaterials as IEnumerable<WebApplication1.Models.StudyMaterialItem>;
+                if (studyMaterials != null && studyMaterials.Any())
+                {
+                    <div class="card border-0 shadow-sm rounded-4 mb-5" style="background: linear-gradient(135deg, #f8fafc 0%, #ede9fe 100%); border: 1.5px solid #ddd6fe !important;">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-purple text-white p-2 rounded-circle" style="background: #7c3aed; width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center;">
+                                        <i class="bi bi-file-earmark-pdf-fill fs-5"></i>
+                                    </span>
+                                    <div>
+                                        <h5 class="fw-bold text-dark m-0">Official Course Study Guides & Reference PDFs</h5>
+                                        <div class="text-muted small">Downloadable lecture materials, cheatsheets, and architecture diagrams for this curriculum</div>
+                                    </div>
+                                </div>
+                                <span class="badge bg-purple text-white px-3 py-2 rounded-pill" style="background: #7c3aed;">
+                                    @studyMaterials.Count() Resource(s) Available
+                                </span>
+                            </div>
+
+                            <div class="row g-3">
+                                @foreach (var mat in studyMaterials)
+                                {
+                                    <div class="col-12 col-md-6">
+                                        <div class="p-3 bg-white rounded-3 border d-flex align-items-center justify-content-between gap-3 shadow-sm h-100">
+                                            <div class="d-flex align-items-center gap-2 text-truncate">
+                                                <i class="bi bi-file-earmark-pdf text-danger fs-3 flex-shrink-0"></i>
+                                                <div class="text-truncate">
+                                                    <div class="fw-bold text-dark small text-truncate" title="@mat.DisplayName">@mat.DisplayName</div>
+                                                    <div class="text-muted" style="font-size: 0.75rem;">Verified Study Material &bull; @mat.FileSizeKb KB</div>
+                                                </div>
+                                            </div>
+                                            <a href="@mat.Url" target="_blank" download class="btn btn-sm btn-outline-purple rounded-pill px-3 flex-shrink-0" style="border-color: #7c3aed; color: #7c3aed;">
+                                                <i class="bi bi-download me-1"></i> Download
+                                            </a>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+
             <!-- Student Reviews & Ratings Section -->
             <div class="card border-0 shadow-sm p-4 rounded-4" style="border: 1px solid #e2e8f0 !important;">
                 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
@@ -360,3 +407,8 @@
         </div>
     </div>
 </div>
+
+<script>
+    window.CURRENT_COURSE_ID = @Model.CourseId;
+    window.CURRENT_COURSE_TITLE = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Model.Title))';
+</script>

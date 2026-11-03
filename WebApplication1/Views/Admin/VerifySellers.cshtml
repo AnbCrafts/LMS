@@ -1,4 +1,4 @@
-@model IEnumerable<WebApplication1.Models.InstructorProfile>
+﻿@model IEnumerable<WebApplication1.Models.InstructorProfile>
 
 @{
     ViewBag.Title = "Instructor & Seller Verification Portal";
@@ -179,7 +179,7 @@
                                     <div class="d-flex justify-content-between small fw-bold mb-1" style="font-size: 0.72rem;">
                                         <span>@inst.CompletionPercentage%</span>
                                         <span class="@(inst.CanUploadCourse ? "text-success" : "text-warning")">
-                                            @(inst.CanUploadCourse ? "≥90% Gate OK" : "Gate Incomplete")
+                                            @(inst.CanUploadCourse ? ">= 90% Gate OK" : "Gate Incomplete")
                                         </span>
                                     </div>
                                     <div class="progress" style="height: 6px;">

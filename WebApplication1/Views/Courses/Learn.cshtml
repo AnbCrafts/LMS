@@ -92,13 +92,63 @@
 <div class="row g-4">
     <!-- Main Content Player (Left) -->
     <div class="col-12 col-lg-8">
-        <!-- Video Player (Embedded or Simulated) -->
+        <!-- Video Player (Embedded, Direct File, or Simulated) -->
         <div class="card border-0 shadow-sm overflow-hidden mb-4" style="border-radius: 18px; background: #0f172a;">
             @if (!string.IsNullOrWhiteSpace(Model.ActiveLesson.VideoUrl))
             {
-                <div class="ratio ratio-16x9">
-                    <iframe src="@Model.ActiveLesson.VideoUrl" title="@Model.ActiveLesson.Title" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
-                </div>
+                var mediaUrl = Model.ActiveLesson.VideoUrl.Trim();
+                bool isDirectVideo = mediaUrl.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase) ||
+                                     mediaUrl.EndsWith(".webm", StringComparison.OrdinalIgnoreCase) ||
+                                     mediaUrl.EndsWith(".mov", StringComparison.OrdinalIgnoreCase);
+                bool isPdfDoc = mediaUrl.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase);
+
+                string embedUrl = mediaUrl;
+                if (mediaUrl.Contains("youtube.com/watch?v="))
+                {
+                    var vId = mediaUrl.Substring(mediaUrl.IndexOf("v=") + 2).Split('&')[0];
+                    embedUrl = "https://www.youtube.com/embed/" + vId;
+                }
+                else if (mediaUrl.Contains("youtu.be/"))
+                {
+                    var vId = mediaUrl.Substring(mediaUrl.IndexOf("youtu.be/") + 9).Split('?')[0];
+                    embedUrl = "https://www.youtube.com/embed/" + vId;
+                }
+
+                if (isDirectVideo)
+                {
+                    <div class="p-0 bg-black text-center position-relative">
+                        <video controls class="w-100" style="max-height: 480px; object-fit: contain;">
+                            <source src="@mediaUrl" type="video/mp4">
+                            Your browser does not support HTML5 video streaming.
+                        </video>
+                    </div>
+                }
+                else if (isPdfDoc)
+                {
+                    <div>
+                        <div class="p-3 bg-light border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-file-earmark-pdf-fill text-danger fs-4"></i>
+                                <div>
+                                    <strong class="text-dark small d-block">Official Lesson Slides & Lecture PDF</strong>
+                                    <span class="text-muted" style="font-size: 0.72rem;">@mediaUrl.Split('/').Last()</span>
+                                </div>
+                            </div>
+                            <a href="@mediaUrl" target="_blank" download class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                                <i class="bi bi-download me-1"></i> Open / Download PDF
+                            </a>
+                        </div>
+                        <div class="ratio ratio-16x9" style="min-height: 420px;">
+                            <iframe src="@mediaUrl" title="Lesson Document"></iframe>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="ratio ratio-16x9">
+                        <iframe src="@embedUrl" title="@Model.ActiveLesson.Title" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+                    </div>
+                }
             }
             else
             {
@@ -139,6 +189,53 @@
                     @Model.ActiveLesson.Summary
                 </div>
             </div>
+
+            <!-- Course Study Materials & Official Lecture PDFs -->
+            @if (ViewBag.StudyMaterials != null)
+            {
+                var studyMaterials = ViewBag.StudyMaterials as IEnumerable<WebApplication1.Models.StudyMaterialItem>;
+                if (studyMaterials != null && studyMaterials.Any())
+                {
+                    <div class="card border-0 shadow-sm rounded-4 my-4" style="background: linear-gradient(135deg, #f8fafc 0%, #ede9fe 100%); border: 1.5px solid #ddd6fe !important;">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-purple text-white p-2 rounded-circle" style="background: #7c3aed; width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center;">
+                                        <i class="bi bi-file-earmark-pdf-fill fs-5"></i>
+                                    </span>
+                                    <div>
+                                        <h5 class="fw-bold text-dark m-0">Official Course Study Guides & Architecture Reference</h5>
+                                        <div class="text-muted small">Download verified PDFs, cheatsheets, and lecture materials designed by your instructor</div>
+                                    </div>
+                                </div>
+                                <span class="badge bg-purple text-white px-3 py-2 rounded-pill" style="background: #7c3aed;">
+                                    @studyMaterials.Count() Resource(s) Available
+                                </span>
+                            </div>
+
+                            <div class="row g-3">
+                                @foreach (var mat in studyMaterials)
+                                {
+                                    <div class="col-12 col-md-6">
+                                        <div class="p-3 bg-white rounded-3 border d-flex align-items-center justify-content-between gap-3 shadow-sm h-100">
+                                            <div class="d-flex align-items-center gap-2 text-truncate">
+                                                <i class="bi bi-file-earmark-pdf text-danger fs-3 flex-shrink-0"></i>
+                                                <div class="text-truncate">
+                                                    <div class="fw-bold text-dark small text-truncate" title="@mat.DisplayName">@mat.DisplayName</div>
+                                                    <div class="text-muted" style="font-size: 0.75rem;">Verified Study PDF &bull; @mat.FileSizeKb KB</div>
+                                                </div>
+                                            </div>
+                                            <a href="@mat.Url" target="_blank" download class="btn btn-sm btn-outline-purple rounded-pill px-3 flex-shrink-0" style="border-color: #7c3aed; color: #7c3aed;">
+                                                <i class="bi bi-download me-1"></i> Download
+                                            </a>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
 
             <!-- End-of-Lesson Mini Quiz Section -->
             @if (hasQuiz)
@@ -276,8 +373,28 @@
                             <div class="text-muted small mb-2" style="white-space: pre-wrap;">@activeSub.SubmissionText</div>
                             @if (!string.IsNullOrWhiteSpace(activeSub.SubmissionFileUrl))
                             {
-                                <div class="small">
-                                    <strong>Project / Repository Link:</strong> <a href="@activeSub.SubmissionFileUrl" target="_blank" class="text-primary text-decoration-none">@activeSub.SubmissionFileUrl</a>
+                                bool isUploadedDoc = activeSub.SubmissionFileUrl.StartsWith("/Uploads/", StringComparison.OrdinalIgnoreCase) ||
+                                                     activeSub.SubmissionFileUrl.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) ||
+                                                     activeSub.SubmissionFileUrl.EndsWith(".zip", StringComparison.OrdinalIgnoreCase) ||
+                                                     activeSub.SubmissionFileUrl.EndsWith(".docx", StringComparison.OrdinalIgnoreCase);
+                                <div class="small mt-2 p-2 bg-light rounded-2 border d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                    <div>
+                                        @if (isUploadedDoc)
+                                        {
+                                            <i class="bi bi-file-earmark-pdf-fill text-danger fs-5 me-1"></i>
+                                            <strong>Attached Solution Document:</strong>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-link-45deg text-primary fs-5 me-1"></i>
+                                            <strong>Project / Repository Link:</strong>
+                                        }
+                                        <span class="text-truncate ms-1" style="max-width: 350px;">@activeSub.SubmissionFileUrl</span>
+                                    </div>
+                                    <a href="@activeSub.SubmissionFileUrl" target="_blank" download class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1">
+                                        <i class="bi @(isUploadedDoc ? "bi-download" : "bi-box-arrow-up-right") me-1"></i>
+                                        @(isUploadedDoc ? "Download File" : "Open Link")
+                                    </a>
                                 </div>
                             }
                             @if (!string.IsNullOrWhiteSpace(activeSub.InstructorFeedback))
@@ -291,7 +408,7 @@
                     else
                     {
                         <!-- Submission Form (Only accessible if student has not yet submitted) -->
-                        using (Html.BeginForm("SubmitAssignment", "Courses", FormMethod.Post))
+                        using (Html.BeginForm("SubmitAssignment", "Courses", FormMethod.Post, new { enctype = "multipart/form-data" }))
                         {
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="courseId" value="@Model.Course.CourseId" />
@@ -300,17 +417,29 @@
                             <input type="hidden" name="submissionTitle" value="Lesson @activeNum: @Model.ActiveLesson.Title" />
 
                             <div class="alert alert-warning py-2 px-3 small rounded-3 mb-3">
-                                <i class="bi bi-shield-exclamation me-1"></i> <strong>One-time Submission Notice:</strong> Re-submissions are not permitted once submitted. Please review your work and links carefully before submitting.
+                                <i class="bi bi-shield-exclamation me-1"></i> <strong>One-time Submission Notice:</strong> Re-submissions are not permitted once submitted. Please review your work, attached file, and links carefully before submitting.
                             </div>
 
                             <div class="mb-3">
-                                <label class="form-label fw-semibold small text-dark">Your Solution / Architecture Details</label>
+                                <label class="form-label fw-semibold small text-dark">Your Solution / Architecture Details <span class="text-danger">*</span></label>
                                 <textarea name="submissionText" class="form-control" rows="3" placeholder="Explain your code implementation, component structure, or paste code snippets..." required></textarea>
                             </div>
 
-                            <div class="mb-3">
-                                <label class="form-label fw-semibold small text-dark">GitHub Repository or Deployed Demo Link</label>
-                                <input type="url" name="submissionFileUrl" class="form-control" placeholder="https://github.com/your-username/project or Vercel link" />
+                            <div class="row g-3 mb-3">
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label fw-semibold small text-dark">
+                                        <i class="bi bi-file-earmark-arrow-up text-primary me-1"></i> Attach Solution File (PDF, ZIP, DOCX, TXT)
+                                    </label>
+                                    <input type="file" name="submissionFile" class="form-control" accept=".pdf,.zip,.rar,.docx,.doc,.txt" />
+                                    <div class="form-text small text-muted">Upload your complete project report or code archive (Max 25 MB).</div>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label fw-semibold small text-dark">
+                                        <i class="bi bi-link-45deg text-primary me-1"></i> GitHub Repo or Live Demo Link (Optional)
+                                    </label>
+                                    <input type="url" name="submissionFileUrl" class="form-control" placeholder="https://github.com/your-username/project or Vercel link" />
+                                    <div class="form-text small text-muted">Or live deployment URL for practical verification.</div>
+                                </div>
                             </div>
 
                             <button type="submit" class="btn btn-purple text-white rounded-pill px-4 py-2 fw-bold shadow-sm" style="background: #9333ea;">
@@ -448,3 +577,8 @@
         </div>
     </div>
 </div>
+
+<script>
+    window.CURRENT_COURSE_ID = @Model.Course.CourseId;
+    window.CURRENT_COURSE_TITLE = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Model.Course.Title))';
+</script>

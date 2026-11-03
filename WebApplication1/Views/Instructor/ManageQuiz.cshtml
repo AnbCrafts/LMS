@@ -14,9 +14,12 @@
         <h1 class="lms-page-title mb-1">Manage Quizzes & Assessments</h1>
         <p class="text-muted mb-0">Course: <strong>@(course != null ? course.Title : "")</strong> &middot; (@(course != null ? course.Category : ""))</p>
     </div>
-    <div>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        <button type="button" class="btn btn-purple text-white rounded-pill px-4 fw-bold shadow-sm" style="background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);" data-bs-toggle="modal" data-bs-target="#aiPdfQuizModal">
+            <i class="bi bi-stars me-1"></i> Generate Quiz from PDF (AI)
+        </button>
         <button type="button" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#addQuestionModal">
-            <i class="bi bi-plus-circle me-1"></i> Add Quiz Question
+            <i class="bi bi-plus-circle me-1"></i> Add Manual Question
         </button>
     </div>
 </div>
@@ -220,3 +223,348 @@ else
         </div>
     </div>
 </div>
+
+<!-- AI PDF-to-Quiz Generator Modal -->
+<div class="modal fade" id="aiPdfQuizModal" tabindex="-1" aria-labelledby="aiPdfQuizModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <!-- Modal Header -->
+            <div class="modal-header text-white px-4 py-3 border-0" style="background: linear-gradient(135deg, #7c3aed 0%, #4338ca 100%);">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-white text-dark rounded-circle p-2" style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-stars fs-5 text-primary"></i>
+                    </span>
+                    <div>
+                        <h5 class="modal-title fw-bold m-0" id="aiPdfQuizModalLabel">AI Quiz Generator from Lecture PDF</h5>
+                        <small class="text-white-50">Powered by Google Gemini & EduPulse RAG Intelligence</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body p-4 bg-light">
+                <!-- Step 1: Upload & Generation Parameters -->
+                <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white" id="aiQuizInputCard">
+                    <h6 class="fw-bold text-dark mb-3">
+                        <i class="bi bi-file-earmark-pdf-fill text-danger me-1"></i> Step 1: Select Lecture PDF & Configuration
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-12 col-md-4">
+                            <label class="form-label fw-bold small text-muted">Target Lesson Module</label>
+                            <select id="aiLessonSelect" class="form-select">
+                                <option value="1">Lesson 1: Foundations & Architecture</option>
+                                <option value="2">Lesson 2: Core Components & Data Flows</option>
+                                <option value="3">Lesson 3: Advanced State & Async APIs</option>
+                                <option value="4">Lesson 4: Performance & Automated Testing</option>
+                                <option value="5">Lesson 5: Capstone Project</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-3">
+                            <label class="form-label fw-bold small text-muted">Number of Questions</label>
+                            <select id="aiNumQuestionsSelect" class="form-select">
+                                <option value="3" selected>3 Questions (Standard)</option>
+                                <option value="4">4 Questions</option>
+                                <option value="5">5 Questions (Comprehensive)</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-5">
+                            <label class="form-label fw-bold small text-muted">Specific Focus / Topic (Optional)</label>
+                            <input type="text" id="aiTopicFocus" class="form-control" placeholder="e.g. Idempotency, Middleware, or Testing" />
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold small text-muted">Upload Lecture Slides, Syllabus, or Notes (.pdf)</label>
+                            <div class="input-group">
+                                <input type="file" id="aiPdfFile" class="form-control" accept=".pdf" />
+                                <button type="button" class="btn text-white px-4 fw-bold" id="aiGenerateBtn" style="background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);">
+                                    <i class="bi bi-lightning-charge-fill me-1"></i> Generate Questions
+                                </button>
+                            </div>
+                            <div class="form-text small text-muted mt-1">
+                                Text-based PDF files are supported. Uploaded documents will also be saved to course study materials for students.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loading State Spinner -->
+                <div id="aiQuizLoading" class="text-center py-5 d-none">
+                    <div class="spinner-border text-primary" style="width: 3.5rem; height: 3.5rem;" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <h5 class="fw-bold text-dark mt-3">Reading Lecture Document & Generating Questions...</h5>
+                    <p class="text-muted small">Gemini AI is parsing concepts, extracting pedagogical insights, and drafting multiple-choice options with explanations.</p>
+                </div>
+
+                <!-- Error Alert Box -->
+                <div id="aiQuizErrorAlert" class="alert alert-danger d-none rounded-3 shadow-sm" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i> <span id="aiQuizErrorMessage"></span>
+                </div>
+
+                <!-- Step 2: Question Review & Approval Section -->
+                <div id="aiQuizResultsCard" class="d-none">
+                    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                        <div>
+                            <h6 class="fw-bold text-dark m-0">
+                                <i class="bi bi-check2-circle text-success me-1"></i> Step 2: Review, Edit & Approve Generated Questions
+                            </h6>
+                            <span class="text-muted small" id="aiQuizMetaInfo"></span>
+                        </div>
+                        <span class="badge bg-success bg-opacity-10 text-success border border-success px-3 py-2 rounded-pill">
+                            <i class="bi bi-shield-check me-1"></i> Pedagogy Verified
+                        </span>
+                    </div>
+
+                    <!-- Dynamic Question Cards Container -->
+                    <div id="aiQuestionsList" class="d-flex flex-column gap-3 mb-4"></div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="modal-footer px-4 py-3 bg-white border-top d-flex justify-content-between">
+                <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm d-none" id="aiSaveAllBtn">
+                    <i class="bi bi-cloud-arrow-up-fill me-1"></i> Add Approved Questions to Quiz
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        var currentCourseId = @(course != null ? course.CourseId : 0);
+        var generatedQuestionsData = [];
+
+        var generateBtn = document.getElementById('aiGenerateBtn');
+        var saveBtn = document.getElementById('aiSaveAllBtn');
+        var fileInput = document.getElementById('aiPdfFile');
+        var lessonSelect = document.getElementById('aiLessonSelect');
+        var numQuestionsSelect = document.getElementById('aiNumQuestionsSelect');
+        var topicInput = document.getElementById('aiTopicFocus');
+
+        var loadingDiv = document.getElementById('aiQuizLoading');
+        var errorAlert = document.getElementById('aiQuizErrorAlert');
+        var errorMsg = document.getElementById('aiQuizErrorMessage');
+        var resultsCard = document.getElementById('aiQuizResultsCard');
+        var questionsContainer = document.getElementById('aiQuestionsList');
+        var metaInfo = document.getElementById('aiQuizMetaInfo');
+
+        generateBtn.addEventListener('click', function () {
+            errorAlert.classList.add('d-none');
+            
+            if (!fileInput.files || fileInput.files.length === 0) {
+                showError("Please select a PDF document first.");
+                return;
+            }
+
+            var file = fileInput.files[0];
+            if (!file.name.toLowerCase().endsWith('.pdf')) {
+                showError("Please upload a valid .pdf file.");
+                return;
+            }
+
+            var formData = new FormData();
+            formData.append('courseId', currentCourseId);
+            formData.append('lessonNumber', lessonSelect.value);
+            formData.append('numQuestions', numQuestionsSelect.value);
+            formData.append('topic', topicInput.value);
+            formData.append('quizPdf', file);
+
+            loadingDiv.classList.remove('d-none');
+            resultsCard.classList.add('d-none');
+            saveBtn.classList.add('d-none');
+            generateBtn.disabled = true;
+
+            fetch('@Url.Action("GenerateQuizFromPdf", "Instructor")', {
+                method: 'POST',
+                body: formData
+            })
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                loadingDiv.classList.add('d-none');
+                generateBtn.disabled = false;
+
+                if (!data.success) {
+                    showError(data.message || "Failed to generate quiz questions from PDF.");
+                    return;
+                }
+
+                generatedQuestionsData = data.questions || [];
+                renderQuestions(generatedQuestionsData, data.filename, data.source_pages, lessonSelect.value);
+            })
+            .catch(function (err) {
+                loadingDiv.classList.add('d-none');
+                generateBtn.disabled = false;
+                showError("Request failed: " + err.message);
+            });
+        });
+
+        function showError(msg) {
+            errorMsg.innerText = msg;
+            errorAlert.classList.remove('d-none');
+        }
+
+        function renderQuestions(questions, filename, pages, lesson) {
+            questionsContainer.innerHTML = '';
+            metaInfo.innerText = "Extracted from " + filename + " (" + pages + " pages) for Lesson " + lesson;
+
+            if (!questions || questions.length === 0) {
+                showError("No questions were generated. The PDF may lack sufficient conceptual text.");
+                return;
+            }
+
+            questions.forEach(function (q, idx) {
+                var card = document.createElement('div');
+                card.className = "card border rounded-3 p-3 bg-white shadow-sm position-relative";
+                card.id = "q_card_" + idx;
+
+                var isA = (q.correct_option === 'A');
+                var isB = (q.correct_option === 'B');
+                var isC = (q.correct_option === 'C');
+                var isD = (q.correct_option === 'D');
+
+                card.innerHTML = `
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <div class="form-check form-switch m-0">
+                            <input class="form-check-input q-include-toggle" type="checkbox" checked id="toggle_${idx}" data-idx="${idx}">
+                            <label class="form-check-label fw-bold text-dark small" for="toggle_${idx}">
+                                Question ${idx + 1}
+                            </label>
+                        </div>
+                        <span class="badge bg-primary bg-opacity-10 text-primary border">Candidate Q${idx + 1}</span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-muted">Question Prompt</label>
+                        <textarea class="form-control form-control-sm q-text" rows="2" data-idx="${idx}">${escapeHtml(q.question_text)}</textarea>
+                    </div>
+
+                    <div class="row g-2 mb-2">
+                        <div class="col-12 col-md-6">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text ${isA ? 'bg-success text-white fw-bold' : 'bg-light'}">A</span>
+                                <input type="text" class="form-control q-opt-a" value="${escapeHtml(q.option_a)}" data-idx="${idx}">
+                                <div class="input-group-text bg-white">
+                                    <input class="form-check-input mt-0 q-correct-radio" type="radio" name="correct_${idx}" value="A" ${isA ? 'checked' : ''} data-idx="${idx}">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text ${isB ? 'bg-success text-white fw-bold' : 'bg-light'}">B</span>
+                                <input type="text" class="form-control q-opt-b" value="${escapeHtml(q.option_b)}" data-idx="${idx}">
+                                <div class="input-group-text bg-white">
+                                    <input class="form-check-input mt-0 q-correct-radio" type="radio" name="correct_${idx}" value="B" ${isB ? 'checked' : ''} data-idx="${idx}">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text ${isC ? 'bg-success text-white fw-bold' : 'bg-light'}">C</span>
+                                <input type="text" class="form-control q-opt-c" value="${escapeHtml(q.option_c)}" data-idx="${idx}">
+                                <div class="input-group-text bg-white">
+                                    <input class="form-check-input mt-0 q-correct-radio" type="radio" name="correct_${idx}" value="C" ${isC ? 'checked' : ''} data-idx="${idx}">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text ${isD ? 'bg-success text-white fw-bold' : 'bg-light'}">D</span>
+                                <input type="text" class="form-control q-opt-d" value="${escapeHtml(q.option_d)}" data-idx="${idx}">
+                                <div class="input-group-text bg-white">
+                                    <input class="form-check-input mt-0 q-correct-radio" type="radio" name="correct_${idx}" value="D" ${isD ? 'checked' : ''} data-idx="${idx}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    ${q.explanation ? `
+                    <div class="p-2 rounded bg-light border small text-muted mt-1">
+                        <i class="bi bi-info-circle text-primary me-1"></i> <strong>Citation / Pedagogical Note:</strong> ${escapeHtml(q.explanation)}
+                    </div>` : ''}
+                `;
+
+                questionsContainer.appendChild(card);
+            });
+
+            resultsCard.classList.remove('d-none');
+            saveBtn.classList.remove('d-none');
+        }
+
+        saveBtn.addEventListener('click', function () {
+            var selectedQuestions = [];
+            var toggles = document.querySelectorAll('.q-include-toggle');
+
+            toggles.forEach(function (toggle) {
+                if (toggle.checked) {
+                    var idx = parseInt(toggle.getAttribute('data-idx'));
+                    var qCard = document.getElementById('q_card_' + idx);
+                    var text = qCard.querySelector('.q-text').value;
+                    var optA = qCard.querySelector('.q-opt-a').value;
+                    var optB = qCard.querySelector('.q-opt-b').value;
+                    var optC = qCard.querySelector('.q-opt-c').value;
+                    var optD = qCard.querySelector('.q-opt-d').value;
+                    var correctRadio = qCard.querySelector('.q-correct-radio:checked');
+                    var correct = correctRadio ? correctRadio.value : "A";
+
+                    selectedQuestions.push({
+                        CourseId: currentCourseId,
+                        LessonNumber: parseInt(lessonSelect.value),
+                        QuestionText: text,
+                        OptionA: optA,
+                        OptionB: optB,
+                        OptionC: optC,
+                        OptionD: optD,
+                        CorrectOption: correct
+                    });
+                }
+            });
+
+            if (selectedQuestions.length === 0) {
+                showError("Please keep at least one question checked to save.");
+                return;
+            }
+
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Saving to Quiz...';
+
+            fetch('@Url.Action("SaveGeneratedQuestions", "Instructor")', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    courseId: currentCourseId,
+                    lessonNumber: parseInt(lessonSelect.value),
+                    questions: selectedQuestions
+                })
+            })
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                if (data.success) {
+                    alert(data.message || "Questions successfully saved to the quiz!");
+                    window.location.reload();
+                } else {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = '<i class="bi bi-cloud-arrow-up-fill me-1"></i> Add Approved Questions to Quiz';
+                    showError(data.message || "Failed to save questions.");
+                }
+            })
+            .catch(function (err) {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="bi bi-cloud-arrow-up-fill me-1"></i> Add Approved Questions to Quiz';
+                showError("Saving failed: " + err.message);
+            });
+        });
+
+        function escapeHtml(text) {
+            if (!text) return "";
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    })();
+</script>

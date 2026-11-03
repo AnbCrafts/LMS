@@ -1,0 +1,27 @@
+## Visual Studio Cache, Temp & State Folders
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.vsidx
+
+## Build Results & Intermediates
+[Oo]bj/
+[Bb]in/Debug/
+[Bb]in/Release/
+*.pdb
+
+## Python Cache & Environments
+__pycache__/
+*.py[cod]
+*$py.class
+*.env
+venv/
+env/
+.pytest_cache/
+
+## Vector DB Local Persistent Storage
+chroma_data/
+*.db-shm
+*.db-wal

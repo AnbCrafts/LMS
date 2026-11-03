@@ -208,6 +208,12 @@
         @RenderBody()
     </main>
 
+    <!-- Floating RAG AI Teaching Assistant Drawer (Only visible when logged in) -->
+    @if (isLoggedIn)
+    {
+        @Html.Partial("_ChatWidget")
+    }
+
     @Scripts.Render("~/bundles/jquery")
     @Scripts.Render("~/bundles/bootstrap")
     @RenderSection("scripts", required: false)

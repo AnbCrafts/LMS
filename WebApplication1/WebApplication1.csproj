@@ -126,6 +126,7 @@
     <Compile Include="Controllers\AccountController.cs" />
     <Compile Include="Controllers\AdminController.cs" />
     <Compile Include="Controllers\InstructorController.cs" />
+    <Compile Include="Controllers\ChatbotController.cs" />
     <Compile Include="Data\DatabaseInitializer.cs" />
     <Compile Include="Data\DbHelper.cs" />
     <Compile Include="Models\Course.cs" />
@@ -212,6 +213,7 @@
     <Content Include="Views\_ViewStart.cshtml" />
     <Content Include="Views\Shared\Error.cshtml" />
     <Content Include="Views\Shared\_Layout.cshtml" />
+    <Content Include="Views\Shared\_ChatWidget.cshtml" />
     <Content Include="Views\Home\About.cshtml" />
     <Content Include="Views\Home\Contact.cshtml" />
     <Content Include="Views\Home\Index.cshtml" />
@@ -243,7 +245,20 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
-    <Folder Include="Models\" />
+    <Folder Include="Rag_Service\" />
+    <None Include="Rag_Service\.env" />
+    <None Include="Rag_Service\requirements.txt" />
+    <None Include="Rag_Service\chunker.py" />
+    <None Include="Rag_Service\vector_store.py" />
+    <None Include="Rag_Service\rag_engine.py" />
+    <None Include="Rag_Service\ingest.py" />
+    <None Include="Rag_Service\test_chat.py" />
+    <None Include="Rag_Service\api.py" />
+    <None Include="Rag_Service\db_ingest.py" />
+    <None Include="Rag_Service\generate_study_materials.py" />
+    <None Include="Rag_Service\ingest_study_materials.py" />
+    <None Include="Rag_Service\test_quiz_gen.py" />
+    <None Include="Rag_Service\test_upload_study_material.py" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Content\bootstrap.rtl.min.css.map" />

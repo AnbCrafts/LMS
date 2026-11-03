@@ -1,4 +1,4 @@
-@model WebApplication1.Models.InstructorApplicationStatusViewModel
+﻿@model WebApplication1.Models.InstructorApplicationStatusViewModel
 
 @{
     ViewBag.Title = "Instructor Application Status & Review Feedback";
@@ -165,7 +165,7 @@
                                 <h5 class="fw-bold text-dark m-0">Application Under Verification</h5>
                             </div>
                             <p class="text-muted small mb-3">
-                                Your application has been received and placed into the accreditation queue. Admin reviews take 24–48 hours. Ensure your profile completion meter is at least 90% so that publishing is unlocked immediately upon approval.
+                                Your application has been received and placed into the accreditation queue. Admin reviews take 24-48 hours. Ensure your profile completion meter is at least 90% so that publishing is unlocked immediately upon approval.
                             </p>
                             <a href="@Url.Action("Login", "Account", new { returnUrl = Url.Action("Profile", "Instructor") })" class="btn btn-primary fw-semibold px-4 rounded-pill shadow-sm">
                                 <i class="bi bi-pencil-square me-1"></i> Review or Complete Profile

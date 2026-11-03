@@ -200,9 +200,9 @@
                     <div class="p-3 rounded-3 bg-light border mb-4">
                         <div class="fw-bold text-dark small mb-1" id="modalSubTitle"></div>
                         <div class="text-muted small mb-2" id="modalSubText" style="white-space: pre-wrap;"></div>
-                        <div id="modalSubFileContainer" class="d-none">
-                            <span class="small fw-bold text-dark">Project Link: </span>
-                            <a href="#" target="_blank" id="modalSubFileLink" class="small text-primary text-decoration-none"></a>
+                        <div id="modalSubFileContainer" class="d-none mt-2 p-2 bg-white rounded border">
+                            <span class="small fw-bold text-dark me-2">Attached Asset:</span>
+                            <a href="#" target="_blank" id="modalSubFileLink" class="small text-decoration-none fw-bold"></a>
                         </div>
                     </div>
 
@@ -241,7 +241,7 @@
 <script>
     function openGradeModal(id, student, course, title, text, fileUrl, marks, feedback, status) {
         document.getElementById('modalSubId').value = id;
-        document.getElementById('modalStudentCourseInfo').innerText = student + ' — ' + course;
+        document.getElementById('modalStudentCourseInfo').innerText = student + ' - ' + course;
         document.getElementById('modalSubTitle').innerText = title;
         document.getElementById('modalSubText').innerText = text || '(No written text submitted)';
         
@@ -249,7 +249,16 @@
         var fileLink = document.getElementById('modalSubFileLink');
         if (fileUrl && fileUrl.trim() !== '') {
             fileLink.href = fileUrl;
-            fileLink.innerText = fileUrl;
+            var isDoc = fileUrl.indexOf('/Uploads/') >= 0 || fileUrl.endsWith('.pdf') || fileUrl.endsWith('.zip') || fileUrl.endsWith('.docx') || fileUrl.endsWith('.rar');
+            if (isDoc) {
+                fileLink.innerHTML = '<i class="bi bi-file-earmark-arrow-down-fill text-danger fs-6 me-1"></i> Download Solution File (' + fileUrl.split('/').pop() + ')';
+                fileLink.setAttribute('download', '');
+                fileLink.className = 'small text-danger text-decoration-none fw-bold';
+            } else {
+                fileLink.innerHTML = '<i class="bi bi-box-arrow-up-right text-primary me-1"></i> Open Repository / Demo: ' + fileUrl;
+                fileLink.removeAttribute('download');
+                fileLink.className = 'small text-primary text-decoration-none fw-bold';
+            }
             fileContainer.classList.remove('d-none');
         } else {
             fileContainer.classList.add('d-none');

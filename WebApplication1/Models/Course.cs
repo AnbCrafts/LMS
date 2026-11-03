@@ -46,4 +46,12 @@ namespace WebApplication1.Models
         [Display(Name = "Total Enrolled")]
         public int TotalEnrolled { get; set; } = 0;
     }
+
+    public class StudyMaterialItem
+    {
+        public string FileName { get; set; }
+        public string DisplayName { get; set; }
+        public string Url { get; set; }
+        public long FileSizeKb { get; set; }
+    }
 }

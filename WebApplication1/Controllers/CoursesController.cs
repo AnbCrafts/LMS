@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Web;
 using System.Web.Mvc;
 using WebApplication1.Models;
 using WebApplication1.Repositories;
@@ -132,6 +134,24 @@ namespace WebApplication1.Controllers
             {
                 ViewBag.Reviews = new List<Review>();
             }
+
+            try
+            {
+                string materialsDir = Server.MapPath("~/Uploads/CourseMaterials");
+                if (Directory.Exists(materialsDir))
+                {
+                    var files = Directory.GetFiles(materialsDir, $"Course{id}_*.pdf")
+                        .Select(f => new StudyMaterialItem {
+                            FileName = Path.GetFileName(f),
+                            DisplayName = Path.GetFileNameWithoutExtension(f).Replace($"Course{id}_", "").Replace("_", " "),
+                            Url = "/Uploads/CourseMaterials/" + Path.GetFileName(f),
+                            FileSizeKb = Math.Max(1, new FileInfo(f).Length / 1024)
+                        }).ToList();
+                    ViewBag.StudyMaterials = files;
+                }
+            }
+            catch { }
+
             return View(course);
         }
 
@@ -350,6 +370,23 @@ namespace WebApplication1.Controllers
             ViewBag.HasSubmittedAssignment = hasSubmittedAssignment;
             ViewBag.CanAdvanceModule = canAdvanceModule;
 
+            try
+            {
+                string materialsDir = Server.MapPath("~/Uploads/CourseMaterials");
+                if (Directory.Exists(materialsDir))
+                {
+                    var files = Directory.GetFiles(materialsDir, $"Course{id}_*.pdf")
+                        .Select(f => new StudyMaterialItem {
+                            FileName = Path.GetFileName(f),
+                            DisplayName = Path.GetFileNameWithoutExtension(f).Replace($"Course{id}_", "").Replace("_", " "),
+                            Url = "/Uploads/CourseMaterials/" + Path.GetFileName(f),
+                            FileSizeKb = Math.Max(1, new FileInfo(f).Length / 1024)
+                        }).ToList();
+                    ViewBag.StudyMaterials = files;
+                }
+            }
+            catch { }
+
             var viewModel = new CoursePlayerViewModel
             {
                 Course = course,
@@ -445,7 +482,7 @@ namespace WebApplication1.Controllers
         // POST: /Courses/SubmitAssignment
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult SubmitAssignment(int courseId, int? moduleId = null, int lessonNumber = 1, string submissionTitle = null, string submissionText = null, string submissionFileUrl = null)
+        public ActionResult SubmitAssignment(int courseId, int? moduleId = null, int lessonNumber = 1, string submissionTitle = null, string submissionText = null, string submissionFileUrl = null, HttpPostedFileBase submissionFile = null)
         {
             int? userId = GetCurrentUserId();
             if (!userId.HasValue) return RedirectToAction("Login", "Account");
@@ -462,6 +499,45 @@ namespace WebApplication1.Controllers
                 return RedirectToAction("Learn", new { id = courseId, lesson = lessonNumber });
             }
 
+            string finalFileUrl = submissionFileUrl;
+
+            // Handle uploaded submission file (PDF, ZIP, DOCX, TXT, etc.)
+            if (submissionFile != null && submissionFile.ContentLength > 0)
+            {
+                var allowedExts = new[] { ".pdf", ".zip", ".rar", ".docx", ".doc", ".txt", ".png", ".jpg" };
+                string ext = Path.GetExtension(submissionFile.FileName)?.ToLower();
+                if (string.IsNullOrEmpty(ext) || !allowedExts.Contains(ext))
+                {
+                    TempData["ErrorMessage"] = "Unsupported file type. Please upload a PDF, ZIP, RAR, DOCX, or TXT file.";
+                    return RedirectToAction("Learn", new { id = courseId, lesson = lessonNumber });
+                }
+
+                if (submissionFile.ContentLength > 25 * 1024 * 1024)
+                {
+                    TempData["ErrorMessage"] = "Uploaded file exceeds the maximum 25 MB limit.";
+                    return RedirectToAction("Learn", new { id = courseId, lesson = lessonNumber });
+                }
+
+                try
+                {
+                    string uploadsDir = Server.MapPath("~/Uploads/Submissions");
+                    if (!Directory.Exists(uploadsDir)) Directory.CreateDirectory(uploadsDir);
+
+                    string rawName = Path.GetFileNameWithoutExtension(submissionFile.FileName);
+                    string safeName = System.Text.RegularExpressions.Regex.Replace(rawName, @"[^a-zA-Z0-9_\-]", "_");
+                    string uniqueFileName = $"Sub_C{courseId}_U{userId.Value}_M{lessonNumber}_{DateTime.UtcNow.Ticks}_{safeName}{ext}";
+                    string savePath = Path.Combine(uploadsDir, uniqueFileName);
+                    submissionFile.SaveAs(savePath);
+
+                    finalFileUrl = "/Uploads/Submissions/" + uniqueFileName;
+                }
+                catch (Exception ex)
+                {
+                    TempData["ErrorMessage"] = "File upload failed: " + ex.Message;
+                    return RedirectToAction("Learn", new { id = courseId, lesson = lessonNumber });
+                }
+            }
+
             var sub = new StudentSubmission
             {
                 CourseId = courseId,
@@ -469,7 +545,7 @@ namespace WebApplication1.Controllers
                 UserId = userId.Value,
                 SubmissionTitle = string.IsNullOrWhiteSpace(submissionTitle) ? ($"Lesson {lessonNumber} Practical Task") : submissionTitle.Trim(),
                 SubmissionText = submissionText,
-                SubmissionFileUrl = submissionFileUrl
+                SubmissionFileUrl = finalFileUrl
             };
 
             var result = _instructorRepo.SubmitAssignment(sub);

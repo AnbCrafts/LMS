@@ -1,0 +1,20 @@
+
+        CS101: Modern Web Application Architecture.
+        Lecture 1: HTTP Protocols, REST Principles, and Stateless Communication.
+
+        1. The HTTP Protocol:
+        The Hypertext Transfer Protocol (HTTP) is an application-layer protocol for distributed, collaborative, hypermedia information systems.
+        HTTP operates via a client-server architecture. The browser (client) initiates a TCP handshake, sends an HTTP request, and awaits the server response.
+
+        2. Idempotency of Methods:
+        An HTTP method is considered idempotent if making multiple identical requests has the same intended effect on the server as making a single request.
+        - GET: Idempotent and safe. Must only retrieve data and never alter database state.
+        - PUT: Idempotent. Replaces the target resource with the uploaded payload.
+        - DELETE: Idempotent. Deleting an item once or multiple times leaves the resource in the deleted state.
+        - POST: NON-idempotent. Submitting multiple POST requests can create duplicate database records or trigger repeated charges.
+
+        3. Course Deadlines and Evaluation Policies:
+        Assignment 1 (Building an MVC Controller) is officially due on Friday, November 14 at 11:59 PM IST.
+        Submissions turned in after the deadline incur a late penalty of 10% per calendar day.
+        The passing threshold for the overall course certification is 75% aggregate score across assignments and quizzes.
+        

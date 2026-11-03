@@ -138,7 +138,7 @@
 <div class="modal fade" id="moduleModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
-            @using (Html.BeginForm("SaveModule", "Instructor", FormMethod.Post))
+            @using (Html.BeginForm("SaveModule", "Instructor", FormMethod.Post, new { enctype = "multipart/form-data" }))
             {
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="CourseId" value="@(course?.CourseId)" />
@@ -176,15 +176,27 @@
                         <textarea name="ContentMarkdown" id="modalMarkdown" class="form-control font-monospace" rows="6" placeholder="### Overview&#10;Write comprehensive lecture notes, architecture diagrams, and code snippets here..."></textarea>
                     </div>
 
-                    <div class="row g-3">
-                        <div class="col-12 col-md-6">
-                            <label class="form-label fw-semibold small">Video Embed / Resource URL (Optional)</label>
-                            <input type="url" name="VideoOrResourceUrl" id="modalVideo" class="form-control" placeholder="https://www.youtube.com/embed/... or CDN link" />
+                    <div class="p-3 bg-light rounded-3 border mb-3">
+                        <label class="form-label fw-bold small text-dark d-block mb-1">
+                            <i class="bi bi-paperclip text-primary me-1"></i> Module Study Material & Media Resource
+                        </label>
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold small text-muted">Option A: Direct File Upload (Video or PDF)</label>
+                                <input type="file" name="materialFile" class="form-control" accept=".mp4,.webm,.mov,.pdf,.docx,.zip" />
+                                <div class="form-text small" style="font-size: 0.73rem;">Upload an MP4/WebM lecture video or a PDF document (Max 100 MB).</div>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label fw-semibold small text-muted">Option B: External Video or Web URL</label>
+                                <input type="text" name="VideoOrResourceUrl" id="modalVideo" class="form-control" placeholder="https://www.youtube.com/watch?v=... or PDF URL" />
+                                <div class="form-text small" style="font-size: 0.73rem;">YouTube, Vimeo, Google Drive, or CDN link.</div>
+                            </div>
                         </div>
-                        <div class="col-12 col-md-6">
-                            <label class="form-label fw-semibold small">Module Assignment Task / Prompt (Optional)</label>
-                            <input type="text" name="AssignmentPrompt" id="modalAssignment" class="form-control" placeholder="e.g. Build a custom debounced search input component" />
-                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Module Assignment Task / Prompt (Optional)</label>
+                        <input type="text" name="AssignmentPrompt" id="modalAssignment" class="form-control" placeholder="e.g. Build a custom debounced search input component" />
                     </div>
                 </div>
                 <div class="modal-footer border-0 pt-0 px-4 pb-4">

@@ -1,0 +1,301 @@
+@* 
+    _ChatWidget.cshtml
+    Modern floating RAG AI Teaching Assistant drawer widget.
+    Grounded in current course curriculum, modules, and assignment rubrics.
+    Only rendered for authenticated users.
+*@
+
+@{
+    string userRole = Session["UserRole"] as string ?? "Student";
+    string userName = Session["UserName"] as string ?? "Learner";
+}
+
+<!-- Floating AI Assistant Launcher Button -->
+<div id="aiChatLauncher" class="position-fixed bottom-0 end-0 m-4" style="z-index: 1050;">
+    <button class="btn btn-primary rounded-pill shadow-lg d-flex align-items-center gap-2 px-4 py-3 border-0" 
+            onclick="toggleAiDrawer()" 
+            style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); font-weight: 600; box-shadow: 0 10px 25px rgba(79, 70, 229, 0.4) !important;">
+        <span class="position-relative">
+            <i class="bi bi-robot fs-5"></i>
+            <span class="position-absolute top-0 start-100 translate-middle p-1 bg-success border border-light rounded-circle">
+                <span class="visually-hidden">Online</span>
+            </span>
+        </span>
+        <span class="d-none d-sm-inline">Ask Course AI</span>
+        <span class="badge bg-white text-primary rounded-pill px-2 py-1" style="font-size: 0.65rem; font-weight: 800;">RAG</span>
+    </button>
+</div>
+
+<!-- Slide-Out AI Assistant Drawer -->
+<div id="aiChatDrawer" class="position-fixed top-0 end-0 h-100 bg-white d-flex flex-column" 
+     style="width: 440px; max-width: 96vw; z-index: 1060; transform: translateX(105%); transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1); box-shadow: -10px 0 35px rgba(0,0,0,0.15);">
+    
+    <!-- Drawer Header -->
+    <div class="p-3 border-bottom d-flex align-items-center justify-content-between" style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);">
+        <div class="d-flex align-items-center gap-3">
+            <div class="rounded-circle text-white d-flex align-items-center justify-content-center shadow-sm" 
+                 style="width: 42px; height: 42px; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);">
+                <i class="bi bi-mortarboard-fill fs-5"></i>
+            </div>
+            <div>
+                <div class="d-flex align-items-center gap-2">
+                    <h6 class="fw-bold m-0 text-dark">Course AI Assistant</h6>
+                    <span class="badge @(userRole == "Instructor" || userRole == "Admin" ? "bg-warning text-dark" : "bg-primary-subtle text-primary") rounded-pill" style="font-size: 0.68rem;">
+                        @(userRole == "Instructor" || userRole == "Admin" ? "Instructor Mode" : "Socratic Tutor")
+                    </span>
+                </div>
+                <small class="text-muted d-block" style="font-size: 0.72rem;">
+                    <i class="bi bi-shield-check text-success me-1"></i> Grounded strictly in your enrolled course notes
+                </small>
+            </div>
+        </div>
+        <button type="button" class="btn btn-sm btn-light rounded-circle p-2 text-muted" onclick="toggleAiDrawer()" style="width: 32px; height: 32px;">
+            <i class="bi bi-x-lg"></i>
+        </button>
+    </div>
+
+    <!-- Active Course Pill Badge -->
+    <div class="px-3 py-2 bg-light border-bottom d-flex align-items-center justify-content-between small text-muted" style="font-size: 0.78rem;">
+        <span class="d-flex align-items-center gap-1 text-truncate" id="aiCourseContextLabel">
+            <i class="bi bi-book text-primary"></i> <span id="aiActiveCourseTitle">Current Course Curriculum</span>
+        </span>
+        <button class="btn btn-link p-0 text-muted small text-decoration-none" onclick="clearAiChat()" title="Reset chat history">
+            <i class="bi bi-trash3"></i> Clear
+        </button>
+    </div>
+
+    <!-- Chat Messages Scroll Area -->
+    <div id="aiChatBody" class="flex-grow-1 p-3 overflow-auto" style="background: #f8fafc; display: flex; flex-direction: column; gap: 14px;">
+        <!-- Welcome Bot Bubble -->
+        <div class="d-flex gap-2">
+            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width: 28px; height: 28px; font-size: 0.75rem;">
+                <i class="bi bi-robot"></i>
+            </div>
+            <div class="p-3 bg-white rounded-4 shadow-sm border small" style="border-radius: 18px 18px 18px 4px !important; line-height: 1.55; color: #1e293b;">
+                Hello <strong>@userName</strong>! <i class="bi bi-hand-index-thumb text-primary"></i> I am your dedicated AI Teaching Assistant.
+                <br/><br/>
+                I am connected directly to your enrolled course syllabus, lecture modules, and assignment rubrics. Ask me to explain a concept, give guidance on homework, or clarify a deadline!
+            </div>
+        </div>
+
+        <!-- Quick Starter Prompt Chips -->
+        <div id="aiQuickChips" class="d-flex flex-wrap gap-1 ps-4">
+            <button class="btn btn-sm btn-outline-primary bg-white rounded-pill px-3 py-1 text-start" style="font-size: 0.75rem;" 
+                    onclick="sendQuickQuestion('What core concepts are covered in this course?')">
+                <i class="bi bi-book-half me-1"></i> What is covered in this course?
+            </button>
+            <button class="btn btn-sm btn-outline-primary bg-white rounded-pill px-3 py-1 text-start" style="font-size: 0.75rem;" 
+                    onclick="sendQuickQuestion('Can you give me a conceptual hint for the latest assignment?')">
+                <i class="bi bi-lightbulb-fill me-1 text-warning"></i> Assignment guidance hint
+            </button>
+            @if (userRole == "Instructor" || userRole == "Admin")
+            {
+                <button class="btn btn-sm btn-outline-warning text-dark bg-white rounded-pill px-3 py-1 text-start" style="font-size: 0.75rem;" 
+                        onclick="sendQuickQuestion('Draft a 3-question multiple choice quiz with answer key based on this course.')">
+                    <i class="bi bi-journal-code me-1 text-warning"></i> Generate a quiz question
+                </button>
+            }
+        </div>
+    </div>
+
+    <!-- Drawer Input Area -->
+    <div class="p-3 bg-white border-top">
+        <form id="aiChatForm" onsubmit="submitAiQuestion(event)" class="d-flex align-items-center gap-2">
+            <input type="text" id="aiChatInput" class="form-control rounded-pill px-3 py-2 small border" 
+                   placeholder="Ask a question about this course..." required autocomplete="off" />
+            <button type="submit" id="aiSendBtn" class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" 
+                    style="width: 40px; height: 40px; background: #4f46e5; border: none;">
+                <i class="bi bi-arrow-up-short fs-4"></i>
+            </button>
+        </form>
+        <div class="d-flex align-items-center justify-content-between mt-2 px-2 text-muted" style="font-size: 0.7rem;">
+            <span><i class="bi bi-check2-circle text-primary me-1"></i> Socratic hints & citations</span>
+            <span>Gemini 3.5 Flash + ChromaDB</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    let isAiDrawerOpen = false;
+
+    function toggleAiDrawer() {
+        isAiDrawerOpen = !isAiDrawerOpen;
+        const drawer = document.getElementById('aiChatDrawer');
+        drawer.style.transform = isAiDrawerOpen ? 'translateX(0)' : 'translateX(105%)';
+        if (isAiDrawerOpen) {
+            updateCourseContextLabel();
+            setTimeout(() => document.getElementById('aiChatInput').focus(), 300);
+        }
+    }
+
+    function updateCourseContextLabel() {
+        const titleSpan = document.getElementById('aiActiveCourseTitle');
+        if (window.CURRENT_COURSE_TITLE) {
+            titleSpan.innerHTML = `<span class="badge bg-primary-subtle text-primary border me-1">Course Scoped</span> ${window.CURRENT_COURSE_TITLE}`;
+        } else {
+            titleSpan.innerHTML = `<span class="badge bg-success-subtle text-success border me-1"><i class="bi bi-globe me-1"></i>Global Assistant</span> All Enrolled Courses`;
+        }
+    }
+
+    function clearAiChat() {
+        const body = document.getElementById('aiChatBody');
+        body.innerHTML = `
+            <div class="d-flex gap-2">
+                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width: 28px; height: 28px; font-size: 0.75rem;"><i class="bi bi-robot"></i></div>
+                <div class="p-3 bg-white rounded-4 shadow-sm border small" style="border-radius: 18px 18px 18px 4px !important; line-height: 1.55; color: #1e293b;">
+                    Chat history cleared. How can I help you with your course today?
+                </div>
+            </div>
+        `;
+    }
+
+    function sendQuickQuestion(q) {
+        document.getElementById('aiChatInput').value = q;
+        submitAiQuestion(new Event('submit'));
+    }
+
+    async function submitAiQuestion(e) {
+        if (e) e.preventDefault();
+        const input = document.getElementById('aiChatInput');
+        const query = input.value.trim();
+        if (!query) return;
+
+        const body = document.getElementById('aiChatBody');
+        const sendBtn = document.getElementById('aiSendBtn');
+
+        // Hide starter chips after first question
+        const chips = document.getElementById('aiQuickChips');
+        if (chips) chips.remove();
+
+        // Append User Bubble
+        body.innerHTML += `
+            <div class="d-flex justify-content-end mb-1">
+                <div class="p-3 text-white rounded-4 shadow-sm small" 
+                     style="max-width: 82%; background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%); border-radius: 18px 18px 4px 18px !important; line-height: 1.5;">
+                    ${escapeHtml(query)}
+                </div>
+            </div>
+        `;
+        input.value = '';
+        input.disabled = true;
+        sendBtn.disabled = true;
+        body.scrollTop = body.scrollHeight;
+
+        // Append Animated Loading Indicator
+        const loadingId = 'loading_' + Date.now();
+        body.innerHTML += `
+            <div id="${loadingId}" class="d-flex gap-2">
+                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width: 28px; height: 28px; font-size: 0.75rem;"><i class="bi bi-robot"></i></div>
+                <div class="p-3 bg-white rounded-4 shadow-sm border small text-muted d-flex align-items-center gap-2" style="border-radius: 18px 18px 18px 4px !important;">
+                    <div class="spinner-grow spinner-grow-sm text-primary" role="status"></div>
+                    <span>Consulting course notes & formulating Socratic hint...</span>
+                </div>
+            </div>
+        `;
+        body.scrollTop = body.scrollHeight;
+
+        try {
+            const activeCourseId = window.CURRENT_COURSE_ID || 0;
+
+            const res = await fetch('/Chatbot/Ask', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ Query: query, CourseId: activeCourseId })
+            });
+
+            const json = await res.json();
+            document.getElementById(loadingId)?.remove();
+
+            if (json.success && json.data) {
+                const formattedAnswer = renderFormattedMarkdown(json.data.answer);
+                
+                // Build model / cache performance pill
+                let metaPillHtml = '';
+                if (json.data.cached) {
+                    metaPillHtml = `<span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1"><i class="bi bi-lightning-charge-fill text-warning me-1"></i>Instant Semantic Cache (0ms &bull; 0 API calls)</span>`;
+                } else if (json.data.model_used === 'offline-extractive-fallback') {
+                    metaPillHtml = `<span class="badge bg-secondary text-white rounded-pill px-2 py-1"><i class="bi bi-shield-check me-1"></i>Tier-3 Offline Extractive Fallback</span>`;
+                } else if (json.data.model_used && json.data.model_used.includes('3.1')) {
+                    metaPillHtml = `<span class="badge bg-warning-subtle text-warning-emphasis border rounded-pill px-2 py-1"><i class="bi bi-shield-check me-1"></i>Tier-2 Model Cascade</span>`;
+                } else {
+                    metaPillHtml = `<span class="badge bg-primary-subtle text-primary border rounded-pill px-2 py-1"><i class="bi bi-stars me-1"></i>Gemini 3.5 Flash</span>`;
+                }
+
+                // Build citations badge list
+                let citationsHtml = '';
+                if (json.data.citations && json.data.citations.length > 0) {
+                    citationsHtml = '<div class="mt-2 pt-2 border-top small text-muted" style="font-size: 0.72rem;"><strong>Verified Citations:</strong><div class="d-flex flex-wrap gap-1 mt-1">';
+                    json.data.citations.forEach(c => {
+                        citationsHtml += `<span class="badge bg-light text-dark border px-2 py-1"><i class="bi bi-file-earmark-text text-primary me-1"></i>${c.source_file} (p.${c.page_number})</span>`;
+                    });
+                    citationsHtml += '</div></div>';
+                }
+
+                body.innerHTML += `
+                    <div class="d-flex gap-2 mb-2">
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width: 28px; height: 28px; font-size: 0.75rem;"><i class="bi bi-robot"></i></div>
+                        <div class="p-3 bg-white rounded-4 shadow-sm border small text-dark" 
+                             style="max-width: 88%; border-radius: 18px 18px 18px 4px !important; line-height: 1.6;">
+                            <div class="mb-2 d-flex align-items-center gap-1">${metaPillHtml}</div>
+                            ${formattedAnswer}
+                            ${citationsHtml}
+                        </div>
+                    </div>
+                `;
+            } else {
+                body.innerHTML += `
+                    <div class="d-flex gap-2">
+                        <div class="rounded-circle bg-danger text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width: 28px; height: 28px;">!</div>
+                        <div class="p-3 bg-danger-subtle text-danger rounded-4 shadow-sm border small" style="border-radius: 18px 18px 18px 4px !important;">
+                            ${json.message || "Failed to formulate response."}
+                        </div>
+                    </div>
+                `;
+            }
+        } catch (err) {
+            document.getElementById(loadingId)?.remove();
+            body.innerHTML += `
+                <div class="d-flex gap-2">
+                    <div class="rounded-circle bg-danger text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width: 28px; height: 28px;">!</div>
+                    <div class="p-3 bg-danger-subtle text-danger rounded-4 shadow-sm border small">
+                        Could not reach the AI service. Ensure Python RAG API is active on port 8000.
+                    </div>
+                </div>
+            `;
+        }
+
+        input.disabled = false;
+        sendBtn.disabled = false;
+        input.focus();
+        body.scrollTop = body.scrollHeight;
+    }
+
+    // Lightweight markdown formatter for bolding, bullet points, code blocks & line breaks
+    function renderFormattedMarkdown(text) {
+        if (!text) return '';
+        let escaped = escapeHtml(text);
+
+        // Code blocks: ```code```
+        escaped = escaped.replace(/```([\s\S]*?)```/g, '<pre class="bg-dark text-white p-2 rounded small my-2 overflow-auto" style="font-size: 0.75rem;"><code>$1</code></pre>');
+        // Inline code: `code`
+        escaped = escaped.replace(/`([^`]+)`/g, '<code class="bg-light text-primary px-1 rounded border">$1</code>');
+        // Bold: **text**
+        escaped = escaped.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+        // Headings: ### Heading
+        escaped = escaped.replace(/###\s*([^\n]+)/g, '<h6 class="fw-bold mt-2 mb-1 text-dark">$1</h6>');
+        escaped = escaped.replace(/##\s*([^\n]+)/g, '<h6 class="fw-bold mt-2 mb-1 text-primary">$1</h6>');
+        // Bullet points: * or -
+        escaped = escaped.replace(/(?:^|\n)[*-]\s+([^\n]+)/g, '<div class="ms-2 d-flex gap-1"><span>&bull;</span><span>$1</span></div>');
+        // Line breaks
+        escaped = escaped.replace(/\n\n/g, '<br/><br/>');
+        escaped = escaped.replace(/\n/g, '<br/>');
+
+        return escaped;
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+</script>
