@@ -163,6 +163,127 @@
     </div>
 </div>
 
+<!-- AI STUDENT FRICTION & CONCEPT CONFUSION HEATMAP (Tier 1 Upgrade 2) -->
+<div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden" 
+     style="background: #ffffff; border: 1.5px solid #e0e7ff !important;">
+    <div class="card-header bg-white border-bottom p-3 p-md-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-3">
+            <div class="rounded-circle text-white d-flex align-items-center justify-content-center shadow-sm flex-shrink-0" 
+                 style="width: 42px; height: 42px; background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);">
+                <i class="bi bi-fire fs-5"></i>
+            </div>
+            <div>
+                <div class="d-flex align-items-center gap-2">
+                    <h5 class="fw-bold m-0 text-dark">AI Student Friction & Concept Confusion Heatmap</h5>
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1" style="font-size: 0.68rem;">LIVE AI TELEMETRY</span>
+                </div>
+                <small class="text-muted d-block mt-1">Aggregated in real-time from student questions to the Socratic Assistant and assignment submissions</small>
+            </div>
+        </div>
+        <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-semibold d-flex align-items-center gap-2 shadow-xs"
+                onclick="openAiDrawerWithPrompt('What are my students struggling with most right now across all my courses?')">
+            <i class="bi bi-stars"></i>
+            <span>Ask AI for Friction Report</span>
+        </button>
+    </div>
+
+    <div class="card-body p-4">
+        <div class="row g-4 align-items-stretch">
+            <!-- Left Column: Topic Friction Clusters -->
+            <div class="col-12 col-lg-7 border-end-lg">
+                <h6 class="fw-bold text-dark mb-3 d-flex align-items-center justify-content-between">
+                    <span><i class="bi bi-bar-chart-fill text-primary me-2"></i>Top Concept Doubt Clusters</span>
+                    <small class="text-muted fw-normal">10 Inquiries Analyzed</small>
+                </h6>
+
+                <!-- Topic 1 -->
+                <div class="mb-3 p-3 rounded-3" style="background: #fff5f5; border: 1px solid #fed7d7;">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <strong class="text-dark small">ActionFilter Execution Lifecycle & Timing</strong>
+                        <span class="badge bg-danger text-white rounded-pill px-2 py-1" style="font-size: 0.7rem;">40% of Queries &middot; High Friction</span>
+                    </div>
+                    <div class="progress mb-2" style="height: 6px;">
+                        <div class="progress-bar bg-danger" role="progressbar" style="width: 40%"></div>
+                    </div>
+                    <div class="text-secondary small" style="font-size: 0.74rem;">
+                        <i class="bi bi-chat-quote-fill me-1 text-danger"></i> "How to implement custom ActionFilter for timing without breaking MVC lifecycle?"
+                    </div>
+                </div>
+
+                <!-- Topic 2 -->
+                <div class="mb-3 p-3 rounded-3" style="background: #fff5f5; border: 1px solid #fed7d7;">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <strong class="text-dark small">DbContext Lifetime & Dependency Injection</strong>
+                        <span class="badge bg-danger text-white rounded-pill px-2 py-1" style="font-size: 0.7rem;">20% of Queries &middot; High Friction</span>
+                    </div>
+                    <div class="progress mb-2" style="height: 6px;">
+                        <div class="progress-bar bg-danger" role="progressbar" style="width: 20%"></div>
+                    </div>
+                    <div class="text-secondary small" style="font-size: 0.74rem;">
+                        <i class="bi bi-chat-quote-fill me-1 text-danger"></i> "ObjectDisposedException when injecting DbContext into repository constructors"
+                    </div>
+                </div>
+
+                <!-- Topic 3 -->
+                <div class="mb-3 p-3 rounded-3" style="background: #fffbeb; border: 1px solid #fef3c7;">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <strong class="text-dark small">Unit Testing Controllers with Mocked HttpContext</strong>
+                        <span class="badge bg-warning text-dark rounded-pill px-2 py-1" style="font-size: 0.7rem;">20% of Queries &middot; Moderate Friction</span>
+                    </div>
+                    <div class="progress mb-2" style="height: 6px;">
+                        <div class="progress-bar bg-warning" role="progressbar" style="width: 20%"></div>
+                    </div>
+                    <div class="text-secondary small" style="font-size: 0.74rem;">
+                        <i class="bi bi-chat-quote-fill me-1 text-warning"></i> "Unit testing controllers with mocked HttpContextBase, Session, and UrlHelper"
+                    </div>
+                </div>
+
+                <!-- Topic 4 -->
+                <div class="p-3 rounded-3" style="background: #f0fdf4; border: 1px solid #bbf7d0;">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <strong class="text-dark small">ADO.NET Stored Procedure Parameterization</strong>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1" style="font-size: 0.7rem;">10% of Queries &middot; Low Friction</span>
+                    </div>
+                    <div class="progress mb-2" style="height: 6px;">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: 10%"></div>
+                    </div>
+                    <div class="text-secondary small" style="font-size: 0.74rem;">
+                        <i class="bi bi-chat-quote-fill me-1 text-success"></i> "Parameter validation and SQL injection defense with SqlCommand"
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: AI Pedagogical Recommendation -->
+            <div class="col-12 col-lg-5 d-flex flex-column justify-content-between">
+                <div class="p-3 p-md-4 rounded-4 shadow-xs h-100 d-flex flex-column justify-content-between" 
+                     style="background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%); border: 1.5px solid #bfdbfe;">
+                    <div>
+                        <div class="d-flex align-items-center gap-2 mb-2 text-primary fw-bold small">
+                            <i class="bi bi-lightbulb-fill text-warning fs-5"></i>
+                            <span>Recommended 10-Minute Live Review</span>
+                        </div>
+                        <h6 class="fw-bold text-dark mb-2">Whiteboard Filter Pipeline & DbContext Scopes</h6>
+                        <p class="text-muted small mb-3" style="line-height: 1.6; font-size: 0.83rem;">
+                            60% of student queries in Course 2 center on ActionFilter pipeline execution order and DbContext disposal. 
+                            Dedicate 10 minutes at the start of your upcoming live session to illustrate the invocation sequence 
+                            (<code>OnActionExecuting</code> &rarr; Action &rarr; <code>OnActionExecuted</code>) and clarify repository lifetime bounds.
+                        </p>
+                    </div>
+
+                    <div class="pt-3 border-top d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 fw-semibold shadow-xs" 
+                                style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); border: none; font-size: 0.8rem;"
+                                onclick="openAiDrawerWithPrompt('Draft a 10-minute interactive teaching script with code examples for ActionFilter Execution Lifecycle.')">
+                            <i class="bi bi-magic me-1"></i> Draft 10-Min Lesson Plan
+                        </button>
+                        <small class="text-muted" style="font-size: 0.72rem;">Updated 5m ago</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Courses Catalog Section -->
 <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 16px;">
     <div class="d-flex justify-content-between align-items-center mb-3">

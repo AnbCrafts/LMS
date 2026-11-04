@@ -15,6 +15,7 @@ from typing import Optional, List, Dict, Any
 from rag_engine import RAGEngine
 from resilience import rate_limiter, semantic_cache
 from vector_store import get_query_embedding
+from course_recommender import recommender
 
 app = FastAPI(title="EduPulse LMS RAG Assistant API", version="1.0")
 
@@ -91,31 +92,34 @@ def handle_chat(req: ChatRequest):
 
     course_key = req.course_id if req.course_id is not None else 0
     q_vec = None
+    is_instructor = (req.user_role or "student").lower() in ("instructor", "admin")
 
-    # 3. High-Speed Semantic Cache Lookup (<5ms, zero token cost)
-    try:
-        q_vec = get_query_embedding(req.query)
-        cached_semantic = semantic_cache.get(req.query, q_vec, course_key)
-        if cached_semantic:
-            rate_limiter.store_duplicate(user_key, req.query, cached_semantic)
-            return cached_semantic
-    except Exception as emb_err:
-        print(f"[Cache Lookup Warning] Embedding generation failed for cache lookup: {emb_err}")
+    # 3. High-Speed Semantic Cache Lookup (<5ms, zero token cost) - Only for static curriculum queries
+    if not is_instructor:
+        try:
+            q_vec = get_query_embedding(req.query)
+            cached_semantic = semantic_cache.get(req.query, q_vec, course_key)
+            if cached_semantic:
+                rate_limiter.store_duplicate(user_key, req.query, cached_semantic)
+                return cached_semantic
+        except Exception as emb_err:
+            print(f"[Cache Lookup Warning] Embedding generation failed for cache lookup: {emb_err}")
 
-    # 4. Fall through to RAG Engine with Cascading Model Tiers
+    # 4. Fall through to RAG Engine with Cascading Model Tiers & Agentic Tools
     try:
         result = engine.answer_query(
             query=req.query,
             course_id=course_key,
             enrolled_course_ids=req.enrolled_course_ids,
             user_role=req.user_role or "student",
-            top_k=req.top_k or 3
+            top_k=req.top_k or 3,
+            user_id=req.user_id
         )
         result["cached"] = False
         result["cache_similarity"] = None
 
-        # 5. Save verified answer to Semantic Cache and Duplicate Cache
-        if q_vec and result.get("model_used") != "offline-extractive-fallback":
+        # 5. Save verified answer to Semantic Cache (for static student queries)
+        if not is_instructor and q_vec and result.get("model_used") != "offline-extractive-fallback":
             semantic_cache.put(req.query, q_vec, course_key, result)
         rate_limiter.store_duplicate(user_key, req.query, result)
 
@@ -212,6 +216,108 @@ LECTURE MATERIAL:
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"AI Quiz Generation failed: {str(e)}")
+
+
+class RecommendCoursesRequest(BaseModel):
+    interests: str
+    learner_level: Optional[str] = "All"
+    top_k: Optional[int] = 3
+
+
+@app.post("/api/recommend-courses")
+def handle_recommend_courses(req: RecommendCoursesRequest):
+    if not req.interests or not req.interests.strip():
+        raise HTTPException(status_code=400, detail="Please specify your interests or learning goals.")
+    
+    try:
+        result = recommender.recommend(
+            interests=req.interests.strip(),
+            user_level=req.learner_level or "All",
+            top_k=req.top_k or 3
+        )
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Course recommendation failed: {str(e)}")
+
+
+@app.get("/api/instructor/friction-heatmap/{instructor_id}")
+def get_friction_heatmap_endpoint(instructor_id: int, course_id: Optional[int] = None):
+    """
+    Returns aggregated student friction metrics, difficulty levels, and AI recommendations.
+    """
+    try:
+        from instructor_tools import get_student_friction_data, get_student_friction_report
+        data = get_student_friction_data(instructor_id, course_id)
+        report = get_student_friction_report(instructor_id, course_id)
+        data["report_markdown"] = report
+        return data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch friction heatmap: {str(e)}")
+
+
+@app.post("/api/ingest-study-material")
+async def ingest_study_material_endpoint(
+    file: UploadFile = File(...),
+    course_id: int = Form(1),
+    visibility: str = Form("student"),
+    doc_type: str = Form("lecture_notes")
+):
+    """
+    Accepts an uploaded PDF study material, chunks it, generates vector embeddings,
+    and indexes it into ChromaDB with course_id and RBAC metadata in real time.
+    """
+    if not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Only PDF documents can be ingested into vector search.")
+    
+    content = await file.read()
+    if len(content) == 0:
+        raise HTTPException(status_code=400, detail="Uploaded file is empty.")
+    
+    import tempfile
+    import os
+    
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+        tmp.write(content)
+        tmp_path = tmp.name
+
+    try:
+        from chunker import prepare_documents_for_indexing
+        from vector_store import add_documents_to_vector_db
+        
+        chunks = prepare_documents_for_indexing(
+            file_path=tmp_path,
+            course_id=int(course_id),
+            visibility=visibility,
+            doc_type=doc_type
+        )
+        
+        # Override source_file metadata to use real filename
+        for c in chunks:
+            if "metadata" in c:
+                c["metadata"]["source_file"] = file.filename
+                
+        if chunks:
+            add_documents_to_vector_db(chunks)
+            try:
+                from hybrid_search import bm25_engine
+                bm25_engine.build_index(force_refresh=True)
+            except Exception as bm_err:
+                print(f"[BM25 Refresh Warning] {bm_err}")
+            
+        return {
+            "success": True,
+            "filename": file.filename,
+            "course_id": course_id,
+            "chunks_indexed": len(chunks)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Ingestion failed: {str(e)}")
+    finally:
+        if os.path.exists(tmp_path):
+            try:
+                os.remove(tmp_path)
+            except:
+                pass
 
 
 if __name__ == "__main__":

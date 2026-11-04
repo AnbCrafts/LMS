@@ -11,7 +11,8 @@ from dotenv import load_dotenv
 from typing import List, Dict, Any
 
 # Load configuration from .env
-load_dotenv()
+ENV_PATH = os.path.join(os.path.dirname(__file__), ".env")
+load_dotenv(ENV_PATH)
 api_key = os.getenv("GEMINI_API_KEY")
 if not api_key:
     raise ValueError("GEMINI_API_KEY is missing from .env file!")
@@ -20,6 +21,8 @@ genai.configure(api_key=api_key)
 
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "models/gemini-embedding-001")
 DB_DIR = os.getenv("CHROMA_DB_DIR", "./chroma_data")
+if not os.path.isabs(DB_DIR):
+    DB_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), DB_DIR))
 
 # Initialize persistent local ChromaDB
 client = chromadb.PersistentClient(path=DB_DIR)

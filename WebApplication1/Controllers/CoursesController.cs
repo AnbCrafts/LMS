@@ -2,8 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
+using Newtonsoft.Json;
 using WebApplication1.Models;
 using WebApplication1.Repositories;
 
@@ -16,6 +20,18 @@ namespace WebApplication1.Controllers
         private readonly IReviewRepository _reviewRepo;
         private readonly IQuizRepository _quizRepo;
         private readonly IInstructorRepository _instructorRepo;
+
+        private static readonly HttpClient _ragHttpClient = new HttpClient
+        {
+            BaseAddress = new Uri("http://127.0.0.1:8000/"),
+            Timeout = TimeSpan.FromSeconds(45)
+        };
+
+        public class AiRecommendRequestDto
+        {
+            public string Interests { get; set; }
+            public string Level { get; set; }
+        }
 
         public CoursesController()
         {
@@ -97,6 +113,50 @@ namespace WebApplication1.Controllers
             ViewBag.CurrentCategory = selectedCategories.Count == 1 ? selectedCategories[0] : (selectedCategories.Count > 1 ? string.Join(", ", selectedCategories) : "All");
 
             return View(viewModel);
+        }
+
+        // POST: /Courses/AiRecommend
+        [HttpPost]
+        public async Task<ActionResult> AiRecommend(AiRecommendRequestDto dto)
+        {
+            if (dto == null || string.IsNullOrWhiteSpace(dto.Interests))
+            {
+                return Json(new { success = false, message = "Please describe your field of interest or learning goal." });
+            }
+
+            try
+            {
+                var payload = new
+                {
+                    interests = dto.Interests.Trim(),
+                    learner_level = string.IsNullOrWhiteSpace(dto.Level) ? "All" : dto.Level.Trim(),
+                    top_k = 3
+                };
+
+                var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+                var response = await _ragHttpClient.PostAsync("api/recommend-courses", content);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    string errBody = await response.Content.ReadAsStringAsync();
+                    return Json(new { success = false, message = "AI Course Advisor is temporarily unavailable. " + errBody });
+                }
+
+                string responseString = await response.Content.ReadAsStringAsync();
+                return Content(responseString, "application/json");
+            }
+            catch (HttpRequestException)
+            {
+                return Json(new
+                {
+                    success = false,
+                    message = "Could not reach the AI Advisor microservice on port 8000. Please ensure the Python service is active."
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "An error occurred: " + ex.Message });
+            }
         }
 
         // GET: /Courses/Details/1

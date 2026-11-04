@@ -165,6 +165,55 @@
             }
         </div>
 
+        <!-- IN-LINE AI SOCRATIC LESSON ASSISTANT BAR (Tier 1 Upgrade 1) -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4 p-3" 
+             style="background: linear-gradient(135deg, #f0fdf4 0%, #eff6ff 100%); border: 1.5px solid #bfdbfe !important;">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="rounded-circle text-white d-inline-flex align-items-center justify-content-center shadow-xs" 
+                          style="width: 34px; height: 34px; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);">
+                        <i class="bi bi-stars"></i>
+                    </span>
+                    <div>
+                        <strong class="text-dark small d-block">AI Socratic Study Assistant &middot; Lesson @activeNum</strong>
+                        <span class="text-muted" style="font-size: 0.72rem;">Ask instant conceptual questions grounded in this lesson's slides and curriculum</span>
+                    </div>
+                </div>
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 small">
+                    <i class="bi bi-cpu-fill me-1"></i> Hybrid RAG (Dense + BM25)
+                </span>
+            </div>
+
+            <!-- Quick Socratic Inquiry Chips -->
+            <div class="d-flex align-items-center gap-2 flex-wrap mt-1">
+                <span class="text-muted small fw-semibold me-1" style="font-size: 0.78rem;">Quick Actions:</span>
+                
+                <button type="button" class="btn btn-sm btn-white bg-white border rounded-pill px-3 py-1 text-dark shadow-xs" 
+                        style="font-size: 0.78rem;"
+                        onclick="openAiDrawerWithPrompt('Summarize the core technical concepts of Lesson @activeNum (@Model.ActiveLesson.Title) in 3 key takeaways with analogies.')">
+                    <i class="bi bi-card-checklist text-primary me-1"></i> 3 Key Takeaways
+                </button>
+
+                <button type="button" class="btn btn-sm btn-white bg-white border rounded-pill px-3 py-1 text-dark shadow-xs" 
+                        style="font-size: 0.78rem;"
+                        onclick="openAiDrawerWithPrompt('What is the most challenging architectural concept in Lesson @activeNum (@Model.ActiveLesson.Title), and how does it work under the hood?')">
+                    <i class="bi bi-lightbulb-fill text-warning me-1"></i> Explain Hardest Concept
+                </button>
+
+                <button type="button" class="btn btn-sm btn-white bg-white border rounded-pill px-3 py-1 text-dark shadow-xs" 
+                        style="font-size: 0.78rem;"
+                        onclick="openAiDrawerWithPrompt('Quiz me with 2 conceptual questions based on Lesson @activeNum (@Model.ActiveLesson.Title) without giving away the answers.')">
+                    <i class="bi bi-patch-question-fill text-success me-1"></i> Quiz Me Socratic
+                </button>
+
+                <button type="button" class="btn btn-sm btn-white bg-white border rounded-pill px-3 py-1 text-dark shadow-xs" 
+                        style="font-size: 0.78rem;"
+                        onclick="openAiDrawerWithPrompt('What practical real-world production project can I build using what is taught in Lesson @activeNum (@Model.ActiveLesson.Title)?')">
+                    <i class="bi bi-laptop-fill text-info me-1"></i> Real-World Project Ideas
+                </button>
+            </div>
+        </div>
+
         <!-- Lesson Description & Study Material -->
         <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 18px; border: 1px solid #e2e8f0 !important;">
             <div class="d-flex justify-content-between align-items-center mb-3">

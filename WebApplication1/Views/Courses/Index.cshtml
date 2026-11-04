@@ -192,6 +192,97 @@
 
     <!-- RIGHT MAIN CONTENT: POPULAR PILLS, ACTIVE FILTERS BAR & COURSES GRID -->
     <div class="col-12 col-lg-9">
+        <!-- AI Course Matcher & Career Advisor Card -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden" 
+             style="background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%); border: 1px solid #bfdbfe !important;">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-circle text-white d-flex align-items-center justify-content-center shadow-sm flex-shrink-0" 
+                             style="width: 44px; height: 44px; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);">
+                            <i class="bi bi-stars fs-4"></i>
+                        </div>
+                        <div>
+                            <div class="d-flex align-items-center gap-2">
+                                <h5 class="fw-bold m-0 text-dark">AI Course Matcher & Career Advisor</h5>
+                                <span class="badge bg-primary text-white rounded-pill px-2 py-1" style="font-size: 0.68rem; letter-spacing: 0.5px;">SEMANTIC DISCOVERY</span>
+                            </div>
+                            <small class="text-muted d-block mt-1">Can't find an exact title? Tell our AI what you want to build or learn - it analyzes our complete curriculum to recommend the most relevant or foundational courses.</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Advisor Input Form -->
+                <form id="aiAdvisorForm" onsubmit="submitAiAdvisor(event)" class="mb-2">
+                    <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white p-1 border">
+                        <span class="input-group-text bg-transparent border-0 text-muted ps-3">
+                            <i class="bi bi-compass text-primary fs-5"></i>
+                        </span>
+                        <input type="text" id="aiAdvisorQuery" class="form-control border-0 bg-transparent px-2 shadow-none" 
+                               placeholder="E.g., 'I want to build real-time trading dashboards' or 'I want to break into cloud DevOps'..." 
+                               required autocomplete="off" />
+                        <button type="submit" id="aiAdvisorBtn" class="btn btn-primary rounded-pill px-4 fw-semibold d-flex align-items-center gap-2" 
+                                style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); border: none;">
+                            <i class="bi bi-magic"></i>
+                            <span>Find Courses</span>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Inspiration Quick Prompt Chips (Using Bootstrap Icons, Zero Mojibake Emojis) -->
+                <div class="d-flex align-items-center gap-1 flex-wrap mt-2">
+                    <small class="text-muted fw-semibold me-1"><i class="bi bi-lightbulb-fill text-warning"></i> Try asking:</small>
+                    <button type="button" class="btn btn-sm btn-white bg-white border rounded-pill px-3 py-1 text-dark small shadow-xs" style="font-size: 0.78rem;" 
+                            onclick="setAiPrompt('I want to build real-time trading dashboards with web sockets and live streaming data')">
+                        <i class="bi bi-lightning-charge-fill text-warning me-1"></i> Real-time Dashboards & WebSockets
+                    </button>
+                    <button type="button" class="btn btn-sm btn-white bg-white border rounded-pill px-3 py-1 text-dark small shadow-xs" style="font-size: 0.78rem;" 
+                            onclick="setAiPrompt('I want to master container orchestration, Kubernetes clusters, and automated CI/CD pipelines')">
+                        <i class="bi bi-boxes text-info me-1"></i> DevOps, Kubernetes & CI/CD
+                    </button>
+                    <button type="button" class="btn btn-sm btn-white bg-white border rounded-pill px-3 py-1 text-dark small shadow-xs" style="font-size: 0.78rem;" 
+                            onclick="setAiPrompt('I want to learn enterprise SQL database architecture, stored procedures, and clean backend APIs')">
+                        <i class="bi bi-database-fill text-primary me-1"></i> Enterprise SQL & Architecture
+                    </button>
+                    <button type="button" class="btn btn-sm btn-white bg-white border rounded-pill px-3 py-1 text-dark small shadow-xs" style="font-size: 0.78rem;" 
+                            onclick="setAiPrompt('I am interested in multi-cloud infrastructure as code on AWS and GCP with Terraform')">
+                        <i class="bi bi-cloud-check-fill text-info me-1"></i> Multi-Cloud & Terraform
+                    </button>
+                    <button type="button" class="btn btn-sm btn-white bg-white border rounded-pill px-3 py-1 text-dark small shadow-xs" style="font-size: 0.78rem;" 
+                            onclick="setAiPrompt('I want to learn ethical hacking, network penetration testing, and security defenses')">
+                        <i class="bi bi-shield-lock-fill text-success me-1"></i> Cyber Security & Defense
+                    </button>
+                </div>
+
+                <!-- Advisor Loading Shimmer -->
+                <div id="aiAdvisorLoading" class="mt-4 p-4 text-center bg-white rounded-4 border d-none shadow-sm">
+                    <div class="spinner-grow text-primary mb-2" role="status"></div>
+                    <h6 class="fw-bold text-dark m-0">Analyzing course curriculum vectors & synthesizing recommendations...</h6>
+                    <small class="text-muted">Evaluating skill transferability, module alignment, and learning pathways.</small>
+                </div>
+
+                <!-- Advisor Results Container -->
+                <div id="aiAdvisorResults" class="mt-4 d-none">
+                    <!-- Pathway Header Alert -->
+                    <div class="p-3 bg-white rounded-4 border mb-3 shadow-sm" style="border-left: 5px solid #4f46e5 !important;">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                            <span id="aiMatchStatusBadge" class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1">Direct Match</span>
+                            <button type="button" class="btn btn-link btn-sm text-muted text-decoration-none p-0" onclick="clearAiRecommendations()">
+                                <i class="bi bi-x-circle me-1"></i> Close Recommendations & View All Courses
+                            </button>
+                        </div>
+                        <div class="d-flex align-items-start gap-2 mt-2">
+                            <i class="bi bi-signpost-split-fill text-primary fs-5 flex-shrink-0"></i>
+                            <div class="fw-semibold text-dark" id="aiPathwayTip" style="font-size: 0.93rem; line-height: 1.55;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Recommendations Cards Grid (Spacious 2-column layout) -->
+                    <div class="row g-3" id="aiRecommendationsGrid"></div>
+                </div>
+            </div>
+        </div>
+
         <!-- Top Popular Quick Category Pills Bar (Dynamically derived from DB) -->
         <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
             <span class="text-muted small fw-bold me-1">
@@ -435,6 +526,154 @@
                 noMatchMsg.classList.add('d-none');
             }
         }
+    }
+
+    // AI Course Advisor Quick Prompt Chip Setter
+    function setAiPrompt(text) {
+        var input = document.getElementById('aiAdvisorQuery');
+        if (input) {
+            input.value = text;
+            submitAiAdvisor();
+        }
+    }
+
+    // Submit user's fields / interests to AI Advisor endpoint
+    async function submitAiAdvisor(e) {
+        if (e) e.preventDefault();
+        var input = document.getElementById('aiAdvisorQuery');
+        var query = (input.value || '').trim();
+        if (!query) return;
+
+        var btn = document.getElementById('aiAdvisorBtn');
+        var loading = document.getElementById('aiAdvisorLoading');
+        var results = document.getElementById('aiAdvisorResults');
+        var grid = document.getElementById('aiRecommendationsGrid');
+        var tip = document.getElementById('aiPathwayTip');
+        var statusBadge = document.getElementById('aiMatchStatusBadge');
+
+        btn.disabled = true;
+        loading.classList.remove('d-none');
+        results.classList.add('d-none');
+        grid.innerHTML = '';
+
+        try {
+            var res = await fetch('/Courses/AiRecommend', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ Interests: query, Level: 'All' })
+            });
+
+            var data = await res.json();
+            loading.classList.add('d-none');
+            btn.disabled = false;
+
+            if (data.success && data.recommendations && data.recommendations.length > 0) {
+                results.classList.remove('d-none');
+                tip.innerText = data.pathway_tip || 'Follow these recommended courses to acquire relevant engineering skills.';
+
+                // Match status badge
+                if (data.has_exact_match) {
+                    statusBadge.className = 'badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1';
+                    statusBadge.innerHTML = '<i class="bi bi-check2-circle me-1"></i>Direct Domain Match Found';
+                } else {
+                    statusBadge.className = 'badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-1';
+                    statusBadge.innerHTML = '<i class="bi bi-lightbulb-fill me-1"></i>Closest Related Learning Pathway';
+                }
+
+                // Render dynamic recommendation cards (Spacious, responsive 2-column layout)
+                var html = '';
+                data.recommendations.forEach(function(r) {
+                    var isDirect = r.match_score >= 88;
+                    var matchBadgeBg = isDirect 
+                        ? 'background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;' 
+                        : 'background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;';
+                    
+                    var matchIcon = isDirect ? 'bi-check-circle-fill' : 'bi-lightbulb-fill';
+                    var rationaleBorderColor = isDirect ? '#10b981' : '#3b82f6';
+
+                    html += `
+                        <div class="col-12 col-lg-6">
+                            <div class="card h-100 border-0 rounded-4 shadow-sm p-4 d-flex flex-column justify-content-between" 
+                                 style="background: #ffffff; border: 1px solid #e2e8f0 !important; transition: transform 0.2s, box-shadow 0.2s;">
+                                <div>
+                                    <!-- Card Header: Badges -->
+                                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                                        <span class="badge rounded-pill px-3 py-1 fw-bold" style="${matchBadgeBg}; font-size: 0.76rem;">
+                                            <i class="bi ${matchIcon} me-1"></i>${r.match_score}% Match - ${escapeHtml(r.match_label)}
+                                        </span>
+                                        <div class="d-flex align-items-center gap-1">
+                                            <span class="badge bg-light text-dark border rounded-pill px-2 py-1" style="font-size: 0.72rem;">
+                                                ${escapeHtml(r.level || 'All Levels')}
+                                            </span>
+                                            <span class="badge bg-primary-subtle text-primary border rounded-pill px-2 py-1" style="font-size: 0.72rem;">
+                                                ${escapeHtml(r.category || 'Tech')}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Course Title -->
+                                    <h5 class="fw-bold text-dark mb-2" style="font-size: 1.05rem; line-height: 1.45;">
+                                        ${escapeHtml(r.title)}
+                                    </h5>
+
+                                    <!-- Instructor & Duration Meta -->
+                                    <div class="text-muted small mb-3 d-flex align-items-center gap-3" style="font-size: 0.8rem;">
+                                        <span><i class="bi bi-person-fill text-primary me-1"></i>${escapeHtml(r.instructor || 'Verified Instructor')}</span>
+                                        <span><i class="bi bi-clock-fill text-secondary me-1"></i>${r.duration_weeks || 8} Weeks</span>
+                                    </div>
+
+                                    <!-- AI Personalized Rationale Callout -->
+                                    <div class="p-3 mb-3 rounded-3" style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-left: 4px solid ${rationaleBorderColor};">
+                                        <div class="d-flex align-items-center gap-1 text-dark fw-bold small mb-1" style="font-size: 0.8rem;">
+                                            <i class="bi bi-magic text-primary"></i>
+                                            <span>Why this matches your goal:</span>
+                                        </div>
+                                        <p class="text-secondary small m-0" style="line-height: 1.55; font-size: 0.82rem;">
+                                            ${escapeHtml(r.rationale || '')}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- Card Footer: Price & CTA Button -->
+                                <div class="d-flex align-items-center justify-content-between pt-3 border-top mt-2">
+                                    <div>
+                                        <small class="text-muted d-block" style="font-size: 0.7rem;">Course Tuition</small>
+                                        <span class="fw-bold fs-5 text-dark">${r.price > 0 ? '$' + Number(r.price).toFixed(2) : 'Free'}</span>
+                                    </div>
+                                    <a href="/Courses/Details/${r.course_id}" class="btn btn-primary rounded-pill px-3 py-2 fw-semibold d-inline-flex align-items-center gap-2 shadow-sm" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); border: none; font-size: 0.85rem;">
+                                        <span>Explore Curriculum</span>
+                                        <i class="bi bi-arrow-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                grid.innerHTML = html;
+                results.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            } else {
+                alert(data.message || 'No specific course recommendations could be generated for that query. Try rephrasing your goal.');
+            }
+        } catch (err) {
+            loading.classList.add('d-none');
+            btn.disabled = false;
+            alert('Could not connect to AI Course Advisor. Please ensure RAG Service is active.');
+        }
+    }
+
+    function clearAiRecommendations() {
+        var results = document.getElementById('aiAdvisorResults');
+        if (results) results.classList.add('d-none');
+        var input = document.getElementById('aiAdvisorQuery');
+        if (input) input.value = '';
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        var div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 </script>
 }

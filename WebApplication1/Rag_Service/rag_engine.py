@@ -16,6 +16,15 @@ from google.api_core import exceptions
 from dotenv import load_dotenv
 
 from vector_store import query_vector_db
+from hybrid_search import query_hybrid, bm25_engine
+from instructor_tools import (
+    detect_instructor_intent,
+    get_instructor_metrics_report,
+    get_student_friction_report,
+    get_target_submission,
+    evaluate_submission_ai,
+    apply_submission_grade
+)
 
 # Load environment configuration
 load_dotenv()
@@ -135,17 +144,137 @@ class RAGEngine:
         course_id: int = 1,
         enrolled_course_ids: Optional[List[int]] = None,
         user_role: str = "student",
-        top_k: int = 3
+        top_k: int = 3,
+        user_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Main Resilient RAG pipeline:
-        1. Retrieve top-k relevant chunks (supports multi-course search).
-        2. Construct system prompt and context block.
-        3. Model Cascade: Primary -> Secondary -> Tertiary Extractive Notes.
-        4. Return answer, parsed citations, model used, and audit metadata.
+        Agentic Multi-Role RAG Pipeline:
+        - If Instructor/Admin asks about students, pending grading, or assignment evaluation:
+          Uses live database tools & Gemini Auto-Evaluator (Pillar 1: Agentic Tools).
+        - Otherwise performs semantic vector retrieval over ChromaDB with role-based access control.
         """
-        # Step 1: Vector Retrieval with hard RBAC filter & multi-course support
-        retrieved_chunks = query_vector_db(
+        # ====================================================================
+        # AGENTIC ROUTER: INSTRUCTOR ANALYTICS & ASSIGNMENT AUTO-EVALUATOR
+        # ====================================================================
+        if user_role.lower() in ("instructor", "admin"):
+            instructor_id = 1
+            if user_id:
+                try:
+                    instructor_id = int(user_id)
+                except (ValueError, TypeError):
+                    pass
+
+            intent, intent_params = detect_instructor_intent(query)
+
+            # Agentic Tool 1: Live Analytics & Grading Backlog Overview
+            if intent == "metrics":
+                report_markdown = get_instructor_metrics_report(instructor_id)
+                return {
+                    "query": query,
+                    "answer": report_markdown,
+                    "role": user_role,
+                    "course_id": course_id,
+                    "citations": [],
+                    "model_used": "agentic-instructor-analytics",
+                    "sources_count": 0,
+                    "sources_used": []
+                }
+
+            # Agentic Tool 1.5: Student Learning Friction & Confusion Heatmap
+            elif intent == "friction_analytics":
+                c_id = intent_params.get("course_id")
+                report_markdown = get_student_friction_report(instructor_id, c_id)
+                return {
+                    "query": query,
+                    "answer": report_markdown,
+                    "role": user_role,
+                    "course_id": course_id,
+                    "citations": [],
+                    "model_used": "agentic-student-friction-analytics",
+                    "sources_count": 0,
+                    "sources_used": []
+                }
+
+            # Agentic Tool 2: AI Assignment Auto-Evaluation
+            elif intent == "evaluate":
+                target_sub = get_target_submission(instructor_id, intent_params)
+                if target_sub:
+                    eval_markdown = evaluate_submission_ai(target_sub)
+                    return {
+                        "query": query,
+                        "answer": eval_markdown,
+                        "role": user_role,
+                        "course_id": target_sub.get("course_id", course_id),
+                        "citations": [
+                            {
+                                "source_file": f"Submission #{target_sub['submission_id']} ({target_sub['student_name']})",
+                                "page_number": 1
+                            }
+                        ],
+                        "model_used": self.model_name,
+                        "sources_count": 1,
+                        "sources_used": [
+                            {
+                                "source_file": f"StudentSubmission_{target_sub['submission_id']}",
+                                "page_number": 1,
+                                "course_id": target_sub["course_id"],
+                                "similarity": 1.0,
+                                "visibility": "instructor"
+                            }
+                        ]
+                    }
+                else:
+                    return {
+                        "query": query,
+                        "answer": (
+                            f"I could not find any pending assignment matching '{query}'. "
+                            "You can ask 'Show pending submissions' to view your current grading backlog, or specify the student name or submission ID."
+                        ),
+                        "role": user_role,
+                        "course_id": course_id,
+                        "citations": [],
+                        "model_used": "agentic-instructor-tools",
+                        "sources_count": 0,
+                        "sources_used": []
+                    }
+
+            # Agentic Tool 3: Direct Database Grade Application
+            elif intent == "grade_apply":
+                marks = intent_params.get("marks", 85)
+                sub_id = intent_params.get("submission_id")
+                if not sub_id:
+                    t = get_target_submission(instructor_id, {})
+                    if t:
+                        sub_id = t["submission_id"]
+
+                if sub_id:
+                    ok = apply_submission_grade(sub_id, marks, f"Grade {marks}/100 awarded via AI Assistant Review.", instructor_id)
+                    if ok:
+                        msg = (
+                            f"### Grade Successfully Committed to Database!\n\n"
+                            f"* **Submission ID:** #{sub_id}\n"
+                            f"* **Marks Awarded:** **{marks} / 100** (Status: Approved)\n"
+                            f"* **Reviewed By:** Instructor #{instructor_id}\n\n"
+                            f"The student's dashboard and course progress have been updated."
+                        )
+                    else:
+                        msg = f"Failed to commit grade for Submission #{sub_id} to database. Please check database permissions."
+                else:
+                    msg = "Please specify which submission you would like to grade (e.g. 'Submit grade 90 for submission 7')."
+
+                return {
+                    "query": query,
+                    "answer": msg,
+                    "role": user_role,
+                    "course_id": course_id,
+                    "citations": [],
+                    "model_used": "agentic-grade-execution",
+                    "sources_count": 0,
+                    "sources_used": []
+                }
+
+        # Step 1: Enterprise Hybrid Retrieval (Dense Vector + BM25 Sparse + Reciprocal Rank Fusion)
+        retrieved_chunks = query_hybrid(
             query_text=query,
             course_id=course_id,
             enrolled_course_ids=enrolled_course_ids,
@@ -237,6 +366,8 @@ class RAGEngine:
                     "page_number": c["metadata"].get("page_number", 1),
                     "course_id": c["metadata"].get("course_id", 1),
                     "similarity": c.get("similarity_score", 0.0),
+                    "retrieval_mode": c.get("retrieval_mode", "hybrid"),
+                    "rrf_score": round(float(c.get("rrf_score", 0.0)), 5),
                     "visibility": c["metadata"].get("visibility")
                 }
                 for c in retrieved_chunks

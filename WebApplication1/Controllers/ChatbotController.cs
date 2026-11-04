@@ -106,6 +106,44 @@ namespace WebApplication1.Controllers
                 top_k = 3
             };
 
+            // Fire-and-forget logging of student query for Student Friction Heatmap Analytics
+            if (string.Equals(userRole, "Student", StringComparison.OrdinalIgnoreCase))
+            {
+                int capturedStudentId = userId;
+                int capturedCourseId = courseId;
+                string capturedQuery = dto.Query.Trim();
+                Task.Run(() =>
+                {
+                    try
+                    {
+                        string connStr = System.Configuration.ConfigurationManager.ConnectionStrings["LmsConnection"]?.ConnectionString;
+                        if (!string.IsNullOrEmpty(connStr))
+                        {
+                            using (var conn = new System.Data.SqlClient.SqlConnection(connStr))
+                            {
+                                conn.Open();
+                                string insertSql = @"
+                                    INSERT INTO LMS.StudentQueryLogs (CourseId, StudentId, QueryText, Topic, FrictionLevel, CreatedAt)
+                                    VALUES (@CourseId, @StudentId, @QueryText, @Topic, @FrictionLevel, GETDATE());";
+                                using (var cmd = new System.Data.SqlClient.SqlCommand(insertSql, conn))
+                                {
+                                    cmd.Parameters.AddWithValue("@CourseId", capturedCourseId > 0 ? (object)capturedCourseId : DBNull.Value);
+                                    cmd.Parameters.AddWithValue("@StudentId", capturedStudentId);
+                                    cmd.Parameters.AddWithValue("@QueryText", capturedQuery);
+                                    cmd.Parameters.AddWithValue("@Topic", capturedCourseId == 2 ? "Enterprise Architecture" : "Core Concepts");
+                                    cmd.Parameters.AddWithValue("@FrictionLevel", "Moderate");
+                                    cmd.ExecuteNonQuery();
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine("[StudentQueryLog Error] " + ex.Message);
+                    }
+                });
+            }
+
             try
             {
                 var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");

@@ -16,7 +16,8 @@ namespace WebApplication1.Services
         private static string CloudName => ConfigurationManager.AppSettings["Cloudinary:CloudName"] ?? "";
 
         /// <summary>
-        /// Uploads an image file to Cloudinary. 
+        /// Uploads an image file to Cloudinary
+        /// . 
         /// If CloudName is not configured or an error occurs, falls back gracefully to local disk storage.
         /// </summary>
         public static string UploadImage(HttpPostedFileBase file, string subFolder = "profiles")

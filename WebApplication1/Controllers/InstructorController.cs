@@ -491,6 +491,39 @@ namespace WebApplication1.Controllers
                     materialFile.SaveAs(fullPath);
 
                     model.VideoOrResourceUrl = (isVideo ? "/Uploads/Videos/" : "/Uploads/CourseMaterials/") + uniqueFileName;
+
+                    // Automatically trigger live RAG vector indexing into ChromaDB for PDF study materials
+                    if (ext == ".pdf")
+                    {
+                        string capturedFullPath = fullPath;
+                        int capturedCourseId = model.CourseId;
+                        string capturedFileName = uniqueFileName;
+                        System.Threading.Tasks.Task.Run(async () =>
+                        {
+                            try
+                            {
+                                using (var ragClient = new System.Net.Http.HttpClient())
+                                {
+                                    ragClient.Timeout = TimeSpan.FromSeconds(30);
+                                    using (var formContent = new System.Net.Http.MultipartFormDataContent())
+                                    {
+                                        byte[] fileBytes = System.IO.File.ReadAllBytes(capturedFullPath);
+                                        var byteContent = new System.Net.Http.ByteArrayContent(fileBytes);
+                                        byteContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
+                                        formContent.Add(byteContent, "file", capturedFileName);
+                                        formContent.Add(new System.Net.Http.StringContent(capturedCourseId.ToString()), "course_id");
+                                        formContent.Add(new System.Net.Http.StringContent("student"), "visibility");
+                                        formContent.Add(new System.Net.Http.StringContent("lecture_notes"), "doc_type");
+                                        await ragClient.PostAsync("http://127.0.0.1:8000/api/ingest-study-material", formContent);
+                                    }
+                                }
+                            }
+                            catch (Exception ragEx)
+                            {
+                                System.Diagnostics.Debug.WriteLine("[RAG Live Study Material Ingestion Error] " + ragEx.Message);
+                            }
+                        });
+                    }
                 }
                 catch (Exception ex)
                 {

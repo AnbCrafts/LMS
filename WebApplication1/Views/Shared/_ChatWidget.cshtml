@@ -80,19 +80,30 @@
 
         <!-- Quick Starter Prompt Chips -->
         <div id="aiQuickChips" class="d-flex flex-wrap gap-1 ps-4">
-            <button class="btn btn-sm btn-outline-primary bg-white rounded-pill px-3 py-1 text-start" style="font-size: 0.75rem;" 
-                    onclick="sendQuickQuestion('What core concepts are covered in this course?')">
-                <i class="bi bi-book-half me-1"></i> What is covered in this course?
-            </button>
-            <button class="btn btn-sm btn-outline-primary bg-white rounded-pill px-3 py-1 text-start" style="font-size: 0.75rem;" 
-                    onclick="sendQuickQuestion('Can you give me a conceptual hint for the latest assignment?')">
-                <i class="bi bi-lightbulb-fill me-1 text-warning"></i> Assignment guidance hint
-            </button>
             @if (userRole == "Instructor" || userRole == "Admin")
             {
+                <button class="btn btn-sm btn-outline-primary bg-white rounded-pill px-3 py-1 text-start" style="font-size: 0.75rem;" 
+                        onclick="sendQuickQuestion('How many students are enrolled and how many assignments do I have to evaluate?')">
+                    <i class="bi bi-bar-chart-fill text-primary me-1"></i> How many assignments to evaluate?
+                </button>
+                <button class="btn btn-sm btn-outline-success text-dark bg-white rounded-pill px-3 py-1 text-start" style="font-size: 0.75rem;" 
+                        onclick="sendQuickQuestion('Evaluate Rahul Verma\'s assignment submission')">
+                    <i class="bi bi-check-circle-fill text-success me-1"></i> Evaluate Rahul's Assignment
+                </button>
                 <button class="btn btn-sm btn-outline-warning text-dark bg-white rounded-pill px-3 py-1 text-start" style="font-size: 0.75rem;" 
                         onclick="sendQuickQuestion('Draft a 3-question multiple choice quiz with answer key based on this course.')">
                     <i class="bi bi-journal-code me-1 text-warning"></i> Generate a quiz question
+                </button>
+            }
+            else
+            {
+                <button class="btn btn-sm btn-outline-primary bg-white rounded-pill px-3 py-1 text-start" style="font-size: 0.75rem;" 
+                        onclick="sendQuickQuestion('What core concepts are covered in this course?')">
+                    <i class="bi bi-book-half me-1"></i> What is covered in this course?
+                </button>
+                <button class="btn btn-sm btn-outline-primary bg-white rounded-pill px-3 py-1 text-start" style="font-size: 0.75rem;" 
+                        onclick="sendQuickQuestion('Can you give me a conceptual hint for the latest assignment?')">
+                    <i class="bi bi-lightbulb-fill me-1 text-warning"></i> Assignment guidance hint
                 </button>
             }
         </div>
@@ -102,7 +113,7 @@
     <div class="p-3 bg-white border-top">
         <form id="aiChatForm" onsubmit="submitAiQuestion(event)" class="d-flex align-items-center gap-2">
             <input type="text" id="aiChatInput" class="form-control rounded-pill px-3 py-2 small border" 
-                   placeholder="Ask a question about this course..." required autocomplete="off" />
+                   placeholder="@(userRole == "Instructor" || userRole == "Admin" ? "Ask about students, backlog, or 'Evaluate [Student]'..." : "Ask a question about this course...")" required autocomplete="off" />
             <button type="submit" id="aiSendBtn" class="btn btn-primary rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" 
                     style="width: 40px; height: 40px; background: #4f46e5; border: none;">
                 <i class="bi bi-arrow-up-short fs-4"></i>
@@ -291,6 +302,18 @@
         escaped = escaped.replace(/\n/g, '<br/>');
 
         return escaped;
+    }
+
+    function openAiDrawerWithPrompt(promptText) {
+        var drawer = document.getElementById('aiChatDrawer');
+        if (drawer) {
+            drawer.style.transform = 'translateX(0)';
+        }
+        var input = document.getElementById('aiChatInput');
+        if (input && promptText) {
+            input.value = promptText;
+            sendChatMessage();
+        }
     }
 
     function escapeHtml(text) {
