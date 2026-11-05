@@ -1,0 +1,1524 @@
+@using WebApplication1.Models
+@{
+    var currentUser = Session["CurrentUser"] as WebApplication1.Models.User;
+    var vm = StudentNavbarViewModel.LoadForUser(currentUser);
+
+    string currentController = ViewContext.RouteData.Values["controller"] != null ? ViewContext.RouteData.Values["controller"].ToString() : "";
+    string currentAction = ViewContext.RouteData.Values["action"] != null ? ViewContext.RouteData.Values["action"].ToString() : "";
+    string currentTab = Request.QueryString["tab"] ?? "";
+
+    bool isDashboard = string.Equals(currentController, "Dashboard", StringComparison.OrdinalIgnoreCase) && string.IsNullOrEmpty(currentTab);
+    bool isCourses = string.Equals(currentController, "Courses", StringComparison.OrdinalIgnoreCase) && !string.Equals(currentTab, "paths", StringComparison.OrdinalIgnoreCase);
+    bool isLearningPaths = string.Equals(currentTab, "paths", StringComparison.OrdinalIgnoreCase);
+    bool isCertificates = string.Equals(currentTab, "certificates", StringComparison.OrdinalIgnoreCase);
+    bool isMyLearning = string.Equals(currentTab, "my-courses", StringComparison.OrdinalIgnoreCase);
+}
+
+<!-- Self-Contained Resilient Design System for EduPulse Authenticated Student Workspace Header -->
+<style>
+    .sn-header-wrapper {
+        position: sticky;
+        top: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        background-color: #ffffff;
+        border-bottom: 1px solid #eef0f3;
+        z-index: 1050;
+        transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .sn-header-wrapper.sn-scrolled {
+        box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 1px 2px -1px rgba(15, 23, 42, 0.03);
+        border-bottom-color: #e2e8f0;
+    }
+
+    .sn-container {
+        max-width: 1440px;
+        margin: 0 auto;
+        height: 64px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 1.25rem;
+        gap: 1rem;
+    }
+
+    .sn-left {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        flex-shrink: 0;
+    }
+
+    .sn-brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.65rem;
+        text-decoration: none;
+        color: #0f172a;
+        font-weight: 700;
+        font-size: 1.15rem;
+        letter-spacing: -0.02em;
+        transition: opacity 0.15s ease;
+    }
+
+    .sn-brand:hover {
+        opacity: 0.85;
+        color: #0f172a;
+        text-decoration: none;
+    }
+
+    .sn-brand-mark {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: #0f172a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);
+    }
+
+    .sn-nav {
+        display: flex;
+        align-items: center;
+        gap: 0.15rem;
+    }
+
+    .sn-nav-link {
+        position: relative;
+        padding: 0.45rem 0.65rem;
+        font-size: 0.825rem;
+        font-weight: 500;
+        color: #475569;
+        text-decoration: none;
+        border-radius: 6px;
+        transition: color 0.15s ease, background-color 0.15s ease;
+        white-space: nowrap;
+    }
+
+    .sn-nav-link:hover {
+        color: #0f172a;
+        background-color: #f8fafc;
+        text-decoration: none;
+    }
+
+    .sn-nav-link.active {
+        color: #0f172a;
+        background-color: #f1f5f9;
+        font-weight: 600;
+    }
+
+    .sn-nav-link.active::after {
+        content: '';
+        position: absolute;
+        bottom: -9px;
+        left: 12px;
+        right: 12px;
+        height: 2px;
+        background-color: #0f172a;
+        border-radius: 2px;
+    }
+
+    .sn-center {
+        flex: 1 1 240px;
+        min-width: 190px;
+        max-width: 380px;
+        position: relative;
+    }
+
+    .sn-search-box {
+        position: relative;
+        width: 100%;
+    }
+
+    .sn-search-input {
+        width: 100%;
+        height: 38px;
+        padding: 0 4.2rem 0 2.25rem;
+        font-size: 0.85rem;
+        color: #0f172a;
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        outline: none;
+        transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .sn-search-input::placeholder {
+        color: #94a3b8;
+        font-weight: 400;
+    }
+
+    .sn-search-input:focus {
+        background-color: #ffffff;
+        border-color: #0f172a;
+        box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
+    }
+
+    .sn-search-icon {
+        position: absolute;
+        left: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8;
+        pointer-events: none;
+        display: flex;
+        align-items: center;
+    }
+
+    .sn-search-kbd {
+        position: absolute;
+        right: 0.5rem;
+        top: 50%;
+        transform: translateY(-50%);
+        padding: 0.15rem 0.35rem;
+        font-size: 0.68rem;
+        font-family: inherit;
+        font-weight: 600;
+        color: #64748b;
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+        box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+        pointer-events: none;
+    }
+
+    .sn-search-dropdown {
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 0;
+        width: 440px;
+        min-width: 360px;
+        max-width: min(440px, calc(100vw - 32px));
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        box-shadow: 0 16px 32px -4px rgba(15, 23, 42, 0.14), 0 8px 12px -6px rgba(15, 23, 42, 0.06);
+        padding: 0.85rem;
+        display: none;
+        z-index: 1060;
+    }
+
+    .sn-search-dropdown.show {
+        display: block;
+    }
+
+    .sn-search-heading {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #94a3b8;
+        padding: 0.35rem 0.65rem 0.25rem;
+    }
+
+    .sn-search-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        padding: 0.35rem 0.65rem 0.65rem;
+    }
+
+    .sn-search-chip {
+        font-size: 0.75rem;
+        color: #334155;
+        background: #f1f5f9;
+        padding: 0.28rem 0.65rem;
+        border-radius: 6px;
+        text-decoration: none;
+        font-weight: 500;
+        white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .sn-search-chip:hover {
+        background: #e2e8f0;
+        color: #0f172a;
+        text-decoration: none;
+    }
+
+    .sn-search-result-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.55rem 0.65rem;
+        border-radius: 6px;
+        text-decoration: none;
+        color: #1e293b;
+        font-size: 0.825rem;
+        transition: background 0.15s ease;
+    }
+
+    .sn-search-result-item:hover {
+        background: #f8fafc;
+        text-decoration: none;
+        color: #0f172a;
+    }
+
+    .sn-search-result-title {
+        font-weight: 500;
+        color: #0f172a;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 270px;
+    }
+
+    .sn-search-result-meta {
+        font-size: 0.725rem;
+        color: #64748b;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .sn-right {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-shrink: 0;
+    }
+
+    .sn-action-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        height: 38px;
+        padding: 0 0.95rem;
+        font-size: 0.825rem;
+        font-weight: 600;
+        text-decoration: none;
+        border-radius: 8px;
+        transition: all 0.15s ease;
+        white-space: nowrap;
+    }
+
+    .sn-action-resume {
+        background-color: #0f172a;
+        color: #ffffff;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+    }
+
+    .sn-action-resume:hover {
+        background-color: #1e293b;
+        color: #ffffff;
+        text-decoration: none;
+        transform: translateY(-1px);
+    }
+
+    .sn-action-explore {
+        background-color: #f8fafc;
+        color: #0f172a;
+        border: 1px solid #e2e8f0;
+    }
+
+    .sn-action-explore:hover {
+        background-color: #f1f5f9;
+        border-color: #cbd5e1;
+        color: #0f172a;
+        text-decoration: none;
+    }
+
+    .sn-progress-badge {
+        font-size: 0.7rem;
+        padding: 0.1rem 0.4rem;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.18);
+        color: #ffffff;
+        font-weight: 700;
+    }
+
+    .sn-streak-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.4rem 0.65rem;
+        font-size: 0.775rem;
+        font-weight: 600;
+        color: #b45309;
+        background-color: #fef3c7;
+        border: 1px solid #fde68a;
+        border-radius: 8px;
+        cursor: default;
+        position: relative;
+    }
+
+    .sn-streak-tooltip {
+        position: absolute;
+        top: calc(100% + 8px);
+        right: 0;
+        background: #0f172a;
+        color: #ffffff;
+        padding: 0.4rem 0.75rem;
+        font-size: 0.725rem;
+        font-weight: 500;
+        border-radius: 6px;
+        white-space: nowrap;
+        pointer-events: none;
+        opacity: 0;
+        transform: translateY(-4px);
+        transition: opacity 0.15s ease, transform 0.15s ease;
+        z-index: 1060;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .sn-streak-pill:hover .sn-streak-tooltip {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .sn-notif-container {
+        position: relative;
+    }
+
+    .sn-icon-btn {
+        width: 38px;
+        height: 38px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        color: #475569;
+        cursor: pointer;
+        position: relative;
+        transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .sn-icon-btn:hover {
+        background-color: #f8fafc;
+        color: #0f172a;
+        border-color: #e2e8f0;
+    }
+
+    .sn-notif-badge {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        width: 8px;
+        height: 8px;
+        background-color: #ef4444;
+        border-radius: 50%;
+        border: 2px solid #ffffff;
+    }
+
+    .sn-notif-panel {
+        position: absolute;
+        top: calc(100% + 8px);
+        right: -80px;
+        width: 380px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.05);
+        display: none;
+        z-index: 1060;
+        overflow: hidden;
+    }
+
+    .sn-notif-panel.show {
+        display: block;
+    }
+
+    .sn-notif-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.85rem 1rem;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .sn-notif-title {
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .sn-notif-mark-btn {
+        background: none;
+        border: none;
+        font-size: 0.725rem;
+        color: #64748b;
+        font-weight: 600;
+        cursor: pointer;
+        padding: 0;
+        transition: color 0.15s ease;
+    }
+
+    .sn-notif-mark-btn:hover {
+        color: #0f172a;
+    }
+
+    .sn-notif-tabs {
+        display: flex;
+        background: #f8fafc;
+        border-bottom: 1px solid #f1f5f9;
+        padding: 0 0.5rem;
+    }
+
+    .sn-notif-tab {
+        flex: 1;
+        padding: 0.5rem 0.25rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #64748b;
+        text-align: center;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .sn-notif-tab.active {
+        color: #0f172a;
+        border-bottom-color: #0f172a;
+    }
+
+    .sn-notif-list {
+        max-height: 320px;
+        overflow-y: auto;
+    }
+
+    .sn-notif-item {
+        display: flex;
+        gap: 0.75rem;
+        padding: 0.85rem 1rem;
+        border-bottom: 1px solid #f8fafc;
+        text-decoration: none;
+        color: inherit;
+        transition: background-color 0.15s ease;
+    }
+
+    .sn-notif-item:hover {
+        background-color: #f8fafc;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .sn-notif-item:last-child {
+        border-bottom: none;
+    }
+
+    .sn-notif-icon-circle {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .sn-notif-icon-deadline {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+
+    .sn-notif-icon-achievement {
+        background: #dcfce7;
+        color: #15803d;
+    }
+
+    .sn-notif-icon-announcement {
+        background: #e0f2fe;
+        color: #0369a1;
+    }
+
+    .sn-notif-content {
+        flex: 1;
+    }
+
+    .sn-notif-item-title {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #0f172a;
+        margin-bottom: 0.15rem;
+    }
+
+    .sn-notif-item-desc {
+        font-size: 0.75rem;
+        color: #64748b;
+        line-height: 1.35;
+        margin-bottom: 0.25rem;
+    }
+
+    .sn-notif-item-time {
+        font-size: 0.675rem;
+        color: #94a3b8;
+    }
+
+    .sn-profile-container {
+        position: relative;
+    }
+
+    .sn-profile-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: transparent;
+        border: 1px solid transparent;
+        padding: 0.25rem 0.5rem 0.25rem 0.25rem;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .sn-profile-btn:hover {
+        background-color: #f8fafc;
+        border-color: #e2e8f0;
+    }
+
+    .sn-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background-color: #0f172a;
+        color: #ffffff;
+        font-size: 0.775rem;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .sn-user-name {
+        font-size: 0.825rem;
+        font-weight: 600;
+        color: #0f172a;
+        white-space: nowrap;
+        max-width: 110px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .sn-chevron {
+        color: #94a3b8;
+        display: flex;
+        align-items: center;
+    }
+
+    .sn-profile-panel {
+        position: absolute;
+        top: calc(100% + 8px);
+        right: 0;
+        width: 260px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.05);
+        display: none;
+        z-index: 1060;
+        overflow: hidden;
+    }
+
+    .sn-profile-panel.show {
+        display: block;
+    }
+
+    .sn-profile-header {
+        padding: 1rem;
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .sn-profile-header-name {
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    .sn-profile-header-email {
+        font-size: 0.75rem;
+        color: #64748b;
+        margin-top: 0.1rem;
+        word-break: break-all;
+    }
+
+    .sn-profile-badge {
+        display: inline-block;
+        margin-top: 0.35rem;
+        padding: 0.15rem 0.45rem;
+        font-size: 0.675rem;
+        font-weight: 600;
+        color: #0369a1;
+        background: #e0f2fe;
+        border-radius: 4px;
+    }
+
+    .sn-profile-menu {
+        padding: 0.4rem;
+    }
+
+    .sn-profile-item {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        padding: 0.55rem 0.75rem;
+        font-size: 0.825rem;
+        font-weight: 500;
+        color: #334155;
+        border-radius: 6px;
+        text-decoration: none;
+        transition: background-color 0.15s ease, color 0.15s ease;
+    }
+
+    .sn-profile-item:hover {
+        background-color: #f1f5f9;
+        color: #0f172a;
+        text-decoration: none;
+    }
+
+    .sn-profile-item-icon {
+        color: #64748b;
+        display: flex;
+        align-items: center;
+    }
+
+    .sn-divider {
+        height: 1px;
+        background: #f1f5f9;
+        margin: 0.4rem 0;
+    }
+
+    .sn-signout-btn {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        padding: 0.55rem 0.75rem;
+        font-size: 0.825rem;
+        font-weight: 500;
+        color: #dc2626;
+        background: none;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        text-align: left;
+        transition: background-color 0.15s ease;
+    }
+
+    .sn-signout-btn:hover {
+        background-color: #fef2f2;
+    }
+
+    .sn-hamburger {
+        display: none;
+        width: 38px;
+        height: 38px;
+        background: transparent;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        color: #0f172a;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+
+    .sn-mobile-search-btn {
+        display: none;
+    }
+
+    .sn-offcanvas-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(4px);
+        z-index: 1070;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s ease;
+    }
+
+    .sn-offcanvas-backdrop.open {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .sn-offcanvas-drawer {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 82%;
+        max-width: 320px;
+        background: #ffffff;
+        z-index: 1080;
+        transform: translateX(-100%);
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12);
+    }
+
+    .sn-offcanvas-drawer.open {
+        transform: translateX(0);
+    }
+
+    .sn-offcanvas-header {
+        padding: 1.25rem;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .sn-offcanvas-user {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .sn-offcanvas-close {
+        background: none;
+        border: none;
+        color: #64748b;
+        font-size: 1.25rem;
+        padding: 0.25rem;
+        cursor: pointer;
+    }
+
+    .sn-offcanvas-body {
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        flex: 1;
+    }
+
+    .sn-offcanvas-link {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 0.85rem;
+        font-size: 0.925rem;
+        font-weight: 500;
+        color: #334155;
+        border-radius: 8px;
+        text-decoration: none;
+        min-height: 44px;
+        transition: background-color 0.15s ease, color 0.15s ease;
+    }
+
+    .sn-offcanvas-link:hover, .sn-offcanvas-link.active {
+        background-color: #f1f5f9;
+        color: #0f172a;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .sn-mobile-search-bar {
+        display: none;
+        padding: 0.5rem 1rem 0.75rem;
+        background: #ffffff;
+        border-bottom: 1px solid #eef0f3;
+    }
+
+    .sn-mobile-search-bar.show {
+        display: block;
+    }
+
+    @@media (max-width: 1280px) {
+        .sn-nav-link {
+            padding: 0.4rem 0.5rem;
+            font-size: 0.8rem;
+        }
+        .sn-left {
+            gap: 0.75rem;
+        }
+        .sn-user-name {
+            display: none;
+        }
+        .sn-streak-pill span.sn-streak-text {
+            display: none;
+        }
+        .sn-action-pill {
+            padding: 0 0.75rem;
+            font-size: 0.78rem;
+        }
+        .sn-search-dropdown {
+            left: 0;
+            right: auto;
+            width: 400px;
+            min-width: 340px;
+            max-width: calc(100vw - 2rem);
+        }
+    }
+
+    @@media (max-width: 1080px) {
+        .sn-nav-link {
+            padding: 0.35rem 0.45rem;
+            font-size: 0.76rem;
+        }
+        .sn-center {
+            max-width: 260px;
+        }
+    }
+
+    @@media (max-width: 991px) {
+        .sn-nav {
+            display: none;
+        }
+        .sn-center {
+            display: none;
+        }
+        .sn-action-pill {
+            display: none;
+        }
+        .sn-streak-pill {
+            display: none;
+        }
+        .sn-hamburger {
+            display: inline-flex;
+        }
+        .sn-mobile-search-btn {
+            display: inline-flex;
+        }
+        .sn-notif-panel {
+            right: -60px;
+            width: 320px;
+        }
+    }
+</style>
+
+<!-- Top Sticky Student Header -->
+<header class="sn-header-wrapper" id="epStudentHeader">
+    <div class="sn-container">
+        <!-- Far Left: Brand & Return to Dashboard -->
+        <div class="sn-left">
+            <a class="sn-brand" href="@Url.Action("Index", "Dashboard")" aria-label="EduPulse Workspace">
+                <span class="sn-brand-mark">
+                    <svg width="20" height="20" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <rect width="28" height="28" rx="6" fill="#0F172A" />
+                        <path d="M7 10C7 8.89543 7.89543 8 9 8H19C20.1046 8 21 8.89543 21 10V18.5C21 19.6046 20.1046 20.5 19 20.5H9C7.89543 20.5 7 19.6046 7 18.5V10Z" stroke="white" stroke-width="1.25" stroke-opacity="0.25" />
+                        <path d="M14 8V20.5M7 16.5C9.2 15.2 11.4 15.2 14 16.5C16.6 15.2 18.8 15.2 21 16.5" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </span>
+                <span class="d-none d-sm-inline">EduPulse</span>
+            </a>
+
+            <!-- Primary Navigation Links -->
+            <nav class="sn-nav" aria-label="Student Learning Navigation">
+                <a class="sn-nav-link @(isDashboard ? "active" : "")" 
+                   href="@Url.Action("Index", "Dashboard")">
+                    Dashboard
+                </a>
+                <a class="sn-nav-link @(isCourses ? "active" : "")" 
+                   href="@Url.Action("Index", "Courses")">
+                    Courses
+                </a>
+                <a class="sn-nav-link @(isLearningPaths ? "active" : "")" 
+                   href="@Url.Action("Index", "Courses", new { tab = "paths" })">
+                    Learning Paths
+                </a>
+                <a class="sn-nav-link @(isCertificates ? "active" : "")" 
+                   href="@Url.Action("Index", "Dashboard", new { tab = "certificates" })">
+                    Certificates
+                </a>
+                <a class="sn-nav-link @(isMyLearning ? "active" : "")" 
+                   href="@Url.Action("Index", "Dashboard", new { tab = "my-courses" })">
+                    My Learning
+                </a>
+            </nav>
+        </div>
+
+        <!-- Center: Prominent Global Search Bar -->
+        <div class="sn-center">
+            <form action="@Url.Action("Index", "Courses")" method="get" class="m-0" id="epGlobalSearchForm">
+                <div class="sn-search-box">
+                    <span class="sn-search-icon" aria-hidden="true">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                    </span>
+                    <input type="text" 
+                           name="search" 
+                           id="epGlobalSearchInput"
+                           class="sn-search-input" 
+                           placeholder="Search courses, topics, skills..." 
+                           autocomplete="off" 
+                           aria-label="Global Search" />
+                    <span class="sn-search-kbd">Ctrl K</span>
+                </div>
+            </form>
+
+            <!-- Floating Search Dropdown (Suggestions & Recent Searches) -->
+            <div class="sn-search-dropdown" id="epSearchDropdown">
+                <div class="sn-search-heading">Quick Learning Paths</div>
+                <div class="sn-search-chips">
+                    @foreach (var cat in vm.QuickCategories)
+                    {
+                        <a href="@Url.Action("Index", "Courses", new { categories = cat })" class="sn-search-chip">
+                            @cat
+                        </a>
+                    }
+                </div>
+
+                <div class="sn-divider"></div>
+                <div class="d-flex align-items-center justify-content-between px-2 pt-1 pb-1">
+                    <span class="sn-search-heading p-0 m-0">Curated Courses</span>
+                    <span class="text-secondary small" style="font-size: 0.7rem;" id="epSearchHintText">Press Enter to search all</span>
+                </div>
+                <div id="epSearchLiveResults">
+                    @foreach (var crs in vm.SearchableCourses)
+                    {
+                        <a href="@Url.Action("Details", "Courses", new { id = crs.CourseId })" 
+                           class="sn-search-result-item" 
+                           data-title="@crs.Title.ToLower()" 
+                           data-instructor="@crs.Instructor.ToLower()" 
+                           data-cat="@crs.Category.ToLower()">
+                            <div>
+                                <div class="sn-search-result-title">@crs.Title</div>
+                                <div class="sn-search-result-meta">@crs.Category &bull; by @crs.Instructor</div>
+                            </div>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2">
+                                <path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side: Continue Action, Streak, Notifications, Profile -->
+        <div class="sn-right">
+            <!-- Mobile Search Icon Trigger -->
+            <button class="sn-icon-btn sn-mobile-search-btn" id="epMobileSearchToggle" aria-label="Open Search">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+            </button>
+
+            <!-- Continue Learning (Active) vs Explore Courses (New Student) -->
+            @if (vm.HasActiveCourse)
+            {
+                <a href="@Url.Action("Learn", "Courses", new { id = vm.ActiveCourseId })" 
+                   class="sn-action-pill sn-action-resume" 
+                   title="Resume: @vm.ActiveCourseTitle">
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M4 3.5v9l8-4.5-8-4.5z"/>
+                    </svg>
+                    <span>Continue Learning</span>
+                    <span class="sn-progress-badge">@vm.ActiveCourseProgress%</span>
+                </a>
+            }
+            @if (!vm.HasActiveCourse)
+            {
+                <a href="@Url.Action("Index", "Courses")" 
+                   class="sn-action-pill sn-action-explore" 
+                   title="Discover All Available Curriculums">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+                    </svg>
+                    <span>Explore Courses</span>
+                </a>
+            }
+
+            <!-- Learning Streak / Progress Indicator (Only rendered when meaningful data exists) -->
+            @if (vm.HasStreak)
+            {
+                <div class="sn-streak-pill" role="status" aria-label="Learning streak: @vm.StreakDays days">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1" aria-hidden="true" style="flex-shrink: 0;">
+                        <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path>
+                    </svg>
+                    <span class="sn-streak-text">@vm.StreakDays-day streak</span>
+                    <div class="sn-streak-tooltip">
+                        @vm.StreakDays active days &bull; @vm.WeeklyGoalPercentage% weekly goal
+                    </div>
+                </div>
+            }
+
+            <!-- Notification Center -->
+            <div class="sn-notif-container">
+                <button class="sn-icon-btn" id="epNotifToggle" aria-label="Notifications" aria-expanded="false">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
+                    <span class="sn-notif-badge @(vm.UnreadNotificationsCount > 0 ? "" : "d-none")" id="epNotifDot"></span>
+                </button>
+
+                <!-- Modern Categorized Notification Dropdown Panel -->
+                <div class="sn-notif-panel" id="epNotifPanel">
+                    <div class="sn-notif-header">
+                        <span class="sn-notif-title">
+                            Notifications
+                            <span class="badge bg-danger rounded-pill ms-1 @(vm.UnreadNotificationsCount > 0 ? "" : "d-none")" id="epNotifCountBadge" style="font-size: 0.65rem;">@vm.UnreadNotificationsCount</span>
+                        </span>
+                        <button class="sn-notif-mark-btn" id="epMarkAllReadBtn">Mark all as read</button>
+                    </div>
+
+                    <div class="sn-notif-tabs">
+                        <button class="sn-notif-tab active" data-filter="all">All</button>
+                        <button class="sn-notif-tab" data-filter="deadline">Deadlines</button>
+                        <button class="sn-notif-tab" data-filter="achievement">Achievements</button>
+                    </div>
+
+                    <div class="sn-notif-list" id="epNotifList">
+                        @if (vm.Notifications.Count == 0)
+                        {
+                            <div class="text-center py-4 text-muted small">
+                                No new notifications at this time.
+                            </div>
+                        }
+                        @if (vm.Notifications.Count > 0)
+                        {
+                            foreach (var notif in vm.Notifications)
+                            {
+                                string iconClass = notif.Category == "deadline" ? "sn-notif-icon-deadline" :
+                                                   notif.Category == "achievement" ? "sn-notif-icon-achievement" :
+                                                   "sn-notif-icon-announcement";
+                                <a href="@notif.ActionUrl" class="sn-notif-item" data-category="@notif.Category">
+                                    <div class="sn-notif-icon-circle @iconClass">
+                                        @if (notif.Category == "deadline")
+                                        {
+                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <circle cx="12" cy="12" r="10"></circle>
+                                                <polyline points="12 6 12 12 16 14"></polyline>
+                                            </svg>
+                                        }
+                                        @if (notif.Category == "achievement")
+                                        {
+                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M6 9H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h2"></path>
+                                                <path d="M18 9h2a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-2"></path>
+                                                <path d="M4 22h16"></path>
+                                                <path d="M10 14.66V17c0 .55-.45 1-1 1H7v2h10v-2h-2c-.55 0-1-.45-1-1v-2.34"></path>
+                                                <rect x="6" y="2" width="12" height="10" rx="2"></rect>
+                                            </svg>
+                                        }
+                                        @if (notif.Category != "deadline" && notif.Category != "achievement")
+                                        {
+                                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                                                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                                            </svg>
+                                        }
+                                    </div>
+                                    <div class="sn-notif-content">
+                                        <div class="sn-notif-item-title">@notif.Title</div>
+                                        <div class="sn-notif-item-desc">@notif.Message</div>
+                                        <div class="sn-notif-item-time">@notif.TimeAgo</div>
+                                    </div>
+                                </a>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Menu Dropdown -->
+            <div class="sn-profile-container">
+                <button class="sn-profile-btn" id="epProfileToggle" aria-label="User Account Menu" aria-expanded="false">
+                    <span class="sn-avatar">@vm.AvatarInitials</span>
+                    <span class="sn-user-name">@vm.FullName</span>
+                    <span class="sn-chevron">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </span>
+                </button>
+
+                <!-- Profile Flyout Panel -->
+                <div class="sn-profile-panel" id="epProfilePanel">
+                    <div class="sn-profile-header">
+                        <div class="sn-profile-header-name">@vm.FullName</div>
+                        <div class="sn-profile-header-email">@vm.Email</div>
+                        <span class="sn-profile-badge">Student Workspace</span>
+                    </div>
+
+                    <div class="sn-profile-menu">
+                        <a href="@Url.Action("Profile", "Account")" class="sn-profile-item">
+                            <span class="sn-profile-item-icon">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                            </span>
+                            <span>Profile Settings</span>
+                        </a>
+
+                        <a href="@Url.Action("Index", "Dashboard", new { tab = "certificates" })" class="sn-profile-item">
+                            <span class="sn-profile-item-icon">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="8" r="7"></circle>
+                                    <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+                                </svg>
+                            </span>
+                            <span>My Certificates</span>
+                        </a>
+
+                        <a href="@Url.Action("Invoices", "Payment")" class="sn-profile-item">
+                            <span class="sn-profile-item-icon">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                                    <line x1="2" y1="10" x2="22" y2="10"></line>
+                                </svg>
+                            </span>
+                            <span>Billing & Invoices</span>
+                        </a>
+
+                        <a href="@Url.Action("Contact", "Home")" class="sn-profile-item">
+                            <span class="sn-profile-item-icon">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                                </svg>
+                            </span>
+                            <span>Help Center</span>
+                        </a>
+
+                        <div class="sn-divider"></div>
+
+                        @using (Html.BeginForm("Logout", "Account", FormMethod.Post, new { @class = "m-0" }))
+                        {
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="sn-signout-btn">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                    <polyline points="16 17 21 12 16 7"></polyline>
+                                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                                </svg>
+                                <span>Sign Out</span>
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile Hamburger Toggle -->
+            <button class="sn-hamburger" id="epStudentDrawerOpen" aria-label="Open Navigation Drawer">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Mobile Expandable Search Bar -->
+    <div class="sn-mobile-search-bar" id="epMobileSearchBar">
+        <form action="@Url.Action("Index", "Courses")" method="get" class="m-0">
+            <div class="sn-search-box">
+                <span class="sn-search-icon">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </span>
+                <input type="text" name="searchTerm" class="sn-search-input" placeholder="Search courses or topics..." />
+            </div>
+        </form>
+    </div>
+</header>
+
+<!-- Mobile Offcanvas Drawer -->
+<div class="sn-offcanvas-backdrop" id="epStudentDrawerBackdrop"></div>
+<div class="sn-offcanvas-drawer" id="epStudentDrawer" role="dialog" aria-modal="true" aria-label="Student Navigation Drawer">
+    <div class="sn-offcanvas-header">
+        <div class="sn-offcanvas-user">
+            <span class="sn-avatar">@vm.AvatarInitials</span>
+            <div>
+                <div class="sn-profile-header-name" style="font-size: 0.85rem;">@vm.FullName</div>
+                <div class="text-muted" style="font-size: 0.7rem;">Student Account</div>
+            </div>
+        </div>
+        <button class="sn-offcanvas-close" id="epStudentDrawerClose" aria-label="Close Navigation Drawer">&times;</button>
+    </div>
+
+    <div class="sn-offcanvas-body">
+        <!-- Prominent Mobile Action Shortcut -->
+        @if (vm.HasActiveCourse)
+        {
+            <a href="@Url.Action("Learn", "Courses", new { id = vm.ActiveCourseId })" 
+               class="sn-action-pill sn-action-resume w-100 justify-content-center mb-2" 
+               style="height: 44px;">
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M4 3.5v9l8-4.5-8-4.5z"/>
+                </svg>
+                <span>Continue: @vm.ActiveCourseProgress% Complete</span>
+            </a>
+        }
+        @if (!vm.HasActiveCourse)
+        {
+            <a href="@Url.Action("Index", "Courses")" 
+               class="sn-action-pill sn-action-explore w-100 justify-content-center mb-2" 
+               style="height: 44px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+                </svg>
+                <span>Explore Curriculums</span>
+            </a>
+        }
+
+        <!-- Primary Navigation Links -->
+        <a href="@Url.Action("Index", "Dashboard")" class="sn-offcanvas-link @(isDashboard ? "active" : "")">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+            <span>Dashboard</span>
+        </a>
+
+        <a href="@Url.Action("Index", "Courses")" class="sn-offcanvas-link @(isCourses ? "active" : "")">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+            </svg>
+            <span>Courses</span>
+        </a>
+
+        <a href="@Url.Action("Index", "Courses", new { tab = "paths" })" class="sn-offcanvas-link @(isLearningPaths ? "active" : "")">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 14 14"></polyline>
+            </svg>
+            <span>Learning Paths</span>
+        </a>
+
+        <a href="@Url.Action("Index", "Dashboard", new { tab = "certificates" })" class="sn-offcanvas-link @(isCertificates ? "active" : "")">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="8" r="7"></circle>
+                <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+            </svg>
+            <span>Certificates</span>
+        </a>
+
+        <a href="@Url.Action("Index", "Dashboard", new { tab = "my-courses" })" class="sn-offcanvas-link @(isMyLearning ? "active" : "")">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            </svg>
+            <span>My Learning</span>
+        </a>
+
+        <div class="sn-divider"></div>
+
+        <!-- Account Options -->
+        <a href="@Url.Action("Profile", "Account")" class="sn-offcanvas-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span>Profile Settings</span>
+        </a>
+
+        <a href="@Url.Action("Invoices", "Payment")" class="sn-offcanvas-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                <line x1="2" y1="10" x2="22" y2="10"></line>
+            </svg>
+            <span>Billing & Invoices</span>
+        </a>
+
+        <a href="@Url.Action("Contact", "Home")" class="sn-offcanvas-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+            <span>Help Center</span>
+        </a>
+
+        <div class="sn-divider mt-auto"></div>
+
+        @using (Html.BeginForm("Logout", "Account", FormMethod.Post, new { @class = "m-0" }))
+        {
+            @Html.AntiForgeryToken()
+            <button type="submit" class="sn-signout-btn" style="min-height: 44px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                <span>Sign Out</span>
+            </button>
+        }
+    </div>
+</div>
+
+<!-- Embedded Robust Interactivity for Student Navigation Workspace -->
+<script>
+    (function () {
+        var header = document.getElementById('epStudentHeader');
+        if (header) {
+            window.addEventListener('scroll', function () {
+                if (window.scrollY > 10) {
+                    header.classList.add('sn-scrolled');
+                } else {
+                    header.classList.remove('sn-scrolled');
+                }
+            }, { passive: true });
+        }
+
+        var searchInput = document.getElementById('epGlobalSearchInput');
+        var searchDropdown = document.getElementById('epSearchDropdown');
+        var searchHint = document.getElementById('epSearchHintText');
+
+        if (searchInput && searchDropdown) {
+            searchInput.addEventListener('focus', function () {
+                searchDropdown.classList.add('show');
+            });
+
+            searchInput.addEventListener('input', function () {
+                var query = (searchInput.value || '').trim().toLowerCase();
+                if (query.length > 0) {
+                    searchDropdown.classList.add('show');
+                    if (searchHint) searchHint.textContent = "Press Enter to search for '" + query + "'";
+                } else {
+                    if (searchHint) searchHint.textContent = "Press Enter to search all";
+                }
+
+                // Instant client-side live filter for items inside the dropdown
+                var items = searchDropdown.querySelectorAll('.sn-search-result-item');
+                items.forEach(function (item) {
+                    var title = item.getAttribute('data-title') || '';
+                    var inst = item.getAttribute('data-instructor') || '';
+                    var cat = item.getAttribute('data-cat') || '';
+                    if (!query || title.indexOf(query) !== -1 || inst.indexOf(query) !== -1 || cat.indexOf(query) !== -1) {
+                        item.style.setProperty('display', 'flex', 'important');
+                    } else {
+                        item.style.setProperty('display', 'none', 'important');
+                    }
+                });
+            });
+
+            document.addEventListener('click', function (e) {
+                if (!searchInput.contains(e.target) && !searchDropdown.contains(e.target)) {
+                    searchDropdown.classList.remove('show');
+                }
+            });
+
+            document.addEventListener('keydown', function (e) {
+                if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+                    e.preventDefault();
+                    searchInput.focus();
+                    searchInput.select();
+                    searchDropdown.classList.add('show');
+                }
+                if (e.key === 'Escape') {
+                    searchDropdown.classList.remove('show');
+                    if (notifPanel) notifPanel.classList.remove('show');
+                    if (profilePanel) profilePanel.classList.remove('show');
+                }
+            });
+        }
+
+        var notifBtn = document.getElementById('epNotifToggle');
+        var notifPanel = document.getElementById('epNotifPanel');
+        var notifDot = document.getElementById('epNotifDot');
+        var notifBadge = document.getElementById('epNotifCountBadge');
+        var markAllBtn = document.getElementById('epMarkAllReadBtn');
+
+        if (notifBtn && notifPanel) {
+            notifBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                if (profilePanel) profilePanel.classList.remove('show');
+                notifPanel.classList.toggle('show');
+            });
+
+            if (markAllBtn) {
+                markAllBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (notifDot) notifDot.style.display = 'none';
+                    if (notifBadge) notifBadge.style.display = 'none';
+                    markAllBtn.innerText = 'All read';
+                    markAllBtn.style.color = '#94a3b8';
+                });
+            }
+
+            var tabs = notifPanel.querySelectorAll('.sn-notif-tab');
+            var items = notifPanel.querySelectorAll('.sn-notif-item');
+            tabs.forEach(function (tab) {
+                tab.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    tabs.forEach(function (t) { t.classList.remove('active'); });
+                    tab.classList.add('active');
+                    var filter = tab.getAttribute('data-filter');
+                    items.forEach(function (item) {
+                        var cat = item.getAttribute('data-category');
+                        if (filter === 'all' || cat === filter) {
+                            item.style.display = 'flex';
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+                });
+            });
+        }
+
+        var profileBtn = document.getElementById('epProfileToggle');
+        var profilePanel = document.getElementById('epProfilePanel');
+
+        if (profileBtn && profilePanel) {
+            profileBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                if (notifPanel) notifPanel.classList.remove('show');
+                profilePanel.classList.toggle('show');
+            });
+        }
+
+        document.addEventListener('click', function (e) {
+            if (notifPanel && !notifPanel.contains(e.target) && notifBtn && !notifBtn.contains(e.target)) {
+                notifPanel.classList.remove('show');
+            }
+            if (profilePanel && !profilePanel.contains(e.target) && profileBtn && !profileBtn.contains(e.target)) {
+                profilePanel.classList.remove('show');
+            }
+        });
+
+        var mobileSearchBtn = document.getElementById('epMobileSearchToggle');
+        var mobileSearchBar = document.getElementById('epMobileSearchBar');
+        if (mobileSearchBtn && mobileSearchBar) {
+            mobileSearchBtn.addEventListener('click', function () {
+                mobileSearchBar.classList.toggle('show');
+            });
+        }
+
+        var drawerOpenBtn = document.getElementById('epStudentDrawerOpen');
+        var drawerCloseBtn = document.getElementById('epStudentDrawerClose');
+        var drawer = document.getElementById('epStudentDrawer');
+        var backdrop = document.getElementById('epStudentDrawerBackdrop');
+
+        function openDrawer() {
+            if (drawer && backdrop) {
+                drawer.classList.add('open');
+                backdrop.classList.add('open');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeDrawer() {
+            if (drawer && backdrop) {
+                drawer.classList.remove('open');
+                backdrop.classList.remove('open');
+                document.body.style.overflow = '';
+            }
+        }
+
+        if (drawerOpenBtn) drawerOpenBtn.addEventListener('click', openDrawer);
+        if (drawerCloseBtn) drawerCloseBtn.addEventListener('click', closeDrawer);
+        if (backdrop) backdrop.addEventListener('click', closeDrawer);
+    })();
+</script>

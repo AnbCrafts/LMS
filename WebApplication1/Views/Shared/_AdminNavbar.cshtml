@@ -1,0 +1,1447 @@
+@using WebApplication1.Models
+@{
+    var currentUser = Session["CurrentUser"] as WebApplication1.Models.User;
+    var vm = AdminNavbarViewModel.LoadForUser(currentUser);
+
+    string currentController = ViewContext.RouteData.Values["controller"] != null ? ViewContext.RouteData.Values["controller"].ToString() : "";
+    string currentAction = ViewContext.RouteData.Values["action"] != null ? ViewContext.RouteData.Values["action"].ToString() : "";
+    string currentTab = Request.QueryString["tab"] ?? "";
+
+    bool isDashboard = string.Equals(currentController, "Admin", StringComparison.OrdinalIgnoreCase) && (string.IsNullOrEmpty(currentTab) || string.Equals(currentTab, "dashboard", StringComparison.OrdinalIgnoreCase));
+    bool isUsers = string.Equals(currentTab, "users", StringComparison.OrdinalIgnoreCase);
+    bool isInstructors = string.Equals(currentTab, "instructors", StringComparison.OrdinalIgnoreCase) || string.Equals(currentAction, "VerifySellers", StringComparison.OrdinalIgnoreCase) || string.Equals(currentAction, "VerifyInstructor", StringComparison.OrdinalIgnoreCase);
+    bool isCourses = string.Equals(currentTab, "courses", StringComparison.OrdinalIgnoreCase);
+    bool isAssessments = string.Equals(currentTab, "assessments", StringComparison.OrdinalIgnoreCase);
+    bool isAnalytics = string.Equals(currentTab, "analytics", StringComparison.OrdinalIgnoreCase);
+    bool isAiGov = string.Equals(currentTab, "ai-governance", StringComparison.OrdinalIgnoreCase);
+    bool isFinance = string.Equals(currentTab, "finance", StringComparison.OrdinalIgnoreCase);
+    bool isReports = string.Equals(currentTab, "reports", StringComparison.OrdinalIgnoreCase);
+    bool isSupport = string.Equals(currentTab, "support", StringComparison.OrdinalIgnoreCase);
+    bool isCertificates = string.Equals(currentTab, "certificates", StringComparison.OrdinalIgnoreCase);
+    bool isSettings = string.Equals(currentTab, "settings", StringComparison.OrdinalIgnoreCase);
+
+    bool isEntitiesActive = isUsers || isInstructors || isCertificates;
+    bool isCurriculumActive = isCourses || isAssessments;
+    bool isIntelligenceActive = isAnalytics || isAiGov || isFinance;
+    bool isSupportActive = isReports || isSupport;
+}
+
+<!-- Self-Contained Resilient Design System for EduPulse Admin Operations Workspace Header -->
+<style>
+    /* ==========================================================================
+       EduPulse Admin Operations Workspace Header
+       Enterprise SaaS Architecture (Datadog, Cloudflare, Linear, Stripe Dashboard)
+       ========================================================================== */
+
+    .ad-header-wrapper {
+        position: sticky;
+        top: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        background-color: #0f172a;
+        border-bottom: 1px solid #1e293b;
+        z-index: 1050;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    .ad-container {
+        height: 60px;
+        max-width: 100%;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 1.25rem;
+        gap: 0.65rem;
+    }
+
+    /* Left: Brand & Operations Badge */
+    .ad-left {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        flex-shrink: 0;
+    }
+
+    .ad-brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
+        text-decoration: none;
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 1.05rem;
+        letter-spacing: -0.02em;
+        transition: opacity 0.15s ease;
+    }
+
+    .ad-brand:hover {
+        opacity: 0.9;
+        color: #ffffff;
+        text-decoration: none;
+    }
+
+    .ad-brand-mark {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 4px rgba(37, 99, 235, 0.35);
+        color: #ffffff;
+    }
+
+    .ad-ops-badge {
+        font-size: 0.625rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #38bdf8;
+        background: rgba(56, 189, 248, 0.12);
+        border: 1px solid rgba(56, 189, 248, 0.25);
+        border-radius: 4px;
+        padding: 0.15rem 0.45rem;
+        margin-left: 0.1rem;
+    }
+
+    /* Primary Navigation Bar (Categorized Enterprise Architecture) */
+    .ad-nav {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        overflow: visible;
+    }
+
+    .ad-nav-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.4rem 0.65rem;
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: #94a3b8;
+        text-decoration: none;
+        border-radius: 6px;
+        transition: color 0.15s ease, background-color 0.15s ease;
+        white-space: nowrap;
+        position: relative;
+    }
+
+    .ad-nav-link:hover {
+        color: #ffffff;
+        background-color: rgba(255, 255, 255, 0.06);
+        text-decoration: none;
+    }
+
+    .ad-nav-link.active {
+        color: #ffffff;
+        background-color: rgba(255, 255, 255, 0.1);
+        font-weight: 600;
+    }
+
+    .ad-nav-link.active::after {
+        content: '';
+        position: absolute;
+        bottom: -11px;
+        left: 8px;
+        right: 8px;
+        height: 2px;
+        background-color: #38bdf8;
+        border-radius: 2px;
+    }
+
+    /* Categorized Dropdown System */
+    .ad-nav-dropdown {
+        position: relative;
+    }
+
+    .ad-nav-dropdown-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.4rem 0.65rem;
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: #94a3b8;
+        background: transparent;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: color 0.15s ease, background-color 0.15s ease;
+        white-space: nowrap;
+        position: relative;
+    }
+
+    .ad-nav-dropdown-btn:hover {
+        color: #ffffff;
+        background-color: rgba(255, 255, 255, 0.06);
+    }
+
+    .ad-nav-dropdown-btn.active {
+        color: #ffffff;
+        background-color: rgba(255, 255, 255, 0.1);
+        font-weight: 600;
+    }
+
+    .ad-nav-dropdown-btn.active::after {
+        content: '';
+        position: absolute;
+        bottom: -11px;
+        left: 8px;
+        right: 8px;
+        height: 2px;
+        background-color: #38bdf8;
+        border-radius: 2px;
+    }
+
+    .ad-chevron {
+        transition: transform 0.2s ease;
+        opacity: 0.7;
+    }
+
+    .ad-nav-dropdown-btn[aria-expanded="true"] .ad-chevron {
+        transform: rotate(180deg);
+        opacity: 1;
+    }
+
+    .ad-nav-menu {
+        position: absolute;
+        top: calc(100% + 10px);
+        left: 0;
+        min-width: 285px;
+        background-color: #0b1120;
+        border: 1px solid #1e293b;
+        border-radius: 10px;
+        box-shadow: 0 16px 36px -4px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.06);
+        padding: 0.45rem;
+        display: none;
+        z-index: 1060;
+    }
+
+    .ad-nav-menu.show {
+        display: block;
+        animation: adFadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @@keyframes adFadeIn {
+        from { opacity: 0; transform: translateY(-4px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .ad-nav-menu-header {
+        padding: 0.45rem 0.65rem 0.35rem;
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #64748b;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        margin-bottom: 0.35rem;
+    }
+
+    .ad-nav-menu-item {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        padding: 0.55rem 0.65rem;
+        border-radius: 6px;
+        color: #cbd5e1;
+        text-decoration: none;
+        font-size: 0.8rem;
+        font-weight: 500;
+        transition: background-color 0.12s ease, color 0.12s ease;
+    }
+
+    .ad-nav-menu-item:hover {
+        background-color: rgba(255, 255, 255, 0.06);
+        color: #ffffff;
+        text-decoration: none;
+    }
+
+    .ad-nav-menu-item.active {
+        background-color: rgba(56, 189, 248, 0.12);
+        color: #38bdf8;
+        font-weight: 600;
+    }
+
+    .ad-menu-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.05);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        color: #94a3b8;
+        transition: all 0.15s ease;
+    }
+
+    .ad-nav-menu-item:hover .ad-menu-icon,
+    .ad-nav-menu-item.active .ad-menu-icon {
+        background: rgba(56, 189, 248, 0.2);
+        color: #38bdf8;
+    }
+
+    .ad-menu-content {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .ad-menu-title {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #f1f5f9;
+        line-height: 1.2;
+    }
+
+    .ad-nav-menu-item.active .ad-menu-title {
+        color: #38bdf8;
+    }
+
+    .ad-menu-desc {
+        font-size: 0.68rem;
+        color: #64748b;
+        margin-top: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .ad-nav-badge {
+        font-size: 0.625rem;
+        font-weight: 700;
+        padding: 0.1rem 0.35rem;
+        border-radius: 999px;
+        line-height: 1;
+        font-family: monospace;
+    }
+
+    /* Center: Global Search */
+    .ad-center {
+        display: flex;
+        align-items: center;
+        flex: 0 1 280px;
+        max-width: 300px;
+        min-width: 140px;
+        position: relative;
+    }
+
+    .ad-search-box {
+        position: relative;
+        width: 100%;
+    }
+
+    .ad-search-input {
+        width: 100%;
+        height: 34px;
+        padding: 0 3.2rem 0 2rem;
+        font-size: 0.78rem;
+        color: #ffffff;
+        background-color: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 7px;
+        outline: none;
+        transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .ad-search-input::placeholder {
+        color: #64748b;
+    }
+
+    .ad-search-input:focus {
+        background-color: #0f172a;
+        border-color: #38bdf8;
+        box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+    }
+
+    .ad-search-icon {
+        position: absolute;
+        left: 0.65rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #64748b;
+        pointer-events: none;
+        display: flex;
+        align-items: center;
+    }
+
+    .ad-search-kbd {
+        position: absolute;
+        right: 0.5rem;
+        top: 50%;
+        transform: translateY(-50%);
+        padding: 0.12rem 0.32rem;
+        font-size: 0.65rem;
+        font-family: inherit;
+        font-weight: 600;
+        color: #94a3b8;
+        background-color: #0f172a;
+        border: 1px solid #334155;
+        border-radius: 4px;
+        pointer-events: none;
+    }
+
+    .ad-search-dropdown {
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 0;
+        width: 450px;
+        max-width: min(450px, calc(100vw - 32px));
+        background: #0f172a;
+        border: 1px solid #334155;
+        border-radius: 12px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+        padding: 0.65rem;
+        display: none;
+        z-index: 1060;
+    }
+
+    .ad-search-dropdown.show {
+        display: block;
+    }
+
+    .ad-search-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.5rem 0.65rem;
+        border-radius: 6px;
+        text-decoration: none;
+        color: #e2e8f0;
+        font-size: 0.8rem;
+        transition: background 0.15s ease;
+    }
+
+    .ad-search-item:hover {
+        background: #1e293b;
+        color: #ffffff;
+        text-decoration: none;
+    }
+
+    /* Right Section: SLA Health, Alerts, Profile, Logout */
+    .ad-right {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        flex-shrink: 0;
+    }
+
+    /* Live Health Indicator Pill */
+    .ad-sla-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        height: 32px;
+        padding: 0 0.65rem;
+        font-size: 0.72rem;
+        font-weight: 600;
+        font-family: monospace;
+        color: #4ade80;
+        background: rgba(34, 197, 94, 0.1);
+        border: 1px solid rgba(34, 197, 94, 0.25);
+        border-radius: 999px;
+        white-space: nowrap;
+    }
+
+    .ad-pulsing-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background-color: #22c55e;
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+        animation: adPulse 2s infinite;
+    }
+
+    @@keyframes adPulse {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+        70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+    }
+
+    /* Icon Buttons (Alerts, Help) */
+    .ad-icon-btn {
+        position: relative;
+        width: 34px;
+        height: 34px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 7px;
+        color: #94a3b8;
+        cursor: pointer;
+        transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .ad-icon-btn:hover {
+        background-color: #334155;
+        color: #ffffff;
+        border-color: #475569;
+    }
+
+    .ad-badge-counter {
+        position: absolute;
+        top: -3px;
+        right: -3px;
+        min-width: 16px;
+        height: 16px;
+        padding: 0 3px;
+        font-size: 0.625rem;
+        font-weight: 700;
+        color: #ffffff;
+        background-color: #ef4444;
+        border-radius: 999px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1.5px solid #0f172a;
+    }
+
+    /* Alerts Panel */
+    .ad-alerts-panel {
+        position: absolute;
+        top: calc(100% + 8px);
+        right: 0;
+        width: 360px;
+        max-width: calc(100vw - 32px);
+        background: #0f172a;
+        border: 1px solid #334155;
+        border-radius: 12px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        display: none;
+        z-index: 1060;
+        overflow: hidden;
+    }
+
+    .ad-alerts-panel.show {
+        display: block;
+    }
+
+    .ad-alerts-header {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #1e293b;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #1e293b;
+    }
+
+    .ad-alert-item {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #1e293b;
+        display: flex;
+        gap: 0.65rem;
+        text-decoration: none;
+        color: #cbd5e1;
+        transition: background 0.15s ease;
+    }
+
+    .ad-alert-item:hover {
+        background: #1e293b;
+        color: #ffffff;
+        text-decoration: none;
+    }
+
+    /* Admin Profile Menu */
+    .ad-profile-container {
+        position: relative;
+    }
+
+    .ad-profile-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        background: #1e293b;
+        border: 1px solid #334155;
+        padding: 0.25rem 0.55rem;
+        border-radius: 7px;
+        cursor: pointer;
+        transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .ad-profile-btn:hover {
+        background-color: #334155;
+        border-color: #475569;
+    }
+
+    .ad-avatar {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: #ffffff;
+        font-size: 0.72rem;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .ad-profile-name {
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #ffffff;
+        white-space: nowrap;
+    }
+
+    .ad-profile-dropdown {
+        position: absolute;
+        top: calc(100% + 8px);
+        right: 0;
+        width: 260px;
+        background: #0f172a;
+        border: 1px solid #334155;
+        border-radius: 12px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        padding: 0.5rem;
+        display: none;
+        z-index: 1060;
+    }
+
+    .ad-profile-dropdown.show {
+        display: block;
+    }
+
+    .ad-profile-header {
+        padding: 0.65rem 0.85rem;
+        border-bottom: 1px solid #1e293b;
+        margin-bottom: 0.35rem;
+    }
+
+    .ad-profile-item {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        padding: 0.5rem 0.85rem;
+        border-radius: 6px;
+        text-decoration: none;
+        color: #cbd5e1;
+        font-size: 0.8rem;
+        font-weight: 500;
+        transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .ad-profile-item:hover {
+        background: #1e293b;
+        color: #ffffff;
+        text-decoration: none;
+    }
+
+    .ad-divider {
+        height: 1px;
+        background: #1e293b;
+        margin: 0.35rem 0;
+    }
+
+    /* Direct Navbar Logout Button */
+    .ad-direct-logout-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        height: 34px;
+        padding: 0 0.65rem;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #f87171;
+        background-color: rgba(239, 68, 68, 0.12);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        border-radius: 7px;
+        cursor: pointer;
+        transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+        white-space: nowrap;
+    }
+
+    .ad-direct-logout-btn:hover {
+        background-color: rgba(239, 68, 68, 0.22);
+        border-color: #f87171;
+        color: #ffffff;
+    }
+
+    /* Mobile Hamburger */
+    .ad-hamburger {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 7px;
+        color: #ffffff;
+        cursor: pointer;
+    }
+
+    /* Mobile Drawer */
+    .ad-drawer-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.65);
+        backdrop-filter: blur(4px);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s ease, visibility 0.2s ease;
+        z-index: 1070;
+    }
+
+    .ad-drawer-backdrop.open {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .ad-drawer {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: 320px;
+        max-width: 85vw;
+        background: #0f172a;
+        border-right: 1px solid #1e293b;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        transform: translateX(-100%);
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        z-index: 1080;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .ad-drawer.open {
+        transform: translateX(0);
+    }
+
+    .ad-drawer-header {
+        padding: 1.15rem 1.25rem;
+        border-bottom: 1px solid #1e293b;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .ad-drawer-body {
+        padding: 1rem;
+        overflow-y: auto;
+        flex: 1 1 auto;
+    }
+
+    .ad-drawer-link {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.65rem 0.85rem;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #94a3b8;
+        border-radius: 7px;
+        text-decoration: none;
+        margin-bottom: 2px;
+        transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .ad-drawer-link:hover, .ad-drawer-link.active {
+        background: #1e293b;
+        color: #ffffff;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    /* Responsive Breakpoints */
+    @@media (max-width: 1366px) {
+        .ad-center {
+            flex: 0 1 200px;
+            max-width: 220px;
+        }
+        .ad-sla-pill span.ad-sla-text {
+            display: none;
+        }
+    }
+
+    @@media (max-width: 1120px) {
+        .ad-center {
+            display: none;
+        }
+    }
+
+    @@media (max-width: 960px) {
+        .ad-nav {
+            display: none;
+        }
+        .ad-hamburger {
+            display: inline-flex;
+        }
+    }
+
+    @@media (max-width: 680px) {
+        .ad-sla-pill {
+            display: none;
+        }
+        .ad-profile-name {
+            display: none;
+        }
+    }
+
+    @@media (max-width: 520px) {
+        .ad-direct-logout-btn span {
+            display: none;
+        }
+        .ad-direct-logout-btn {
+            padding: 0 0.5rem;
+            width: 35px;
+            justify-content: center;
+        }
+    }
+</style>
+
+<!-- Top Sticky Admin Workspace Header -->
+<header class="ad-header-wrapper" id="epAdminHeader">
+    <div class="ad-container">
+        <!-- Left: Logo & Operations Pill -->
+        <div class="ad-left">
+            <a href="@Url.Action("Index", "Admin")" class="ad-brand" aria-label="EduPulse Admin Console">
+                <span class="ad-brand-mark">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
+                </span>
+                <span>EduPulse</span>
+                <span class="ad-ops-badge">Ops Console</span>
+            </a>
+
+            <!-- Categorized Operations Navigation -->
+            <nav class="ad-nav" aria-label="Administrative Workspaces">
+                <!-- 1. Dashboard -->
+                <a href="@Url.Action("Index", "Admin", new { tab = "dashboard" })" class="ad-nav-link @(isDashboard ? "active" : "")">
+                    <span>Dashboard</span>
+                </a>
+
+                <!-- 2. Entities Dropdown (Users, Instructors, Certificates) -->
+                <div class="ad-nav-dropdown" id="epNavEntitiesDropdown">
+                    <button type="button" class="ad-nav-dropdown-btn @(isEntitiesActive ? "active" : "")" id="epEntitiesToggle" aria-haspopup="true" aria-expanded="false">
+                        <span>Entities</span>
+                        @if (vm.PendingReviewsCount > 0)
+                        {
+                            <span class="ad-nav-badge bg-warning text-dark">@vm.PendingReviewsCount</span>
+                        }
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="ad-chevron">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="ad-nav-menu" id="epEntitiesMenu">
+                        <div class="ad-nav-menu-header">Platform Directory</div>
+                        
+                        <a href="@Url.Action("Index", "Admin", new { tab = "users" })" class="ad-nav-menu-item @(isUsers ? "active" : "")">
+                            <div class="ad-menu-icon">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="9" cy="7" r="4"></circle>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                </svg>
+                            </div>
+                            <div class="ad-menu-content">
+                                <div class="ad-menu-title">Users &amp; Learners</div>
+                                <div class="ad-menu-desc">Manage accounts, roles &amp; statuses</div>
+                            </div>
+                        </a>
+
+                        <a href="@Url.Action("Index", "Admin", new { tab = "instructors" })" class="ad-nav-menu-item @(isInstructors ? "active" : "")">
+                            <div class="ad-menu-icon">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                            </div>
+                            <div class="ad-menu-content">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <span class="ad-menu-title">Instructors</span>
+                                    @if (vm.PendingReviewsCount > 0)
+                                    {
+                                        <span class="badge bg-warning text-dark font-monospace" style="font-size: 0.65rem;">@vm.PendingReviewsCount pending</span>
+                                    }
+                                </div>
+                                <div class="ad-menu-desc">Verification dossiers &amp; faculty pedigree</div>
+                            </div>
+                        </a>
+
+                        <a href="@Url.Action("Index", "Admin", new { tab = "certificates" })" class="ad-nav-menu-item @(isCertificates ? "active" : "")">
+                            <div class="ad-menu-icon">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="8" r="7"></circle>
+                                    <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+                                </svg>
+                            </div>
+                            <div class="ad-menu-content">
+                                <div class="ad-menu-title">Certificates</div>
+                                <div class="ad-menu-desc">SHA-256 authentications &amp; revocations</div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 3. Curriculum Dropdown (Courses, Assessments) -->
+                <div class="ad-nav-dropdown" id="epNavCurriculumDropdown">
+                    <button type="button" class="ad-nav-dropdown-btn @(isCurriculumActive ? "active" : "")" id="epCurriculumToggle" aria-haspopup="true" aria-expanded="false">
+                        <span>Curriculum</span>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="ad-chevron">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="ad-nav-menu" id="epCurriculumMenu">
+                        <div class="ad-nav-menu-header">Academic Governance</div>
+
+                        <a href="@Url.Action("Index", "Admin", new { tab = "courses" })" class="ad-nav-menu-item @(isCourses ? "active" : "")">
+                            <div class="ad-menu-icon">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                                </svg>
+                            </div>
+                            <div class="ad-menu-content">
+                                <div class="ad-menu-title">Course Moderation</div>
+                                <div class="ad-menu-desc">Catalog review, QA score &amp; publishing</div>
+                            </div>
+                        </a>
+
+                        <a href="@Url.Action("Index", "Admin", new { tab = "assessments" })" class="ad-nav-menu-item @(isAssessments ? "active" : "")">
+                            <div class="ad-menu-icon">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="9 11 12 14 22 4"></polyline>
+                                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                                </svg>
+                            </div>
+                            <div class="ad-menu-content">
+                                <div class="ad-menu-title">Assessments &amp; Rubrics</div>
+                                <div class="ad-menu-desc">Quiz evaluation, grading SLA &amp; integrity</div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 4. Intelligence Dropdown (Analytics, AI Governance, Finance) -->
+                <div class="ad-nav-dropdown" id="epNavIntelDropdown">
+                    <button type="button" class="ad-nav-dropdown-btn @(isIntelligenceActive ? "active" : "")" id="epIntelToggle" aria-haspopup="true" aria-expanded="false">
+                        <span>Intelligence</span>
+                        <span class="ad-nav-badge bg-info text-dark" style="font-size: 0.6rem; padding: 0.1rem 0.35rem;">AI</span>
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="ad-chevron">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="ad-nav-menu" id="epIntelMenu">
+                        <div class="ad-nav-menu-header">Telemetry &amp; Finance</div>
+
+                        <a href="@Url.Action("Index", "Admin", new { tab = "analytics" })" class="ad-nav-menu-item @(isAnalytics ? "active" : "")">
+                            <div class="ad-menu-icon">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                                </svg>
+                            </div>
+                            <div class="ad-menu-content">
+                                <div class="ad-menu-title">Analytics &amp; BI</div>
+                                <div class="ad-menu-desc">Completion velocity &amp; 90-day retention</div>
+                            </div>
+                        </a>
+
+                        <a href="@Url.Action("Index", "Admin", new { tab = "ai-governance" })" class="ad-nav-menu-item @(isAiGov ? "active" : "")">
+                            <div class="ad-menu-icon">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2">
+                                    <rect x="2" y="3" width="20" height="14" rx="2"></rect>
+                                    <line x1="8" y1="21" x2="16" y2="21"></line>
+                                </svg>
+                            </div>
+                            <div class="ad-menu-content">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <span class="ad-menu-title">AI Governance</span>
+                                    <span class="badge bg-info bg-opacity-25 text-info font-monospace" style="font-size: 0.65rem;">Port 8000</span>
+                                </div>
+                                <div class="ad-menu-desc">Prompt safety shields &amp; ChromaDB health</div>
+                            </div>
+                        </a>
+
+                        <a href="@Url.Action("Index", "Admin", new { tab = "finance" })" class="ad-nav-menu-item @(isFinance ? "active" : "")">
+                            <div class="ad-menu-icon">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+                                    <line x1="12" y1="1" x2="12" y2="23"></line>
+                                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                                </svg>
+                            </div>
+                            <div class="ad-menu-content">
+                                <div class="ad-menu-title">Financial Ledger</div>
+                                <div class="ad-menu-desc">10% EduPulse cut &amp; 90% instructor payouts</div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 5. Support & Moderation Dropdown (Reports, Support Center) -->
+                <div class="ad-nav-dropdown" id="epNavSupportDropdown">
+                    <button type="button" class="ad-nav-dropdown-btn @(isSupportActive ? "active" : "")" id="epSupportToggle" aria-haspopup="true" aria-expanded="false">
+                        <span>Support</span>
+                        @if (vm.FlaggedReportsCount > 0)
+                        {
+                            <span class="ad-nav-badge bg-danger text-light">@vm.FlaggedReportsCount</span>
+                        }
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="ad-chevron">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="ad-nav-menu" id="epSupportMenu">
+                        <div class="ad-nav-menu-header">Trust &amp; Customer Care</div>
+
+                        <a href="@Url.Action("Index", "Admin", new { tab = "reports" })" class="ad-nav-menu-item @(isReports ? "active" : "")">
+                            <div class="ad-menu-icon">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f43f5e" stroke-width="2">
+                                    <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
+                                    <line x1="4" y1="22" x2="4" y2="15"></line>
+                                </svg>
+                            </div>
+                            <div class="ad-menu-content">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <span class="ad-menu-title">Reports &amp; Moderation</span>
+                                    @if (vm.FlaggedReportsCount > 0)
+                                    {
+                                        <span class="badge bg-danger text-light font-monospace" style="font-size: 0.65rem;">@vm.FlaggedReportsCount cases</span>
+                                    }
+                                </div>
+                                <div class="ad-menu-desc">Investigate flagged courses &amp; grievances</div>
+                            </div>
+                        </a>
+
+                        <a href="@Url.Action("Index", "Admin", new { tab = "support" })" class="ad-nav-menu-item @(isSupport ? "active" : "")">
+                            <div class="ad-menu-icon">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                                </svg>
+                            </div>
+                            <div class="ad-menu-content">
+                                <div class="ad-menu-title">Support Helpdesk</div>
+                                <div class="ad-menu-desc">Student &amp; teacher SLA ticket resolution</div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 6. Settings -->
+                <a href="@Url.Action("Index", "Admin", new { tab = "settings" })" class="ad-nav-link @(isSettings ? "active" : "")">
+                    <span>Settings</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Center: Global Unified Search -->
+        @*<div class="ad-center">
+            <div class="ad-search-box">
+                <span class="ad-search-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </span>
+                <input type="text" id="epAdminSearchInput" class="ad-search-input" placeholder="Search users, courses, tickets..." autocomplete="off" />
+                <span class="ad-search-kbd">Ctrl K</span>
+
+                <div class="ad-search-dropdown" id="epAdminSearchDropdown">
+                    <div class="d-flex align-items-center justify-content-between px-2 pt-1 pb-2 border-bottom border-secondary border-opacity-25 mb-1">
+                        <span class="text-secondary small font-monospace" style="font-size: 0.68rem; text-transform: uppercase;">Operations Directory</span>
+                        <span class="text-secondary small font-monospace" style="font-size: 0.65rem;">Esc to close</span>
+                    </div>
+
+                    <div id="epAdminSearchList" style="max-height: 320px; overflow-y: auto;">
+                        @foreach (var item in vm.SearchItems)
+                        {
+                            <a href="@item.TargetUrl" class="ad-search-item" data-title="@item.Title.ToLower()" data-category="@item.Category.ToLower()" data-sub="@item.Subtitle.ToLower()">
+                                <div class="d-flex align-items-center gap-2 text-truncate">
+                                    <span class="badge bg-secondary bg-opacity-25 text-info border border-secondary border-opacity-25 font-monospace" style="font-size: 0.65rem; min-width: 64px; text-align: center;">
+                                        @item.Category
+                                    </span>
+                                    <div class="text-truncate">
+                                        <div class="fw-semibold text-truncate text-light">@item.Title</div>
+                                        <div class="text-secondary small" style="font-size: 0.7rem;">@item.Subtitle</div>
+                                    </div>
+                                </div>
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2" class="flex-shrink-0 ms-2">
+                                    <polyline points="9 18 15 12 9 6"></polyline>
+                                </svg>
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>*@
+
+        <!-- Right: SLA Pill, Alerts, Profile, Logout -->
+        <div class="ad-right">
+            <!-- System Health SLA Indicator -->
+            @*<div class="ad-sla-pill" title="FastAPI RAG Microservice + Vector Store + SQL Cluster Operational">
+                <span class="ad-pulsing-dot"></span>
+                <span>@vm.SystemStatus</span>
+                <span class="ad-sla-text text-secondary opacity-75">&bull; @vm.SlaUptime</span>
+            </div>*@
+
+            <!-- Platform Alerts Toggle -->
+            <div class="position-relative">
+                <button class="ad-icon-btn" id="epAdminAlertsToggle" aria-haspopup="true" aria-expanded="false" title="Platform Alerts & Safety Center">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
+                    @if (vm.PendingReviewsCount + vm.FlaggedReportsCount > 0)
+                    {
+                        <span class="ad-badge-counter">@(vm.PendingReviewsCount + vm.FlaggedReportsCount)</span>
+                    }
+                </button>
+
+                <!-- Alerts Dropdown Panel -->
+                <div class="ad-alerts-panel" id="epAdminAlertsPanel">
+                    <div class="ad-alerts-header">
+                        <span class="fw-bold text-light small">Platform Operational Alerts</span>
+                        <span class="badge bg-secondary font-monospace" style="font-size: 0.65rem;">@vm.Notifications.Count Total</span>
+                    </div>
+
+                    <div style="max-height: 300px; overflow-y: auto;">
+                        @foreach (var n in vm.Notifications)
+                        {
+                            <a href="@n.TargetUrl" class="ad-alert-item">
+                                <div class="pt-1">
+                                    @if (n.IsUrgent)
+                                    {
+                                        <span class="text-danger">&#9679;</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-success">&#10003;</span>
+                                    }
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="fw-semibold text-light small">@n.Title</div>
+                                    <div class="text-secondary small" style="font-size: 0.725rem;">@n.Message</div>
+                                    <div class="text-muted font-monospace mt-1" style="font-size: 0.65rem;">@n.TimestampFormatted</div>
+                                </div>
+                            </a>
+                        }
+                    </div>
+
+                    <div class="p-2 border-top border-secondary border-opacity-25 bg-black bg-opacity-25 text-center">
+                        <a href="@Url.Action("Index", "Admin", new { tab = "reports" })" class="text-info small fw-semibold text-decoration-none">
+                            View All Incident Reports &rarr;
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Profile Menu -->
+            <div class="ad-profile-container">
+                <button class="ad-profile-btn" id="epAdminProfileToggle" aria-haspopup="true" aria-expanded="false" title="Administrator Account: @vm.Email">
+                    <span class="ad-avatar">@vm.AvatarInitials</span>
+                    <span class="ad-profile-name">Admin</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </button>
+
+                <div class="ad-profile-dropdown" id="epAdminProfileDropdown">
+                    <div class="ad-profile-header">
+                        <div class="fw-bold text-light small">@vm.AdminName</div>
+                        <div class="text-secondary small font-monospace" style="font-size: 0.7rem;">@vm.Email</div>
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill font-monospace mt-1" style="font-size: 0.625rem;">
+                            Root Administrator
+                        </span>
+                    </div>
+
+                    <a href="@Url.Action("Index", "Admin", new { tab = "settings" })" class="ad-profile-item">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                        </svg>
+                        <span>Platform Settings</span>
+                    </a>
+
+                    <a href="@Url.Action("Index", "Admin", new { tab = "ai-governance" })" class="ad-profile-item">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="3" width="20" height="14" rx="2"></rect>
+                            <line x1="8" y1="21" x2="16" y2="21"></line>
+                        </svg>
+                        <span>AI Safety &amp; Guardrails</span>
+                    </a>
+
+                    <a href="@Url.Action("Index", "Courses")" class="ad-profile-item">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polygon points="10 8 16 12 10 16 10 8"></polygon>
+                        </svg>
+                        <span>Preview Student Catalog</span>
+                    </a>
+
+                    <div class="ad-divider"></div>
+
+                    <form action="@Url.Action("Logout", "Account")" method="post" class="m-0">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="w-100 btn btn-sm btn-outline-danger d-flex align-items-center justify-content-center gap-2 rounded-2 mt-1">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                <polyline points="16 17 21 12 16 7"></polyline>
+                                <line x1="21" y1="12" x2="9" y2="12"></line>
+                            </svg>
+                            <span>Sign Out Admin</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Direct Navbar Logout Button -->
+            <form action="@Url.Action("Logout", "Account")" method="post" class="m-0 d-inline-flex align-items-center">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="ad-direct-logout-btn" title="Sign out administrator">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    <span>Logout</span>
+                </button>
+            </form>
+
+            <!-- Mobile Hamburger Toggle -->
+            <button class="ad-hamburger" id="epAdminDrawerOpen" aria-label="Open Admin Menu">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+    </div>
+</header>
+
+<!-- Mobile Offcanvas Drawer -->
+<div class="ad-drawer-backdrop" id="epAdminDrawerBackdrop"></div>
+<div class="ad-drawer" id="epAdminDrawer" role="dialog" aria-modal="true" aria-label="Admin Navigation Drawer">
+    <div class="ad-drawer-header">
+        <div class="d-flex align-items-center gap-2">
+            <span class="ad-avatar">@vm.AvatarInitials</span>
+            <div>
+                <div class="fw-bold text-light small">EduPulse Operations</div>
+                <div class="text-secondary font-monospace" style="font-size: 0.68rem;">@vm.Email</div>
+            </div>
+        </div>
+        <button class="btn-close btn-close-white" id="epAdminDrawerClose" aria-label="Close"></button>
+    </div>
+
+    <div class="ad-drawer-body">
+        <div class="px-2 mb-2 text-secondary small fw-bold text-uppercase" style="font-size: 0.65rem;">Platform Governance</div>
+        
+        <a href="@Url.Action("Index", "Admin", new { tab = "dashboard" })" class="ad-drawer-link @(isDashboard ? "active" : "")">
+            <span>Dashboard</span>
+        </a>
+
+        <div class="px-2 mt-3 mb-2 text-secondary small fw-bold text-uppercase" style="font-size: 0.65rem;">Entities &amp; Directory</div>
+
+        <a href="@Url.Action("Index", "Admin", new { tab = "users" })" class="ad-drawer-link @(isUsers ? "active" : "")">
+            <span>Users &amp; Learners</span>
+        </a>
+
+        <a href="@Url.Action("Index", "Admin", new { tab = "instructors" })" class="ad-drawer-link @(isInstructors ? "active" : "")">
+            <span>Instructors Approval</span>
+            @if (vm.PendingReviewsCount > 0)
+            {
+                <span class="badge bg-warning text-dark font-monospace ms-auto">@vm.PendingReviewsCount</span>
+            }
+        </a>
+
+        <a href="@Url.Action("Index", "Admin", new { tab = "certificates" })" class="ad-drawer-link @(isCertificates ? "active" : "")">
+            <span>Certificates Ledger</span>
+        </a>
+
+        <div class="px-2 mt-3 mb-2 text-secondary small fw-bold text-uppercase" style="font-size: 0.65rem;">Academic &amp; Curriculum</div>
+
+        <a href="@Url.Action("Index", "Admin", new { tab = "courses" })" class="ad-drawer-link @(isCourses ? "active" : "")">
+            <span>Courses Moderation</span>
+        </a>
+
+        <a href="@Url.Action("Index", "Admin", new { tab = "assessments" })" class="ad-drawer-link @(isAssessments ? "active" : "")">
+            <span>Assessments &amp; Rubrics</span>
+        </a>
+
+        <div class="px-2 mt-3 mb-2 text-secondary small fw-bold text-uppercase" style="font-size: 0.65rem;">Intelligence &amp; Finance</div>
+
+        <a href="@Url.Action("Index", "Admin", new { tab = "analytics" })" class="ad-drawer-link @(isAnalytics ? "active" : "")">
+            <span>Analytics &amp; BI</span>
+        </a>
+
+        <a href="@Url.Action("Index", "Admin", new { tab = "ai-governance" })" class="ad-drawer-link @(isAiGov ? "active" : "")">
+            <span>AI Governance</span>
+            <span class="badge bg-info text-dark font-monospace ms-auto">Active</span>
+        </a>
+
+        <a href="@Url.Action("Index", "Admin", new { tab = "finance" })" class="ad-drawer-link @(isFinance ? "active" : "")">
+            <span>Finance &amp; 10% Cut</span>
+        </a>
+
+        <div class="px-2 mt-3 mb-2 text-secondary small fw-bold text-uppercase" style="font-size: 0.65rem;">Trust, Safety &amp; Care</div>
+
+        <a href="@Url.Action("Index", "Admin", new { tab = "reports" })" class="ad-drawer-link @(isReports ? "active" : "")">
+            <span>Reports &amp; Incidents</span>
+            @if (vm.FlaggedReportsCount > 0)
+            {
+                <span class="badge bg-danger text-light font-monospace ms-auto">@vm.FlaggedReportsCount</span>
+            }
+        </a>
+
+        <a href="@Url.Action("Index", "Admin", new { tab = "support" })" class="ad-drawer-link @(isSupport ? "active" : "")">
+            <span>Support Helpdesk</span>
+        </a>
+
+        <div class="px-2 mt-3 mb-2 text-secondary small fw-bold text-uppercase" style="font-size: 0.65rem;">System Configuration</div>
+
+        <a href="@Url.Action("Index", "Admin", new { tab = "settings" })" class="ad-drawer-link @(isSettings ? "active" : "")">
+            <span>Platform Settings</span>
+        </a>
+
+        <div class="ad-divider my-3"></div>
+
+        <form action="@Url.Action("Logout", "Account")" method="post" class="m-0">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="w-100 btn btn-sm btn-danger d-flex align-items-center justify-content-center gap-2 rounded-2">
+                <span>Sign Out Root Admin</span>
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Admin Header Interactive Scripts -->
+<script>
+    (function () {
+        // Nav Category Dropdowns
+        document.querySelectorAll('.ad-nav-dropdown-btn').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                var menu = btn.nextElementSibling;
+                var isOpen = menu ? menu.classList.contains('show') : false;
+
+                // Close all other dropdowns
+                document.querySelectorAll('.ad-nav-menu, .ad-alerts-panel, .ad-profile-dropdown, .ad-search-dropdown').forEach(function (m) {
+                    if (m !== menu) m.classList.remove('show');
+                });
+                document.querySelectorAll('.ad-nav-dropdown-btn').forEach(function (b) {
+                    if (b !== btn) b.setAttribute('aria-expanded', 'false');
+                });
+
+                if (menu) {
+                    if (!isOpen) {
+                        menu.classList.add('show');
+                        btn.setAttribute('aria-expanded', 'true');
+                    } else {
+                        menu.classList.remove('show');
+                        btn.setAttribute('aria-expanded', 'false');
+                    }
+                }
+            });
+        });
+
+        function setupDropdown(btnId, panelId) {
+            var btn = document.getElementById(btnId);
+            var panel = document.getElementById(panelId);
+            if (!btn || !panel) return;
+
+            btn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                document.querySelectorAll('.ad-nav-menu, .ad-alerts-panel, .ad-profile-dropdown, .ad-search-dropdown').forEach(function (d) {
+                    if (d !== panel) d.classList.remove('show');
+                });
+                document.querySelectorAll('.ad-nav-dropdown-btn').forEach(function (b) {
+                    b.setAttribute('aria-expanded', 'false');
+                });
+                panel.classList.toggle('show');
+            });
+        }
+
+        setupDropdown('epAdminAlertsToggle', 'epAdminAlertsPanel');
+        setupDropdown('epAdminProfileToggle', 'epAdminProfileDropdown');
+
+        document.addEventListener('click', function (e) {
+            document.querySelectorAll('.ad-nav-menu, .ad-alerts-panel, .ad-profile-dropdown, .ad-search-dropdown').forEach(function (d) {
+                if (!d.contains(e.target)) d.classList.remove('show');
+            });
+            document.querySelectorAll('.ad-nav-dropdown-btn').forEach(function (btn) {
+                btn.setAttribute('aria-expanded', 'false');
+            });
+        });
+
+        // Search Autocomplete functionality
+        var searchInput = document.getElementById('epAdminSearchInput');
+        var searchDropdown = document.getElementById('epAdminSearchDropdown');
+
+        if (searchInput && searchDropdown) {
+            searchInput.addEventListener('focus', function () {
+                searchDropdown.classList.add('show');
+            });
+
+            searchInput.addEventListener('input', function () {
+                var query = (searchInput.value || '').trim().toLowerCase();
+                searchDropdown.classList.add('show');
+
+                var items = searchDropdown.querySelectorAll('.ad-search-item');
+                items.forEach(function (item) {
+                    var title = item.getAttribute('data-title') || '';
+                    var cat = item.getAttribute('data-category') || '';
+                    var sub = item.getAttribute('data-sub') || '';
+                    if (!query || title.indexOf(query) !== -1 || cat.indexOf(query) !== -1 || sub.indexOf(query) !== -1) {
+                        item.style.setProperty('display', 'flex', 'important');
+                    } else {
+                        item.style.setProperty('display', 'none', 'important');
+                    }
+                });
+            });
+
+            document.addEventListener('keydown', function (e) {
+                if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+                    e.preventDefault();
+                    searchInput.focus();
+                    searchInput.select();
+                    searchDropdown.classList.add('show');
+                }
+                if (e.key === 'Escape') {
+                    searchDropdown.classList.remove('show');
+                    document.querySelectorAll('.ad-nav-menu, .ad-alerts-panel, .ad-profile-dropdown').forEach(function (d) {
+                        d.classList.remove('show');
+                    });
+                    document.querySelectorAll('.ad-nav-dropdown-btn').forEach(function (btn) {
+                        btn.setAttribute('aria-expanded', 'false');
+                    });
+                }
+            });
+        }
+
+        // Drawer
+        var drawerOpenBtn = document.getElementById('epAdminDrawerOpen');
+        var drawerCloseBtn = document.getElementById('epAdminDrawerClose');
+        var drawer = document.getElementById('epAdminDrawer');
+        var backdrop = document.getElementById('epAdminDrawerBackdrop');
+
+        function openDrawer() {
+            if (drawer && backdrop) {
+                drawer.classList.add('open');
+                backdrop.classList.add('open');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeDrawer() {
+            if (drawer && backdrop) {
+                drawer.classList.remove('open');
+                backdrop.classList.remove('open');
+                document.body.style.overflow = '';
+            }
+        }
+
+        if (drawerOpenBtn) drawerOpenBtn.addEventListener('click', openDrawer);
+        if (drawerCloseBtn) drawerCloseBtn.addEventListener('click', closeDrawer);
+        if (backdrop) backdrop.addEventListener('click', closeDrawer);
+    })();
+</script>

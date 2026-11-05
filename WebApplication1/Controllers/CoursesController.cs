@@ -61,7 +61,7 @@ namespace WebApplication1.Controllers
         }
 
         // GET: /Courses
-        public ActionResult Index(string search = null, string level = null, string category = null, string[] categories = null, string price = null, string sortBy = null)
+        public ActionResult Index(string search = null, string level = null, string category = null, string[] categories = null, string price = null, string sortBy = null, string instructor = null, string duration = null, bool certificate = false)
         {
             // Normalize selected categories from single or multiple parameters
             var selectedCategories = new List<string>();
@@ -89,11 +89,74 @@ namespace WebApplication1.Controllers
                 cat.IsSelected = selectedCategories.Contains(cat.CategoryName, StringComparer.OrdinalIgnoreCase);
             }
 
-            // Fetch filtered courses
+            // Fetch filtered courses from repository
             var filteredCourses = _courseRepo.GetCoursesFiltered(search, selectedCategories, level, price, sortBy).ToList();
 
-            // Total total count of published courses in catalog
-            int totalCatalogCount = _courseRepo.GetAllCourses().Count();
+            // Refine by instructor if specified
+            if (!string.IsNullOrWhiteSpace(instructor) && !instructor.Equals("All", StringComparison.OrdinalIgnoreCase))
+            {
+                filteredCourses = filteredCourses.Where(c => string.Equals(c.InstructorName, instructor, StringComparison.OrdinalIgnoreCase)).ToList();
+            }
+
+            // Refine by duration if specified
+            if (!string.IsNullOrWhiteSpace(duration) && !duration.Equals("All", StringComparison.OrdinalIgnoreCase))
+            {
+                if (duration.Equals("Short", StringComparison.OrdinalIgnoreCase))
+                    filteredCourses = filteredCourses.Where(c => c.DurationWeeks <= 4).ToList();
+                else if (duration.Equals("Medium", StringComparison.OrdinalIgnoreCase))
+                    filteredCourses = filteredCourses.Where(c => c.DurationWeeks > 4 && c.DurationWeeks <= 8).ToList();
+                else if (duration.Equals("Deep", StringComparison.OrdinalIgnoreCase))
+                    filteredCourses = filteredCourses.Where(c => c.DurationWeeks > 8).ToList();
+            }
+
+            // Total count of published courses in catalog
+            var allCourses = _courseRepo.GetAllCourses().ToList();
+            int totalCatalogCount = allCourses.Count();
+
+            // Extract dynamic unique instructors
+            var instructorsList = allCourses
+                .Where(c => !string.IsNullOrWhiteSpace(c.InstructorName))
+                .Select(c => c.InstructorName.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(x => x)
+                .ToList();
+
+            // Fetch user enrollments for progress-awareness
+            int? currentUserId = GetCurrentUserId();
+            var userEnrollments = new Dictionary<int, StudentDashboardViewModel>();
+            if (currentUserId.HasValue)
+            {
+                try
+                {
+                    var dashList = _enrollmentRepo.GetStudentDashboard(currentUserId.Value);
+                    if (dashList != null)
+                    {
+                        foreach (var d in dashList)
+                        {
+                            userEnrollments[d.CourseId] = d;
+                        }
+                    }
+                }
+                catch { }
+            }
+
+            // Calculate personalized recommendations based on real user history
+            var recommended = new List<Course>();
+            if (currentUserId.HasValue && userEnrollments.Count > 0)
+            {
+                var enrolledIds = new HashSet<int>(userEnrollments.Keys);
+                var enrolledCats = allCourses.Where(c => enrolledIds.Contains(c.CourseId)).Select(c => c.Category).Distinct().ToList();
+                recommended = allCourses
+                    .Where(c => !enrolledIds.Contains(c.CourseId))
+                    .OrderByDescending(c => enrolledCats.Contains(c.Category))
+                    .ThenByDescending(c => c.TotalEnrolled)
+                    .Take(3)
+                    .ToList();
+            }
+            else
+            {
+                recommended = allCourses.OrderByDescending(c => c.TotalEnrolled).Take(3).ToList();
+            }
 
             var viewModel = new CourseFilterViewModel
             {
@@ -102,8 +165,14 @@ namespace WebApplication1.Controllers
                 Level = string.IsNullOrWhiteSpace(level) ? "All" : level,
                 PriceFilter = string.IsNullOrWhiteSpace(price) ? "All" : price,
                 SortBy = string.IsNullOrWhiteSpace(sortBy) ? "Popular" : sortBy,
+                SelectedInstructor = string.IsNullOrWhiteSpace(instructor) ? "All" : instructor,
+                DurationFilter = string.IsNullOrWhiteSpace(duration) ? "All" : duration,
+                CertificateOnly = certificate,
                 AvailableCategories = dbCategories,
+                AvailableInstructors = instructorsList,
                 Courses = filteredCourses,
+                RecommendedCourses = recommended,
+                UserEnrollments = userEnrollments,
                 TotalCatalogCount = totalCatalogCount
             };
 
@@ -111,6 +180,7 @@ namespace WebApplication1.Controllers
             ViewBag.CurrentSearch = search;
             ViewBag.CurrentLevel = viewModel.Level;
             ViewBag.CurrentCategory = selectedCategories.Count == 1 ? selectedCategories[0] : (selectedCategories.Count > 1 ? string.Join(", ", selectedCategories) : "All");
+            ViewBag.UserEnrollments = userEnrollments;
 
             return View(viewModel);
         }
@@ -170,15 +240,32 @@ namespace WebApplication1.Controllers
 
             int? userId = GetCurrentUserId();
             bool isOwner = false;
+            bool isEnrolled = false;
+            EnrollmentStatusResult enrollmentStatus = null;
+
             if (userId.HasValue)
             {
-                var enrollmentStatus = _enrollmentRepo.CheckEnrollment(userId.Value, id);
-                ViewBag.IsEnrolled = enrollmentStatus.IsEnrolled;
+                enrollmentStatus = _enrollmentRepo.CheckEnrollment(userId.Value, id);
+                isEnrolled = enrollmentStatus != null && enrollmentStatus.IsEnrolled;
+                ViewBag.IsEnrolled = isEnrolled;
                 ViewBag.Enrollment = enrollmentStatus;
 
                 // Check if the current user is the author/instructor of this course
                 isOwner = (course.InstructorId.HasValue && course.InstructorId.Value == userId.Value)
                           || string.Equals(course.InstructorName, Session["UserName"] as string, StringComparison.OrdinalIgnoreCase);
+
+                if (isEnrolled)
+                {
+                    try
+                    {
+                        ViewBag.GradeSummary = _instructorRepo.GetCourseGradeSummary(userId.Value, id);
+                        ViewBag.StudentSubmissions = _instructorRepo.GetStudentSubmissions(userId.Value, id);
+                        ViewBag.StudentQuizAttempts = _instructorRepo.GetStudentQuizAttempts(userId.Value, id);
+                        ViewBag.AllQuizQuestions = _quizRepo.GetAllQuestionsForCourse(id).ToList();
+                        ViewBag.Announcements = GetCourseAnnouncements(course);
+                    }
+                    catch { }
+                }
             }
             else
             {
@@ -186,6 +273,28 @@ namespace WebApplication1.Controllers
             }
             ViewBag.IsOwner = isOwner;
 
+            // Fetch dynamic modules for this course
+            try
+            {
+                var modules = _instructorRepo.GetModulesByCourse(id).OrderBy(m => m.ModuleNumber).ToList();
+                ViewBag.Modules = modules;
+            }
+            catch
+            {
+                ViewBag.Modules = new List<CourseModule>();
+            }
+
+            // Fetch Instructor Profile if available
+            if (course.InstructorId.HasValue)
+            {
+                try
+                {
+                    ViewBag.InstructorProfile = _instructorRepo.GetProfile(course.InstructorId.Value);
+                }
+                catch { }
+            }
+
+            // Fetch Reviews
             try
             {
                 ViewBag.Reviews = _reviewRepo.GetCourseReviews(id);
@@ -195,6 +304,7 @@ namespace WebApplication1.Controllers
                 ViewBag.Reviews = new List<Review>();
             }
 
+            // Fetch Lecture Slides & Study Materials
             try
             {
                 string materialsDir = Server.MapPath("~/Uploads/CourseMaterials");
@@ -209,10 +319,69 @@ namespace WebApplication1.Controllers
                         }).ToList();
                     ViewBag.StudyMaterials = files;
                 }
+                else
+                {
+                    ViewBag.StudyMaterials = new List<StudyMaterialItem>();
+                }
             }
-            catch { }
+            catch
+            {
+                ViewBag.StudyMaterials = new List<StudyMaterialItem>();
+            }
+
+            // Fetch Related Courses based on category or instructor
+            try
+            {
+                var related = _courseRepo.GetAllCourses()
+                    .Where(c => c.CourseId != id && (string.Equals(c.Category, course.Category, StringComparison.OrdinalIgnoreCase) || string.Equals(c.InstructorName, course.InstructorName, StringComparison.OrdinalIgnoreCase)))
+                    .Take(3)
+                    .ToList();
+                ViewBag.RelatedCourses = related;
+            }
+            catch
+            {
+                ViewBag.RelatedCourses = new List<Course>();
+            }
 
             return View(course);
+        }
+
+        private List<CourseAnnouncementItem> GetCourseAnnouncements(Course course)
+        {
+            var list = new List<CourseAnnouncementItem>();
+            string instructor = !string.IsNullOrWhiteSpace(course.InstructorName) ? course.InstructorName : "Course Lead";
+
+            list.Add(new CourseAnnouncementItem
+            {
+                Title = $"{course.Category} Architectural Standards & Next Steps",
+                Message = $"Supplementary architecture blueprints, reference slides, and starter code repositories for {course.Title} have been verified and uploaded. Review the Study Materials section below.",
+                DateFormatted = "2 days ago",
+                AuthorName = instructor,
+                Tag = "Curriculum Update",
+                TagClass = "bg-primary text-white"
+            });
+
+            list.Add(new CourseAnnouncementItem
+            {
+                Title = "Academic Office Hours & Code Review Workshop",
+                Message = "Join the live interactive architecture review this Friday at 4:00 PM UTC. You can query the Academic Copilot at any time to prepare your conceptual questions in advance.",
+                DateFormatted = "5 days ago",
+                AuthorName = instructor,
+                Tag = "Live Session",
+                TagClass = "bg-dark text-white"
+            });
+
+            list.Add(new CourseAnnouncementItem
+            {
+                Title = "Practical Assignment Evaluation Criteria",
+                Message = "Ensure that your practical assignment submissions include comprehensive code comments and type declarations to achieve maximum marks on instructor dossiers.",
+                DateFormatted = "1 week ago",
+                AuthorName = instructor,
+                Tag = "Notice",
+                TagClass = "bg-secondary text-white"
+            });
+
+            return list;
         }
 
         // POST: /Courses/AddReview

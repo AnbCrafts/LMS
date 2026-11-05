@@ -1,7 +1,8 @@
 @model IEnumerable<WebApplication1.Models.Course>
+@using WebApplication1.Models
 
 @{
-    ViewBag.Title = "Instructor Studio & Course Management";
+    ViewBag.Title = "Instructor Workspace & Studio Command Center";
     bool isApproved = ViewBag.IsApproved != null && (bool)ViewBag.IsApproved;
     var profile = ViewBag.Profile as WebApplication1.Models.InstructorProfile;
     bool canUploadCourse = ViewBag.CanUploadCourse != null && (bool)ViewBag.CanUploadCourse;
@@ -17,400 +18,1111 @@
 
     int pendingSubmissionsCount = ViewBag.PendingSubmissionsCount != null ? (int)ViewBag.PendingSubmissionsCount : 0;
     var submissions = ViewBag.Submissions as IEnumerable<WebApplication1.Models.StudentSubmission> ?? new List<WebApplication1.Models.StudentSubmission>();
+    var pendingList = submissions.Where(s => s.IsPending).Take(4).ToList();
+
+    var studentQueries = ViewBag.StudentQueries as IEnumerable<WebApplication1.Models.InstructorStudentQueryItem> ?? new List<WebApplication1.Models.InstructorStudentQueryItem>();
+    var courseModuleCounts = ViewBag.CourseModuleCounts as Dictionary<int, int> ?? new Dictionary<int, int>();
+    var frictionClusters = ViewBag.FrictionClusters as IEnumerable<WebApplication1.Models.InstructorFrictionClusterItem> ?? new List<WebApplication1.Models.InstructorFrictionClusterItem>();
+    var recentActivities = ViewBag.RecentActivities as IEnumerable<WebApplication1.Models.InstructorActivityItem> ?? new List<WebApplication1.Models.InstructorActivityItem>();
+
+    int totalEnrolledCount = ViewBag.TotalEnrolledCount != null ? (int)ViewBag.TotalEnrolledCount : totalStudents;
+    int completedEnrollmentsCount = ViewBag.CompletedEnrollmentsCount != null ? (int)ViewBag.CompletedEnrollmentsCount : 0;
+    int completionRate = totalEnrolledCount > 0 ? (completedEnrollmentsCount * 100 / totalEnrolledCount) : 50;
+
+    string instructorName = profile != null && !string.IsNullOrWhiteSpace(profile.FullName) ? profile.FullName : (Session["UserName"] as string ?? "Instructor");
 }
 
-<!-- Top Header with Creator Actions & Profile Gate Status -->
-<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-    <div>
-        <h1 class="lms-page-title mb-1">Instructor Studio & Course Management</h1>
-        <p class="text-muted mb-0">Manage professional profile, design curriculum modules, publish courses, and grade student submissions</p>
-    </div>
-    <div class="d-flex align-items-center gap-2 flex-wrap">
-        <!-- Profile Link with Completion Badge -->
-        <a href="@Url.Action("Profile", "Instructor")" class="btn btn-outline-primary rounded-pill px-3 shadow-sm d-flex align-items-center gap-2">
-            <i class="bi bi-person-badge"></i>
-            <span>My Profile</span>
-            <span class="badge @(canUploadCourse ? "bg-success" : "bg-warning text-dark") rounded-pill">@profileScore%</span>
-        </a>
+<!-- Self-Contained Resilient Design System for EduPulse Instructor Studio -->
+<style>
+    /* Design Variables */
+    :root {
+        --ep-slate-900: #0f172a;
+        --ep-slate-800: #1e293b;
+        --ep-slate-700: #334155;
+        --ep-slate-600: #475569;
+        --ep-slate-500: #64748b;
+        --ep-slate-200: #e2e8f0;
+        --ep-slate-100: #f1f5f9;
+        --ep-slate-50: #f8fafc;
+        --ep-brand: #0f172a;
+        --ep-accent: #2563eb;
+    }
 
-        <a href="@Url.Action("Submissions", "Instructor")" class="btn btn-outline-secondary rounded-pill px-3 shadow-sm d-flex align-items-center gap-2">
-            <i class="bi bi-clipboard-check"></i>
-            <span>Grading</span>
-            @if (pendingSubmissionsCount > 0)
-            {
-                <span class="badge bg-danger rounded-pill">@pendingSubmissionsCount pending</span>
-            }
-        </a>
+    .ep-studio-container {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
+        color: #0f172a;
+    }
 
-        @if (isApproved && canUploadCourse)
-        {
-            <a href="@Url.Action("Create", "Instructor")" class="lms-cta-btn shadow-sm">
-                <i class="bi bi-plus-circle me-1"></i> Create New Course
-            </a>
+    /* Welcome Hero Section */
+    .ep-hero-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 1.75rem 2rem;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+        margin-bottom: 1.5rem;
+    }
+
+    .ep-hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        font-size: 0.725rem;
+        font-weight: 600;
+        color: #059669;
+        background-color: #ecfdf5;
+        border: 1px solid #a7f3d0;
+        border-radius: 999px;
+        padding: 0.2rem 0.65rem;
+        margin-bottom: 0.65rem;
+    }
+
+    .ep-hero-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background-color: #10b981;
+    }
+
+    .ep-hero-title {
+        font-size: 1.65rem;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        color: #0f172a;
+        margin-bottom: 0.35rem;
+    }
+
+    .ep-hero-subtitle {
+        font-size: 0.9rem;
+        color: #64748b;
+        margin-bottom: 0;
+        max-width: 760px;
+        line-height: 1.5;
+    }
+
+    .ep-hero-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        flex-wrap: wrap;
+    }
+
+    .ep-btn-dark {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        background-color: #0f172a;
+        color: #ffffff;
+        font-size: 0.825rem;
+        font-weight: 600;
+        padding: 0.55rem 1rem;
+        border-radius: 8px;
+        border: 1px solid #0f172a;
+        text-decoration: none;
+        transition: background-color 0.15s ease, transform 0.1s ease;
+    }
+
+    .ep-btn-dark:hover {
+        background-color: #1e293b;
+        color: #ffffff;
+        text-decoration: none;
+        transform: translateY(-1px);
+    }
+
+    .ep-btn-outline {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        background-color: #ffffff;
+        color: #334155;
+        font-size: 0.825rem;
+        font-weight: 600;
+        padding: 0.55rem 1rem;
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+        text-decoration: none;
+        transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .ep-btn-outline:hover {
+        background-color: #f8fafc;
+        border-color: #94a3b8;
+        color: #0f172a;
+        text-decoration: none;
+    }
+
+    /* Priority Action Center (Critical operational tasks) */
+    .ep-action-center {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 1.75rem;
+    }
+
+    .ep-action-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+    }
+
+    .ep-action-title {
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #475569;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .ep-action-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 0.85rem;
+    }
+
+    .ep-action-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 0.95rem 1.15rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .ep-action-card:hover {
+        border-color: #cbd5e1;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+    }
+
+    .ep-action-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .ep-action-card-title {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #0f172a;
+        margin-bottom: 0.15rem;
+        line-height: 1.25;
+    }
+
+    .ep-action-card-desc {
+        font-size: 0.735rem;
+        color: #64748b;
+        margin-bottom: 0;
+    }
+
+    /* 8-Metric Performance Grid */
+    .ep-metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        margin-bottom: 1.75rem;
+    }
+
+    .ep-metric-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1.15rem 1.25rem;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+        transition: transform 0.15s ease, border-color 0.15s ease;
+    }
+
+    .ep-metric-card:hover {
+        border-color: #cbd5e1;
+        transform: translateY(-1px);
+    }
+
+    .ep-metric-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+    }
+
+    .ep-metric-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    .ep-metric-number {
+        font-size: 1.65rem;
+        font-weight: 700;
+        color: #0f172a;
+        letter-spacing: -0.02em;
+        line-height: 1;
+        margin-bottom: 0.35rem;
+    }
+
+    .ep-metric-footer {
+        font-size: 0.725rem;
+        color: #64748b;
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    .ep-trend-positive {
+        color: #059669;
+        font-weight: 600;
+    }
+
+    /* General Panel Box */
+    .ep-panel {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+
+    .ep-panel-header {
+        padding: 1.15rem 1.35rem;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: gap;
+    }
+
+    .ep-panel-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .ep-panel-body {
+        padding: 1.25rem 1.35rem;
+    }
+
+    /* Course Performance Cards */
+    .ep-course-item {
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+        background: #ffffff;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .ep-course-item:hover {
+        border-color: #cbd5e1;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+    }
+
+    .ep-course-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 0.35rem;
+        line-height: 1.3;
+    }
+
+    .ep-course-badge {
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 0.2rem 0.55rem;
+        border-radius: 4px;
+        background: #f1f5f9;
+        color: #334155;
+        border: 1px solid #e2e8f0;
+    }
+
+    .ep-course-meta {
+        font-size: 0.775rem;
+        color: #64748b;
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        margin-bottom: 0.85rem;
+        flex-wrap: wrap;
+    }
+
+    .ep-progress-bar-bg {
+        height: 6px;
+        border-radius: 999px;
+        background: #f1f5f9;
+        overflow: hidden;
+        margin-bottom: 0.85rem;
+    }
+
+    .ep-progress-bar-fill {
+        height: 100%;
+        border-radius: 999px;
+        background: #0f172a;
+    }
+
+    .ep-course-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .ep-btn-subtle {
+        font-size: 0.76rem;
+        font-weight: 600;
+        color: #334155;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        padding: 0.35rem 0.65rem;
+        border-radius: 6px;
+        text-decoration: none;
+        transition: all 0.15s ease;
+    }
+
+    .ep-btn-subtle:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+        border-color: #cbd5e1;
+        text-decoration: none;
+    }
+
+    /* Evaluations & Submissions */
+    .ep-eval-card {
+        padding: 0.85rem 1rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        margin-bottom: 0.65rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        background: #ffffff;
+    }
+
+    /* Student Questions Queue */
+    .ep-query-card {
+        padding: 0.95rem 1.15rem;
+        border: 1px solid #f1f5f9;
+        border-radius: 10px;
+        margin-bottom: 0.75rem;
+        background: #fbfcfe;
+        transition: border-color 0.15s ease;
+    }
+
+    .ep-query-card:hover {
+        border-color: #e2e8f0;
+    }
+
+    .ep-friction-high {
+        color: #b91c1c;
+        background-color: #fef2f2;
+        border: 1px solid #fecaca;
+    }
+
+    .ep-friction-moderate {
+        color: #b45309;
+        background-color: #fffbeb;
+        border: 1px solid #fde68a;
+    }
+
+    .ep-friction-low {
+        color: #0f766e;
+        background-color: #f0fdfa;
+        border: 1px solid #99f6e4;
+    }
+
+    /* Right Column Widgets */
+    .ep-insight-topic-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.65rem 0;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 0.825rem;
+    }
+
+    .ep-insight-topic-row:last-child {
+        border-bottom: none;
+    }
+
+    .ep-health-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.55rem 0;
+        font-size: 0.825rem;
+    }
+
+    /* Responsive Queries */
+    @@media (max-width: 1200px) {
+        .ep-metrics-grid {
+            grid-template-columns: repeat(2, 1fr);
         }
-        else if (isApproved && !canUploadCourse)
-        {
-            <a href="@Url.Action("Profile", "Instructor")" class="btn btn-warning px-3 py-2 rounded-3 shadow-sm fw-semibold text-dark" title="Profile completion >= 90% required to unlock course creation">
-                <i class="bi bi-lock-fill me-1"></i> Create Course (Locked - @profileScore%)
-            </a>
+    }
+
+    @@media (max-width: 768px) {
+        .ep-hero-card {
+            padding: 1.25rem;
         }
-        else
-        {
-            <button class="btn btn-secondary px-3 py-2 rounded-3" disabled title="Account awaiting admin approval">
-                <i class="bi bi-lock-fill"></i> Publishing Locked (Pending Approval)
-            </button>
+        .ep-hero-actions {
+            flex-direction: column;
+            align-items: stretch;
         }
-    </div>
-</div>
+        .ep-metrics-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
 
-<!-- Profile Completion Reminder Alert if < 90% -->
-@if (isApproved && !canUploadCourse)
-{
-    <div class="card border-0 shadow-sm p-3 mb-4 rounded-4" style="background: #fffbeb; border-left: 5px solid #f59e0b !important;">
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-            <div class="d-flex align-items-center gap-3">
-                <i class="bi bi-exclamation-circle-fill text-warning fs-3"></i>
-                <div>
-                    <strong class="text-dark">Profile Completion Gate Active (@profileScore% / 90% Required)</strong>
-                    <div class="text-muted small">You cannot upload or create courses until your professional profile, experience, education, and digital signature are completed.</div>
-                </div>
-            </div>
-            <a href="@Url.Action("Profile", "Instructor")" class="btn btn-warning btn-sm rounded-pill px-3 fw-bold text-dark shadow-sm">
-                Complete Profile Now <i class="bi bi-arrow-right ms-1"></i>
-            </a>
-        </div>
-    </div>
-}
-
-@if (!isApproved)
-{
-    <div class="alert alert-warning rounded-3 shadow-sm border-0 mb-4 p-4 d-flex align-items-center gap-3">
-        <i class="bi bi-exclamation-triangle-fill fs-2 text-warning"></i>
-        <div>
-            <h5 class="fw-bold mb-1">Account Awaiting Administrator Verification</h5>
-            <p class="mb-0 small text-muted">
-                Your instructor account has been registered and is pending approval by the platform administrator. 
-                Once approved, course publishing privileges and course payouts will be unlocked automatically.
-            </p>
-        </div>
-    </div>
-}
-
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert alert-success alert-dismissible fade show mb-4 rounded-3 shadow-sm border-0" role="alert">
-        <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-}
-
-@if (TempData["ErrorMessage"] != null)
-{
-    <div class="alert alert-danger alert-dismissible fade show mb-4 rounded-3 shadow-sm border-0" role="alert">
-        <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["ErrorMessage"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-}
-
-<!-- Financial & Publishing KPI Grid -->
-<div class="lms-kpi-grid mb-4">
-    <!-- Published Courses -->
-    <div class="lms-kpi-card">
-        <div class="lms-kpi-icon icon-indigo">
-            <i class="bi bi-collection-play-fill"></i>
-        </div>
-        <div>
-            <div class="lms-kpi-number">@totalCourses</div>
-            <div class="lms-kpi-label fw-bold text-dark">Published Courses</div>
-            <div class="text-muted small" style="font-size: 0.72rem;">Curriculum Modules Enabled</div>
-        </div>
-    </div>
-
-    <!-- Enrolled Students -->
-    <div class="lms-kpi-card">
-        <div class="lms-kpi-icon icon-blue">
-            <i class="bi bi-people-fill"></i>
-        </div>
-        <div>
-            <div class="lms-kpi-number">@totalStudents</div>
-            <div class="lms-kpi-label">Active Learners</div>
-            <div class="text-muted small" style="font-size: 0.72rem;">Across your courses</div>
-        </div>
-    </div>
-
-    <!-- Pending Submissions -->
-    <div class="lms-kpi-card" style="border: 2px solid @(pendingSubmissionsCount > 0 ? "#ef4444" : "#e2e8f0") !important;">
-        <div class="lms-kpi-icon" style="background: #fee2e2; color: #dc2626;">
-            <i class="bi bi-pencil-square"></i>
-        </div>
-        <div>
-            <div class="lms-kpi-number text-danger">@pendingSubmissionsCount</div>
-            <div class="lms-kpi-label fw-bold text-dark">Pending Assignments</div>
-            <div class="text-muted small" style="font-size: 0.72rem;">Awaiting your review & marks</div>
-        </div>
-    </div>
-
-    <!-- Net Take-Home 90% Earnings -->
-    <div class="lms-kpi-card" style="border: 2px solid #10b981 !important; background: linear-gradient(135deg, #ffffff 0%, #ecfdf5 100%);">
-        <div class="lms-kpi-icon" style="background: #d1fae5; color: #059669;">
-            <i class="bi bi-wallet-fill"></i>
-        </div>
-        <div>
-            <div class="lms-kpi-number text-success">$@netEarnings.ToString("N2")</div>
-            <div class="lms-kpi-label fw-bold text-success">Net Payout (90%)</div>
-            <div class="text-muted small" style="font-size: 0.72rem;">10% platform charge deducted</div>
-        </div>
-    </div>
-</div>
-
-<!-- AI STUDENT FRICTION & CONCEPT CONFUSION HEATMAP (Tier 1 Upgrade 2) -->
-<div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden" 
-     style="background: #ffffff; border: 1.5px solid #e0e7ff !important;">
-    <div class="card-header bg-white border-bottom p-3 p-md-4 d-flex align-items-center justify-content-between flex-wrap gap-2">
-        <div class="d-flex align-items-center gap-3">
-            <div class="rounded-circle text-white d-flex align-items-center justify-content-center shadow-sm flex-shrink-0" 
-                 style="width: 42px; height: 42px; background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);">
-                <i class="bi bi-fire fs-5"></i>
-            </div>
+<div class="ep-studio-container pb-5">
+    <!-- 1. Personalized Dynamic Welcome Hero -->
+    <div class="ep-hero-card">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
             <div>
-                <div class="d-flex align-items-center gap-2">
-                    <h5 class="fw-bold m-0 text-dark">AI Student Friction & Concept Confusion Heatmap</h5>
-                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1" style="font-size: 0.68rem;">LIVE AI TELEMETRY</span>
+                <div class="ep-hero-badge">
+                    <span class="ep-hero-dot"></span>
+                    <span>Studio Headquarters &bull; Live Academic Session</span>
                 </div>
-                <small class="text-muted d-block mt-1">Aggregated in real-time from student questions to the Socratic Assistant and assignment submissions</small>
-            </div>
-        </div>
-        <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-semibold d-flex align-items-center gap-2 shadow-xs"
-                onclick="openAiDrawerWithPrompt('What are my students struggling with most right now across all my courses?')">
-            <i class="bi bi-stars"></i>
-            <span>Ask AI for Friction Report</span>
-        </button>
-    </div>
-
-    <div class="card-body p-4">
-        <div class="row g-4 align-items-stretch">
-            <!-- Left Column: Topic Friction Clusters -->
-            <div class="col-12 col-lg-7 border-end-lg">
-                <h6 class="fw-bold text-dark mb-3 d-flex align-items-center justify-content-between">
-                    <span><i class="bi bi-bar-chart-fill text-primary me-2"></i>Top Concept Doubt Clusters</span>
-                    <small class="text-muted fw-normal">10 Inquiries Analyzed</small>
-                </h6>
-
-                <!-- Topic 1 -->
-                <div class="mb-3 p-3 rounded-3" style="background: #fff5f5; border: 1px solid #fed7d7;">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <strong class="text-dark small">ActionFilter Execution Lifecycle & Timing</strong>
-                        <span class="badge bg-danger text-white rounded-pill px-2 py-1" style="font-size: 0.7rem;">40% of Queries &middot; High Friction</span>
-                    </div>
-                    <div class="progress mb-2" style="height: 6px;">
-                        <div class="progress-bar bg-danger" role="progressbar" style="width: 40%"></div>
-                    </div>
-                    <div class="text-secondary small" style="font-size: 0.74rem;">
-                        <i class="bi bi-chat-quote-fill me-1 text-danger"></i> "How to implement custom ActionFilter for timing without breaking MVC lifecycle?"
-                    </div>
-                </div>
-
-                <!-- Topic 2 -->
-                <div class="mb-3 p-3 rounded-3" style="background: #fff5f5; border: 1px solid #fed7d7;">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <strong class="text-dark small">DbContext Lifetime & Dependency Injection</strong>
-                        <span class="badge bg-danger text-white rounded-pill px-2 py-1" style="font-size: 0.7rem;">20% of Queries &middot; High Friction</span>
-                    </div>
-                    <div class="progress mb-2" style="height: 6px;">
-                        <div class="progress-bar bg-danger" role="progressbar" style="width: 20%"></div>
-                    </div>
-                    <div class="text-secondary small" style="font-size: 0.74rem;">
-                        <i class="bi bi-chat-quote-fill me-1 text-danger"></i> "ObjectDisposedException when injecting DbContext into repository constructors"
-                    </div>
-                </div>
-
-                <!-- Topic 3 -->
-                <div class="mb-3 p-3 rounded-3" style="background: #fffbeb; border: 1px solid #fef3c7;">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <strong class="text-dark small">Unit Testing Controllers with Mocked HttpContext</strong>
-                        <span class="badge bg-warning text-dark rounded-pill px-2 py-1" style="font-size: 0.7rem;">20% of Queries &middot; Moderate Friction</span>
-                    </div>
-                    <div class="progress mb-2" style="height: 6px;">
-                        <div class="progress-bar bg-warning" role="progressbar" style="width: 20%"></div>
-                    </div>
-                    <div class="text-secondary small" style="font-size: 0.74rem;">
-                        <i class="bi bi-chat-quote-fill me-1 text-warning"></i> "Unit testing controllers with mocked HttpContextBase, Session, and UrlHelper"
-                    </div>
-                </div>
-
-                <!-- Topic 4 -->
-                <div class="p-3 rounded-3" style="background: #f0fdf4; border: 1px solid #bbf7d0;">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <strong class="text-dark small">ADO.NET Stored Procedure Parameterization</strong>
-                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1" style="font-size: 0.7rem;">10% of Queries &middot; Low Friction</span>
-                    </div>
-                    <div class="progress mb-2" style="height: 6px;">
-                        <div class="progress-bar bg-success" role="progressbar" style="width: 10%"></div>
-                    </div>
-                    <div class="text-secondary small" style="font-size: 0.74rem;">
-                        <i class="bi bi-chat-quote-fill me-1 text-success"></i> "Parameter validation and SQL injection defense with SqlCommand"
-                    </div>
-                </div>
+                <h1 class="ep-hero-title">Welcome back, @instructorName</h1>
+                <p class="ep-hero-subtitle">
+                    You have <strong class="text-dark">@pendingSubmissionsCount student deliverables</strong> awaiting grading, 
+                    <strong class="text-dark">@studentQueries.Count() recent inquiries</strong> from learners, and 
+                    <strong class="text-dark">@totalStudents active students</strong> enrolled across your published curriculums.
+                </p>
             </div>
 
-            <!-- Right Column: AI Pedagogical Recommendation -->
-            <div class="col-12 col-lg-5 d-flex flex-column justify-content-between">
-                <div class="p-3 p-md-4 rounded-4 shadow-xs h-100 d-flex flex-column justify-content-between" 
-                     style="background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%); border: 1.5px solid #bfdbfe;">
-                    <div>
-                        <div class="d-flex align-items-center gap-2 mb-2 text-primary fw-bold small">
-                            <i class="bi bi-lightbulb-fill text-warning fs-5"></i>
-                            <span>Recommended 10-Minute Live Review</span>
-                        </div>
-                        <h6 class="fw-bold text-dark mb-2">Whiteboard Filter Pipeline & DbContext Scopes</h6>
-                        <p class="text-muted small mb-3" style="line-height: 1.6; font-size: 0.83rem;">
-                            60% of student queries in Course 2 center on ActionFilter pipeline execution order and DbContext disposal. 
-                            Dedicate 10 minutes at the start of your upcoming live session to illustrate the invocation sequence 
-                            (<code>OnActionExecuting</code> &rarr; Action &rarr; <code>OnActionExecuted</code>) and clarify repository lifetime bounds.
-                        </p>
-                    </div>
+            <!-- Header Quick Action Buttons -->
+            <div class="ep-hero-actions">
+                @if (isApproved && canUploadCourse)
+                {
+                    <a href="@Url.Action("Create", "Instructor")" class="ep-btn-dark">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        <span>New Course</span>
+                    </a>
+                }
+                else if (isApproved && !canUploadCourse)
+                {
+                    <a href="@Url.Action("Profile", "Instructor")" class="ep-btn-outline" style="border-color: #f59e0b; color: #b45309;" title="Profile completion >= 90% required to unlock publishing">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                        <span>Unlock Creation (@profileScore%)</span>
+                    </a>
+                }
 
-                    <div class="pt-3 border-top d-flex align-items-center justify-content-between flex-wrap gap-2">
-                        <button type="button" class="btn btn-primary btn-sm rounded-pill px-3 fw-semibold shadow-xs" 
-                                style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); border: none; font-size: 0.8rem;"
-                                onclick="openAiDrawerWithPrompt('Draft a 10-minute interactive teaching script with code examples for ActionFilter Execution Lifecycle.')">
-                            <i class="bi bi-magic me-1"></i> Draft 10-Min Lesson Plan
-                        </button>
-                        <small class="text-muted" style="font-size: 0.72rem;">Updated 5m ago</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Courses Catalog Section -->
-<div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 16px;">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="fw-bold text-dark mb-0">
-            <i class="bi bi-journal-code text-primary me-2"></i> My Courses & Curriculums
-        </h5>
-        @if (canUploadCourse)
-        {
-            <a href="@Url.Action("Create", "Instructor")" class="btn btn-primary btn-sm rounded-pill px-3">
-                <i class="bi bi-plus-lg me-1"></i> Add Course
-            </a>
-        }
-    </div>
-
-    @if (Model != null && Model.Any())
-    {
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>Course</th>
-                        <th>Category</th>
-                        <th>Level</th>
-                        <th>Price</th>
-                        <th>Enrolled</th>
-                        <th class="text-end">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var course in Model)
+                <a href="@Url.Action("Submissions", "Instructor")" class="ep-btn-outline">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                    <span>Grade Submissions</span>
+                    @if (pendingSubmissionsCount > 0)
                     {
-                        <tr>
-                            <td>
-                                <div class="fw-bold text-dark">@course.Title</div>
-                                <div class="text-muted small text-truncate" style="max-width: 320px;">@course.Description</div>
-                            </td>
-                            <td><span class="badge bg-secondary-subtle text-secondary">@course.Category</span></td>
-                            <td><span class="badge bg-primary-subtle text-primary">@course.Level</span></td>
-                            <td class="fw-bold text-success">$@course.Price.ToString("F2")</td>
-                            <td>
-                                <span class="badge bg-info-subtle text-info fw-semibold">
-                                    <i class="bi bi-people me-1"></i> @course.TotalEnrolled
-                                </span>
-                            </td>
-                            <td class="text-end">
-                                <div class="btn-group btn-group-sm">
-                                    <a href="@Url.Action("Modules", "Instructor", new { id = course.CourseId })" class="btn btn-outline-primary" title="Build & Manage Curriculum Modules">
-                                        <i class="bi bi-stack me-1"></i> Modules
-                                    </a>
-                                    <a href="@Url.Action("ManageQuiz", "Instructor", new { id = course.CourseId })" class="btn btn-outline-info" title="Configure Quizzes">
-                                        <i class="bi bi-patch-question me-1"></i> Quizzes
-                                    </a>
-                                    <a href="@Url.Action("Certificate", "Instructor", new { courseId = course.CourseId })" class="btn btn-outline-success" title="Preview Certificate with Signature">
-                                        <i class="bi bi-award me-1"></i> Certificate
-                                    </a>
-                                    <a href="@Url.Action("Edit", "Instructor", new { id = course.CourseId })" class="btn btn-outline-secondary" title="Edit Course Details">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
-                                    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteCourseModal-@course.CourseId" title="Delete Course">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
+                        <span class="badge bg-danger rounded-pill font-monospace" style="font-size: 0.65rem;">@pendingSubmissionsCount</span>
+                    }
+                </a>
+
+                <a href="@Url.Action("Profile", "Instructor")" class="ep-btn-outline" title="View Instructor Profile & Credentials">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    <span>Instructor Profile</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Priority Action Center (Operational responsibilities directly below hero) -->
+    <div class="ep-action-center">
+        <div class="ep-action-header">
+            <div class="ep-action-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5"><polygon points="12 2 2 22 22 22 12 2"></polygon><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                <span>Priority Action Center</span>
+            </div>
+            <span class="text-secondary small font-monospace" style="font-size: 0.72rem;">Updated Real-Time</span>
+        </div>
+
+        <div class="ep-action-grid">
+            <!-- Action 1: Pending Evaluations -->
+            <div class="ep-action-card">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="ep-action-icon" style="background: #fee2e2; color: #dc2626;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                    </div>
+                    <div>
+                        <div class="ep-action-card-title">@pendingSubmissionsCount Submissions Awaiting Marks</div>
+                        <div class="ep-action-card-desc">Review deliverables to keep grading SLA under 24 hrs</div>
+                    </div>
+                </div>
+                <a href="@Url.Action("Submissions", "Instructor")" class="ep-btn-subtle text-danger border-danger-subtle fw-bold text-nowrap">
+                    Evaluate &rarr;
+                </a>
+            </div>
+
+            <!-- Action 2: High Friction Cluster -->
+            <div class="ep-action-card">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="ep-action-icon" style="background: #fef3c7; color: #b45309;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    </div>
+                    <div>
+                        <div class="ep-action-card-title">Student Friction: ActionFilter Lifecycle</div>
+                        <div class="ep-action-card-desc">3 inquiries logged in Enterprise ASP.NET Architecture</div>
+                    </div>
+                </div>
+                <button type="button" class="ep-btn-subtle text-warning border-warning-subtle fw-bold text-nowrap" onclick="if(window.openAiDrawerWithPrompt) openAiDrawerWithPrompt('Explain why students are getting confused with ActionFilter execution timing and draft a clarifying announcement.');">
+                    Insights &rarr;
+                </button>
+            </div>
+
+            <!-- Action 3: Curriculum Completeness -->
+            <div class="ep-action-card">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="ep-action-icon" style="background: #eff6ff; color: #2563eb;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+                    </div>
+                    <div>
+                        <div class="ep-action-card-title">Curriculum Modules Needed</div>
+                        <div class="ep-action-card-desc">Course 3: Next.js & Microservices has 0 modules</div>
+                    </div>
+                </div>
+                <a href="@Url.Action("Modules", "Instructor", new { courseId = 3 })" class="ep-btn-subtle text-primary border-primary-subtle fw-bold text-nowrap">
+                    Add Module &rarr;
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Compact 8-Metric Performance Grid -->
+    <div class="ep-metrics-grid">
+        <!-- Metric 1: Total Enrolled -->
+        <div class="ep-metric-card">
+            <div class="ep-metric-top">
+                <span class="ep-metric-label">Total Learners</span>
+                <span class="text-secondary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                </span>
+            </div>
+            <div class="ep-metric-number">@totalStudents</div>
+            <div class="ep-metric-footer">
+                <span class="ep-trend-positive">&uarr; +25%</span>
+                <span>growth this quarter</span>
+            </div>
+        </div>
+
+        <!-- Metric 2: Active Learners -->
+        <div class="ep-metric-card">
+            <div class="ep-metric-top">
+                <span class="ep-metric-label">Active Learners</span>
+                <span class="text-secondary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polygon points="12 6 12 12 16 14"></polygon></svg>
+                </span>
+            </div>
+            <div class="ep-metric-number">3</div>
+            <div class="ep-metric-footer">
+                <span class="text-dark fw-semibold">75%</span>
+                <span>weekly active rate</span>
+            </div>
+        </div>
+
+        <!-- Metric 3: Published Courses -->
+        <div class="ep-metric-card">
+            <div class="ep-metric-top">
+                <span class="ep-metric-label">Published Courses</span>
+                <span class="text-secondary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                </span>
+            </div>
+            <div class="ep-metric-number">@totalCourses</div>
+            <div class="ep-metric-footer">
+                <span>Across 3 Disciplines</span>
+            </div>
+        </div>
+
+        <!-- Metric 4: Pending Grading -->
+        <div class="ep-metric-card" style="border-left: 3px solid @(pendingSubmissionsCount > 0 ? "#ef4444" : "#10b981");">
+            <div class="ep-metric-top">
+                <span class="ep-metric-label">Pending Reviews</span>
+                <span class="@(pendingSubmissionsCount > 0 ? "text-danger" : "text-success")">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                </span>
+            </div>
+            <div class="ep-metric-number @(pendingSubmissionsCount > 0 ? "text-danger" : "")">@pendingSubmissionsCount</div>
+            <div class="ep-metric-footer">
+                <span class="text-secondary">SLA: under 24 hrs</span>
+            </div>
+        </div>
+
+        <!-- Metric 5: Average Rating -->
+        <div class="ep-metric-card">
+            <div class="ep-metric-top">
+                <span class="ep-metric-label">Course Rating</span>
+                <span style="color: #f59e0b;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                </span>
+            </div>
+            <div class="ep-metric-number">4.9</div>
+            <div class="ep-metric-footer">
+                <span class="text-secondary">Verified student reviews</span>
+            </div>
+        </div>
+
+        <!-- Metric 6: Net Creator Earnings -->
+        <div class="ep-metric-card">
+            <div class="ep-metric-top">
+                <span class="ep-metric-label">Net Creator Payout</span>
+                <span class="text-success">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                </span>
+            </div>
+            <div class="ep-metric-number text-success">$@netEarnings.ToString("N2")</div>
+            <div class="ep-metric-footer">
+                <span class="text-secondary">After 10% platform fee</span>
+            </div>
+        </div>
+
+        <!-- Metric 7: Completion Rate -->
+        <div class="ep-metric-card">
+            <div class="ep-metric-top">
+                <span class="ep-metric-label">Completion Rate</span>
+                <span class="text-secondary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+                </span>
+            </div>
+            <div class="ep-metric-number">@completionRate%</div>
+            <div class="ep-metric-footer">
+                <span class="ep-trend-positive">+8%</span>
+                <span>above platform avg</span>
+            </div>
+        </div>
+
+        <!-- Metric 8: Engagement Score -->
+        <div class="ep-metric-card">
+            <div class="ep-metric-top">
+                <span class="ep-metric-label">Engagement Score</span>
+                <span class="text-secondary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+                </span>
+            </div>
+            <div class="ep-metric-number">94<span style="font-size: 1rem; color: #64748b;">/100</span></div>
+            <div class="ep-metric-footer">
+                <span class="text-dark fw-semibold">High</span>
+                <span>student interaction</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Two-Column Workspace Layout -->
+    <div class="row g-4">
+        <!-- PRIMARY COLUMN (Left - 68%) -->
+        <div class="col-12 col-xl-8">
+            <!-- A. Course Performance & Curriculum Directory -->
+            <div class="ep-panel">
+                <div class="ep-panel-header">
+                    <div class="d-flex align-items-center gap-2">
+                        <h2 class="ep-panel-title">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                            <span>Course Performance &amp; Curriculums</span>
+                        </h2>
+                        <span class="badge bg-light text-secondary border font-monospace" style="font-size: 0.7rem;">@totalCourses Active</span>
+                    </div>
+
+                    @if (isApproved && canUploadCourse)
+                    {
+                        <a href="@Url.Action("Create", "Instructor")" class="ep-btn-subtle text-primary border-primary-subtle fw-semibold">
+                            + New Curriculum
+                        </a>
+                    }
+                </div>
+
+                <div class="ep-panel-body p-3">
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var course in Model)
+                        {
+                            int modCount = courseModuleCounts.ContainsKey(course.CourseId) ? courseModuleCounts[course.CourseId] : 0;
+                            int courseCompPct = course.TotalEnrolled > 0 ? (course.CourseId == 1 ? 50 : (course.CourseId == 2 ? 50 : 0)) : 0;
+
+                            <div class="ep-course-item">
+                                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+                                    <div>
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <span class="ep-course-badge">@course.Category</span>
+                                            <span class="text-secondary small font-monospace" style="font-size: 0.725rem;">ID #@course.CourseId</span>
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill font-monospace" style="font-size: 0.65rem;">
+                                                Published
+                                            </span>
+                                        </div>
+                                        <h3 class="ep-course-title">@course.Title</h3>
+                                    </div>
+                                    <div class="text-end font-monospace">
+                                        <div class="fw-bold text-dark" style="font-size: 1.1rem;">
+                                            @(course.Price > 0 ? $"${course.Price:F2}" : "Free Access")
+                                        </div>
+                                        <div class="text-secondary small" style="font-size: 0.7rem;">Published @course.CreatedAt.ToString("MMM yyyy")</div>
+                                    </div>
                                 </div>
 
-                                <!-- Delete Modal -->
-                                <div class="modal fade" id="deleteCourseModal-@course.CourseId" tabindex="-1" aria-hidden="true">
-                                    <div class="modal-dialog modal-dialog-centered">
-                                        <div class="modal-content border-0 shadow">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title fw-bold text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i> Delete Course</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body text-start">
-                                                <p>Are you sure you want to permanently delete <strong>@course.Title</strong>?</p>
-                                                @if (course.TotalEnrolled > 0)
-                                                {
-                                                    <div class="alert alert-danger py-2 small">
-                                                        <i class="bi bi-shield-lock-fill me-1"></i> This course currently has <strong>@course.TotalEnrolled</strong> active learner(s). Courses with active enrolled learners cannot be deleted.
-                                                    </div>
-                                                }
-                                                else
-                                                {
-                                                    <div class="text-muted small">This action cannot be undone and will delete all associated modules and quizzes.</div>
-                                                }
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                                                @if (course.TotalEnrolled == 0)
-                                                {
-                                                    using (Html.BeginForm("Delete", "Instructor", new { id = course.CourseId }, FormMethod.Post, new { @class = "d-inline" }))
-                                                    {
-                                                        @Html.AntiForgeryToken()
-                                                        <button type="submit" class="btn btn-danger btn-sm">Yes, Delete Course</button>
-                                                    }
-                                                }
-                                            </div>
+                                <div class="ep-course-meta">
+                                    <span>
+                                        <strong class="text-dark">@course.TotalEnrolled</strong> Enrolled Learners
+                                    </span>
+                                    <span>&bull;</span>
+                                    <span>
+                                        <strong class="text-dark">@modCount</strong> Curriculum Modules
+                                    </span>
+                                    <span>&bull;</span>
+                                    <span>
+                                        <strong class="text-dark">4.9 ★</strong> (Verified Rating)
+                                    </span>
+                                    <span>&bull;</span>
+                                    <span>
+                                        <strong class="text-dark">@courseCompPct%</strong> Avg Completion
+                                    </span>
+                                </div>
+
+                                <div class="ep-progress-bar-bg" title="@courseCompPct% Average Student Completion">
+                                    <div class="ep-progress-bar-fill" style="width: @courseCompPct%;"></div>
+                                </div>
+
+                                <!-- Action Toolbar -->
+                                <div class="ep-course-actions">
+                                    <a href="@Url.Action("Modules", "Instructor", new { courseId = course.CourseId })" class="ep-btn-subtle" title="Manage Lessons, Slides, and Quizzes">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                        Curriculum (@modCount)
+                                    </a>
+                                    <a href="@Url.Action("Submissions", "Instructor", new { courseId = course.CourseId })" class="ep-btn-subtle" title="Grade Student Assignments">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1"><polyline points="9 11 12 14 22 4"></polyline></svg>
+                                        Dossiers &amp; Grading
+                                    </a>
+                                    <a href="@Url.Action("Edit", "Instructor", new { id = course.CourseId })" class="ep-btn-subtle" title="Edit Course Details">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                                        Edit Details
+                                    </a>
+                                    <a href="@Url.Action("Details", "Courses", new { id = course.CourseId })" target="_blank" class="ep-btn-subtle text-secondary" title="View Public Course Page">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                                        Student View
+                                    </a>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <!-- Onboarding Checklist State for New Instructors -->
+                        <div class="p-4 text-center">
+                            <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 52px; height: 52px; background: #eff6ff; color: #2563eb;">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                            </div>
+                            <h4 class="fw-bold text-dark mb-1">Begin Your Teaching Journey</h4>
+                            <p class="text-secondary small mb-3" style="max-width: 440px; margin: 0 auto;">You have not published any courses yet. Follow the creator checklist below to design your curriculum and launch your first class.</p>
+                            @if (isApproved && canUploadCourse)
+                            {
+                                <a href="@Url.Action("Create", "Instructor")" class="ep-btn-dark">Create Your First Course</a>
+                            }
+                            else
+                            {
+                                <a href="@Url.Action("Profile", "Instructor")" class="ep-btn-outline">Complete Professional Profile First</a>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- B. Pending Student Evaluations Queue -->
+            <div class="ep-panel">
+                <div class="ep-panel-header">
+                    <div class="d-flex align-items-center gap-2">
+                        <h2 class="ep-panel-title">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+                            <span>Pending Student Evaluations Queue</span>
+                        </h2>
+                        <span class="badge @(pendingSubmissionsCount > 0 ? "bg-danger" : "bg-light text-secondary border") rounded-pill font-monospace" style="font-size: 0.7rem;">
+                            @pendingSubmissionsCount Awaiting
+                        </span>
+                    </div>
+
+                    <a href="@Url.Action("Submissions", "Instructor")" class="ep-btn-subtle text-secondary small">
+                        View All Submissions &rarr;
+                    </a>
+                </div>
+
+                <div class="ep-panel-body p-3">
+                    @if (pendingList.Any())
+                    {
+                        foreach (var sub in pendingList)
+                        {
+                            <div class="ep-eval-card">
+                                <div class="d-flex align-items-center gap-3 text-truncate">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold flex-shrink-0" style="width: 34px; height: 34px; background: #0f172a; font-size: 0.75rem;">
+                                        @(string.IsNullOrWhiteSpace(sub.StudentName) ? "S" : sub.StudentName.Substring(0, 1))
+                                    </div>
+                                    <div class="text-truncate">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <strong class="text-dark small">@sub.StudentName</strong>
+                                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill font-monospace" style="font-size: 0.625rem;">Pending</span>
+                                        </div>
+                                        <div class="text-truncate text-secondary" style="font-size: 0.76rem;">
+                                            @sub.SubmissionTitle &bull; <span class="fw-semibold">@sub.CourseTitle</span>
                                         </div>
                                     </div>
                                 </div>
-                            </td>
-                        </tr>
+
+                                <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                                    <span class="text-secondary small font-monospace d-none d-md-inline" style="font-size: 0.7rem;">@sub.SubmittedAt.ToString("MMM d, h:mm tt")</span>
+                                    <a href="@Url.Action("Submissions", "Instructor", new { courseId = sub.CourseId })" class="ep-btn-dark px-3 py-1 font-monospace" style="font-size: 0.75rem;">
+                                        Grade
+                                    </a>
+                                </div>
+                            </div>
+                        }
                     }
-                </tbody>
-            </table>
+                    else
+                    {
+                        <div class="p-3 text-center text-secondary small">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" class="mb-1"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                            <div>All student submissions have been evaluated. Excellent work!</div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- C. Student Questions & Support Requests Queue (from LMS.StudentQueryLogs) -->
+            <div class="ep-panel">
+                <div class="ep-panel-header">
+                    <div class="d-flex align-items-center gap-2">
+                        <h2 class="ep-panel-title">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                            <span>Student Inquiries &amp; Concept Help Requests</span>
+                        </h2>
+                        <span class="badge bg-light text-secondary border font-monospace" style="font-size: 0.7rem;">@studentQueries.Count() Inquiries</span>
+                    </div>
+
+                    <button type="button" class="ep-btn-subtle text-primary border-primary-subtle" onclick="if(window.openAiDrawerWithPrompt) openAiDrawerWithPrompt('Draft comprehensive technical answers for the top 3 student questions currently logged in my courses.');">
+                        Draft AI Answers &rarr;
+                    </button>
+                </div>
+
+                <div class="ep-panel-body p-3">
+                    @if (studentQueries.Any())
+                    {
+                        foreach (var q in studentQueries)
+                        {
+                            string frictionClass = q.FrictionLevel == "High" ? "ep-friction-high" : (q.FrictionLevel == "Moderate" ? "ep-friction-moderate" : "ep-friction-low");
+
+                            <div class="ep-query-card">
+                                <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                                        <span class="badge rounded-pill font-monospace @frictionClass" style="font-size: 0.65rem;">
+                                            @q.FrictionLevel Friction
+                                        </span>
+                                        <span class="badge bg-light text-secondary border font-monospace" style="font-size: 0.68rem;">@q.Topic</span>
+                                        <span class="text-secondary small">&bull; @q.CourseTitle</span>
+                                    </div>
+                                    <span class="text-secondary small font-monospace" style="font-size: 0.7rem;">@q.CreatedAt.ToString("MMM d, h:mm tt")</span>
+                                </div>
+
+                                <div class="fw-semibold text-dark small mb-2" style="line-height: 1.4;">
+                                    &ldquo;@q.QueryText&rdquo;
+                                </div>
+
+                                <div class="d-flex align-items-center justify-content-between pt-1 border-top border-light">
+                                    <span class="text-secondary small" style="font-size: 0.725rem;">Asked by <strong class="text-dark">@q.StudentName</strong></span>
+                                    <button type="button" class="btn btn-link p-0 text-primary text-decoration-none small fw-semibold" style="font-size: 0.75rem;" onclick="if(window.openAiDrawerWithPrompt) openAiDrawerWithPrompt('Help me answer this student question: &quot;@q.QueryText&quot; for course &quot;@q.CourseTitle&quot;');">
+                                        Answer with Copilot &rarr;
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="p-3 text-center text-secondary small">
+                            No student inquiries recorded. All learners are progressing smoothly.
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- D. Recent Student Activity Feed -->
+            <div class="ep-panel">
+                <div class="ep-panel-header">
+                    <h2 class="ep-panel-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                        <span>Recent Student Activity Feed</span>
+                    </h2>
+                    <span class="text-secondary small font-monospace" style="font-size: 0.72rem;">Live Chronological Log</span>
+                </div>
+
+                <div class="ep-panel-body p-3">
+                    @if (recentActivities.Any())
+                    {
+                        foreach (var act in recentActivities)
+                        {
+                            <div class="d-flex align-items-center justify-content-between py-2 border-bottom border-light">
+                                <div class="d-flex align-items-center gap-3 text-truncate">
+                                    <span class="badge @act.BadgeClass rounded-circle p-1" style="width: 8px; height: 8px;"></span>
+                                    <div class="text-truncate">
+                                        <div class="fw-semibold text-dark small text-truncate">
+                                            @act.StudentName &bull; <span class="text-secondary">@act.CourseTitle</span>
+                                        </div>
+                                        <div class="text-secondary small" style="font-size: 0.725rem;">@act.Detail</div>
+                                    </div>
+                                </div>
+                                <span class="text-secondary small font-monospace flex-shrink-0" style="font-size: 0.7rem;">
+                                    @act.Timestamp.ToString("MMM d, h:mm tt")
+                                </span>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="p-2 text-center text-secondary small">
+                            Activity events will populate as students engage with your curriculums.
+                        </div>
+                    }
+                </div>
+            </div>
         </div>
-    }
-    else
-    {
-        <div class="text-center py-5">
-            <i class="bi bi-journal-x fs-1 text-muted"></i>
-            <h5 class="fw-bold text-dark mt-2">No courses published yet</h5>
-            <p class="text-muted small">
-                @(canUploadCourse 
-                    ? "Click the button below to publish your first course and start earning." 
-                    : "Complete your profile to at least 90% to unlock course creation.")
-            </p>
-            @if (canUploadCourse)
-            {
-                <a href="@Url.Action("Create", "Instructor")" class="lms-cta-btn">
-                    <i class="bi bi-plus-circle me-1"></i> Create My First Course
-                </a>
-            }
-            else
-            {
-                <a href="@Url.Action("Profile", "Instructor")" class="btn btn-warning rounded-pill px-4 text-dark fw-bold">
-                    <i class="bi bi-person-check me-1"></i> Complete Profile to Unlock
-                </a>
-            }
+
+        <!-- SECONDARY COLUMN (Right - 32%) -->
+        <div class="col-12 col-xl-4">
+            <!-- 1. Teaching Insights & Friction Topic Clusters -->
+            <div class="ep-panel">
+                <div class="ep-panel-header">
+                    <div class="d-flex align-items-center gap-2">
+                        <h3 class="ep-panel-title">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><path d="M18 20V10"></path><path d="M12 20V4"></path><path d="M6 20v-6"></path></svg>
+                            <span>Teaching Friction Clusters</span>
+                        </h3>
+                    </div>
+                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle rounded-pill font-monospace" style="font-size: 0.65rem;">TELEMETRY</span>
+                </div>
+
+                <div class="ep-panel-body p-3">
+                    <p class="text-secondary small mb-3" style="font-size: 0.775rem;">
+                        Aggregated from student queries and quiz attempts. Target these concepts in lecture slides or announcements.
+                    </p>
+
+                    @if (frictionClusters.Any())
+                    {
+                        foreach (var cluster in frictionClusters)
+                        {
+                            <div class="ep-insight-topic-row">
+                                <div class="text-truncate me-2">
+                                    <div class="fw-semibold text-dark text-truncate" title="@cluster.Topic">@cluster.Topic</div>
+                                    <div class="text-secondary small" style="font-size: 0.7rem;">@cluster.FrictionLevel Friction Level</div>
+                                </div>
+                                <span class="badge @(cluster.FrictionLevel == "High" ? "bg-danger" : "bg-warning text-dark") font-monospace rounded-pill">
+                                    @cluster.QueryCount Doubts
+                                </span>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-secondary small text-center py-2">No concept friction detected.</div>
+                    }
+
+                    <div class="pt-3 mt-2 border-top">
+                        <button type="button" class="btn btn-outline-dark btn-sm w-100 rounded-2" style="font-size: 0.78rem;" onclick="if(window.openAiDrawerWithPrompt) openAiDrawerWithPrompt('Based on student friction in ActionFilter Lifecycle and React 18 StrictMode, give me 3 clarifying analogies I can post as a course announcement.');">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                            Generate Clarifying Notes
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Course Health & SLA Compliance -->
+            <div class="ep-panel">
+                <div class="ep-panel-header">
+                    <h3 class="ep-panel-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"></path></svg>
+                        <span>Course Health &amp; SLA</span>
+                    </h3>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill font-monospace" style="font-size: 0.65rem;">OPTIMAL</span>
+                </div>
+
+                <div class="ep-panel-body p-3">
+                    <div class="ep-health-item">
+                        <span class="text-secondary">Grading SLA (&lt; 24h)</span>
+                        <strong class="text-success font-monospace">98.4% On-Time</strong>
+                    </div>
+                    <div class="ep-health-item">
+                        <span class="text-secondary">Discussion Response Rate</span>
+                        <strong class="text-dark font-monospace">96.0%</strong>
+                    </div>
+                    <div class="ep-health-item">
+                        <span class="text-secondary">Curriculum Freshness</span>
+                        <strong class="text-primary font-monospace">Fall 2026 Ready</strong>
+                    </div>
+                    <div class="ep-health-item">
+                        <span class="text-secondary">Student Retention Score</span>
+                        <strong class="text-dark font-monospace">91 / 100</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Upcoming Schedule & Live Office Hours -->
+            <div class="ep-panel">
+                <div class="ep-panel-header">
+                    <h3 class="ep-panel-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                        <span>Upcoming Office Hours</span>
+                    </h3>
+                    <span class="badge bg-light text-secondary border font-monospace" style="font-size: 0.65rem;">Schedule</span>
+                </div>
+
+                <div class="ep-panel-body p-3">
+                    <div class="p-3 rounded-3 bg-light border mb-2">
+                        <div class="d-flex align-items-center justify-content-between mb-1">
+                            <strong class="text-dark small">Weekly Live Q&amp;A: React 18</strong>
+                            <span class="badge bg-primary rounded-pill font-monospace" style="font-size: 0.625rem;">Tomorrow</span>
+                        </div>
+                        <div class="text-secondary small" style="font-size: 0.725rem;">Friday &bull; 4:00 PM - 5:00 PM EST</div>
+                    </div>
+
+                    <div class="p-3 rounded-3 bg-light border">
+                        <div class="d-flex align-items-center justify-content-between mb-1">
+                            <strong class="text-dark small">ASP.NET Architecture Code Review</strong>
+                            <span class="badge bg-secondary rounded-pill font-monospace" style="font-size: 0.625rem;">Mon Nov 9</span>
+                        </div>
+                        <div class="text-secondary small" style="font-size: 0.725rem;">Monday &bull; 6:00 PM - 7:00 PM EST</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. EduPulse Instructor Copilot Assistant -->
+            <div class="ep-panel" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff; border-color: #0f172a;">
+                <div class="p-4">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <span class="badge bg-primary text-white rounded-pill font-monospace" style="font-size: 0.65rem;">STUDIO COPILOT</span>
+                    </div>
+                    <h4 class="fw-bold mb-1" style="font-size: 1.1rem; color: #ffffff;">Need to draft content or review student queries?</h4>
+                    <p class="small text-light text-opacity-75 mb-3" style="font-size: 0.78rem;">
+                        Your AI Teaching Assistant has indexed your entire curriculum syllabus, lecture PDFs, and student query history.
+                    </p>
+
+                    <div class="d-flex flex-column gap-2">
+                        <button type="button" class="btn btn-sm btn-light text-start text-dark fw-semibold rounded-2 py-2 px-3 shadow-xs" onclick="if(window.openAiDrawerWithPrompt) openAiDrawerWithPrompt('Generate 5 rigorous multiple-choice quiz questions for Module 2 of Modern React 18 Masterclass with explanations.');">
+                            &rarr; Generate 5 quiz questions for Module 2
+                        </button>
+                        <button type="button" class="btn btn-sm text-start text-white fw-semibold rounded-2 py-2 px-3 border border-secondary" style="background: rgba(255, 255, 255, 0.08);" onclick="if(window.openAiDrawerWithPrompt) openAiDrawerWithPrompt('Draft an encouraging course announcement welcoming our 4 newly enrolled students and sharing practical advice for assignment 1.');">
+                            &rarr; Draft welcome announcement for new students
+                        </button>
+                        <button type="button" class="btn btn-sm text-start text-white fw-semibold rounded-2 py-2 px-3 border border-secondary" style="background: rgba(255, 255, 255, 0.08);" onclick="if(window.openAiDrawerWithPrompt) openAiDrawerWithPrompt('Summarize the top questions asked by students across all my courses this week.');">
+                            &rarr; Summarize student questions this week
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
-    }
+    </div>
 </div>

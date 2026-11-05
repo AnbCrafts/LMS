@@ -1,125 +1,829 @@
 @model WebApplication1.Models.RegisterViewModel
 
 @{
-    ViewBag.Title = "Create an Account";
+    ViewBag.Title = "Create an Account | EduPulse";
 }
 
-<div class="row justify-content-center py-4">
-    <div class="col-12 col-md-7 col-lg-6">
-        <div class="card border-0 shadow-sm p-4 p-md-5" style="border-radius: 20px; border: 1px solid #e2e8f0 !important;">
-            <div class="text-center mb-4">
-                <div class="lms-brand-icon mx-auto mb-3" style="width: 48px; height: 48px; font-size: 1.5rem;">
-                    <i class="bi bi-person-plus-fill"></i>
+<!-- Self-Contained Resilient Styling for EduPulse Registration Onboarding -->
+<style>
+    .ep-reg-page {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
+        color: #0f172a;
+        background-color: #f8fafc;
+        min-height: calc(100vh - 64px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem 1.5rem;
+    }
+
+    .ep-reg-shell {
+        max-width: 1180px;
+        width: 100%;
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.05), 0 8px 10px -6px rgba(15, 23, 42, 0.02);
+        display: grid;
+        grid-template-columns: 1fr 1.15fr;
+        overflow: hidden;
+    }
+
+    /* Left Brand & Value Proposition Panel */
+    .ep-reg-left {
+        background: linear-gradient(145deg, #0f172a 0%, #1e293b 100%);
+        color: #ffffff;
+        padding: 3.5rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .ep-reg-brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none !important;
+        margin-bottom: 2.25rem;
+    }
+
+    .ep-reg-symbol {
+        width: 32px;
+        height: 32px;
+        background-color: #ffffff;
+        border-radius: 7px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #0f172a;
+    }
+
+    .ep-reg-brand-name {
+        font-size: 1.25rem;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        color: #ffffff;
+    }
+
+    .ep-reg-headline {
+        font-size: 2rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        line-height: 1.25;
+        color: #ffffff;
+        margin-bottom: 1.25rem;
+    }
+
+    .ep-reg-subtext {
+        font-size: 0.95rem;
+        color: #94a3b8;
+        line-height: 1.6;
+        margin-bottom: 2rem;
+    }
+
+    /* Feature Highlights List */
+    .ep-benefit-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1.15rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .ep-benefit-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .ep-benefit-bullet {
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+        background-color: rgba(56, 189, 248, 0.15);
+        color: #38bdf8;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+
+    .ep-benefit-title {
+        font-size: 0.9rem;
+        font-weight: 650;
+        color: #f8fafc;
+        margin-bottom: 2px;
+    }
+
+    .ep-benefit-desc {
+        font-size: 0.8rem;
+        color: #94a3b8;
+        line-height: 1.5;
+        margin: 0;
+    }
+
+    /* Certificate Preview Card inside Left Panel */
+    .ep-cert-preview-box {
+        background-color: rgba(15, 23, 42, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .ep-cert-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 8px;
+        background-color: rgba(16, 185, 129, 0.15);
+        color: #34d399;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+
+    .ep-cert-title {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #f8fafc;
+        margin-bottom: 2px;
+    }
+
+    .ep-cert-meta {
+        font-size: 0.75rem;
+        color: #94a3b8;
+    }
+
+    /* Right Form Panel */
+    .ep-reg-right {
+        padding: 3.5rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        background-color: #ffffff;
+    }
+
+    .ep-reg-header {
+        margin-bottom: 1.75rem;
+    }
+
+    .ep-reg-title {
+        font-size: 1.75rem;
+        font-weight: 750;
+        letter-spacing: -0.025em;
+        color: #0f172a;
+        margin-bottom: 0.4rem;
+    }
+
+    .ep-reg-subtitle {
+        font-size: 0.925rem;
+        color: #475569;
+        margin: 0;
+    }
+
+    /* Role Selector Segmented Controls */
+    .ep-role-selector {
+        background-color: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 4px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 4px;
+        margin-bottom: 1.5rem;
+    }
+
+    .ep-role-option {
+        padding: 8px 12px;
+        border-radius: 8px;
+        text-align: center;
+        cursor: pointer;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #64748b;
+        transition: all 0.15s ease;
+        user-select: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+
+    .ep-role-option.active {
+        background-color: #ffffff;
+        color: #0f172a;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+    }
+
+    .ep-role-callout {
+        font-size: 0.78rem;
+        color: #475569;
+        background-color: #f8fafc;
+        border: 1px solid #edf0f4;
+        border-radius: 8px;
+        padding: 8px 12px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    /* Form Fields */
+    .ep-form-group {
+        margin-bottom: 1.15rem;
+    }
+
+    .ep-form-label {
+        display: block;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin-bottom: 0.35rem;
+    }
+
+    .ep-input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .ep-input-icon {
+        position: absolute;
+        left: 12px;
+        color: #94a3b8;
+        font-size: 1rem;
+        pointer-events: none;
+    }
+
+    .ep-form-control {
+        width: 100%;
+        font-size: 0.925rem;
+        color: #0f172a;
+        background-color: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        padding: 0.65rem 1rem 0.65rem 2.4rem;
+        transition: all 0.15s ease;
+    }
+
+    .ep-form-control:focus {
+        outline: none;
+        border-color: #0f172a;
+        box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
+    }
+
+    .ep-pw-toggle {
+        position: absolute;
+        right: 12px;
+        background: transparent;
+        border: none;
+        color: #64748b;
+        cursor: pointer;
+        padding: 4px;
+        display: flex;
+        align-items: center;
+        font-size: 1rem;
+    }
+
+    .ep-pw-toggle:hover {
+        color: #0f172a;
+    }
+
+    .ep-field-error {
+        font-size: 0.8rem;
+        color: #dc2626;
+        margin-top: 0.35rem;
+        display: block;
+    }
+
+    /* Password Requirements Helper */
+    .ep-pw-requirements {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 6px;
+        font-size: 0.75rem;
+        color: #64748b;
+    }
+
+    .ep-req-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        transition: color 0.15s ease;
+    }
+
+    .ep-req-pill.valid {
+        color: #16a34a;
+        font-weight: 600;
+    }
+
+    /* Terms */
+    .ep-terms-check {
+        font-size: 0.82rem;
+        color: #475569;
+        margin: 1.25rem 0 1.5rem 0;
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .ep-terms-check a {
+        color: #0f172a;
+        text-decoration: underline;
+    }
+
+    /* Submit Button */
+    .ep-reg-btn {
+        width: 100%;
+        background-color: #0f172a;
+        color: #ffffff !important;
+        font-size: 0.95rem;
+        font-weight: 600;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        border: 1px solid #0f172a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        cursor: pointer;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+        transition: all 0.15s ease;
+    }
+
+    .ep-reg-btn:hover {
+        background-color: #1e293b;
+        border-color: #1e293b;
+    }
+
+    .ep-reg-btn:disabled {
+        opacity: 0.65;
+        cursor: not-allowed;
+    }
+
+    /* Social Divider */
+    .ep-reg-divider {
+        display: flex;
+        align-items: center;
+        margin: 1.5rem 0;
+        color: #94a3b8;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .ep-reg-divider::before,
+    .ep-reg-divider::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background-color: #e2e8f0;
+    }
+
+    .ep-reg-divider span {
+        padding: 0 10px;
+    }
+
+    /* Social Buttons */
+    .ep-social-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 1.75rem;
+    }
+
+    .ep-social-btn {
+        background-color: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        padding: 0.6rem 1rem;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #334155;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .ep-social-btn:hover {
+        background-color: #f8fafc;
+        border-color: #94a3b8;
+        color: #0f172a;
+    }
+
+    /* Footer Link */
+    .ep-reg-footer {
+        padding-top: 1.25rem;
+        border-top: 1px solid #f1f5f9;
+        text-align: center;
+        font-size: 0.875rem;
+        color: #64748b;
+    }
+
+    .ep-reg-footer a {
+        color: #0f172a !important;
+        font-weight: 600;
+        text-decoration: none !important;
+    }
+
+    .ep-reg-footer a:hover {
+        text-decoration: underline !important;
+    }
+
+    /* Alert */
+    .ep-reg-alert {
+        background-color: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #991b1b;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    /* Responsive */
+    @@media (max-width: 991.98px) {
+        .ep-reg-shell {
+            grid-template-columns: 1fr;
+            max-width: 560px;
+        }
+
+        .ep-reg-left {
+            padding: 2.5rem 2rem;
+        }
+
+        .ep-reg-headline {
+            font-size: 1.75rem;
+        }
+
+        .ep-reg-right {
+            padding: 2.5rem 2rem;
+        }
+    }
+
+    @@media (max-width: 575.98px) {
+        .ep-reg-page {
+            padding: 1rem;
+        }
+
+        .ep-reg-left {
+            padding: 2rem 1.5rem;
+        }
+
+        .ep-reg-right {
+            padding: 2rem 1.5rem;
+        }
+
+        .ep-social-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="ep-reg-page">
+    <div class="ep-reg-shell">
+        
+        <!-- Left Panel: Membership Benefits & Value Proposition -->
+        <div class="ep-reg-left">
+            <div>
+                <a class="ep-reg-brand" href="@Url.Action("Index", "Home")" aria-label="EduPulse Home">
+                    <span class="ep-reg-symbol">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 3L2 8L12 13L22 8L12 3Z" stroke="#0f172a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M5 10.5V16C5 17.5 8 19.5 12 19.5C16 19.5 19 17.5 19 16V10.5" stroke="#0f172a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </span>
+                    <span class="ep-reg-brand-name">EduPulse</span>
+                </a>
+
+                <h1 class="ep-reg-headline">
+                    Advance Your Engineering Career with Industry Mentors.
+                </h1>
+                <p class="ep-reg-subtext">
+                    Join a vetted community of software engineers, systems designers, and educators mastering complex architectures through sequential curriculums.
+                </p>
+
+                <!-- Feature Highlights -->
+                <div class="ep-benefit-list">
+                    <div class="ep-benefit-item">
+                        <div class="ep-benefit-bullet"><i class="bi bi-mortarboard"></i></div>
+                        <div>
+                            <div class="ep-benefit-title">Curriculum-First Architecture</div>
+                            <p class="ep-benefit-desc">Sequential modules, synchronized slide decks, and zero superficial marketing content.</p>
+                        </div>
+                    </div>
+
+                    <div class="ep-benefit-item">
+                        <div class="ep-benefit-bullet"><i class="bi bi-terminal"></i></div>
+                        <div>
+                            <div class="ep-benefit-title">Practical Project Assessments</div>
+                            <p class="ep-benefit-desc">Build real codebases evaluated directly against standardized instructor grading rubrics.</p>
+                        </div>
+                    </div>
+
+                    <div class="ep-benefit-item">
+                        <div class="ep-benefit-bullet"><i class="bi bi-award"></i></div>
+                        <div>
+                            <div class="ep-benefit-title">Cryptographic Certifications</div>
+                            <p class="ep-benefit-desc">Earn tamper-proof completion certificates featuring unique verification hashes and instructor signatures.</p>
+                        </div>
+                    </div>
+
+                    <div class="ep-benefit-item">
+                        <div class="ep-benefit-bullet"><i class="bi bi-cash-stack"></i></div>
+                        <div>
+                            <div class="ep-benefit-title">Educator Creator Economy</div>
+                            <p class="ep-benefit-desc">Accredited instructors keep 90% net revenue on course sales with automated invoicing.</p>
+                        </div>
+                    </div>
                 </div>
-                <h2 class="fw-bold text-dark">Join EduPulse LMS</h2>
-                <p class="text-muted small">Choose your learning or teaching journey</p>
+            </div>
+
+            <!-- Certified Credential Preview Card -->
+            <div class="ep-cert-preview-box">
+                <div class="ep-cert-icon">
+                    <i class="bi bi-patch-check-fill"></i>
+                </div>
+                <div>
+                    <div class="ep-cert-title">Verified Certificate of Completion</div>
+                    <div class="ep-cert-meta">Unique Hash &bull; Digital Signature &bull; Permanent URL</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Onboarding Registration Form -->
+        <div class="ep-reg-right">
+            <div class="ep-reg-header">
+                <h2 class="ep-reg-title">Create your account</h2>
+                <p class="ep-reg-subtitle">Get started with your technical learning journey.</p>
             </div>
 
             @if (!ViewData.ModelState.IsValid)
             {
-                <div class="alert alert-danger py-2 small rounded-3">
-                    @Html.ValidationSummary(true, "", new { @class = "mb-0" })
+                <div class="ep-reg-alert">
+                    <i class="bi bi-exclamation-circle-fill fs-6 mt-0"></i>
+                    <div>
+                        @Html.ValidationSummary(true, "", new { @class = "m-0 list-unstyled" })
+                    </div>
                 </div>
             }
 
-            @using (Html.BeginForm("Register", "Account", FormMethod.Post))
+            @using (Html.BeginForm("Register", "Account", FormMethod.Post, new { id = "registerForm", novalidate = "novalidate" }))
             {
                 @Html.AntiForgeryToken()
 
-                <!-- Role Selector -->
-                <div class="mb-4">
-                    <label class="form-label fw-semibold text-dark small">I want to join as:</label>
-                    <div class="row g-2">
-                        <div class="col-6">
-                            <label class="card h-100 p-3 text-center border cursor-pointer role-option" id="roleStudentCard" style="border-radius: 12px; cursor: pointer;">
-                                <input type="radio" name="Role" value="Student" class="d-none" id="roleStudent" checked />
-                                <div class="fs-4 text-primary mb-1"><i class="bi bi-mortarboard"></i></div>
-                                <div class="fw-bold small text-dark">Student / Learner</div>
-                                <div class="text-muted" style="font-size: 0.75rem;">Instant auto-access</div>
-                            </label>
+                <!-- Hidden Input for Selected Role -->
+                @Html.HiddenFor(m => m.Role, new { id = "selectedRole" })
+
+                <!-- Role Selector (Student vs Instructor) -->
+                <div class="mb-2">
+                    <label class="ep-form-label">I want to join as:</label>
+                    <div class="ep-role-selector">
+                        <div class="ep-role-option @(Model?.Role == "Student" || string.IsNullOrEmpty(Model?.Role) ? "active" : "")" 
+                             id="roleBtnStudent" 
+                             onclick="selectRole('Student')">
+                            <i class="bi bi-mortarboard"></i> Student / Learner
                         </div>
-                        <div class="col-6">
-                            <label class="card h-100 p-3 text-center border cursor-pointer role-option" id="roleInstructorCard" style="border-radius: 12px; cursor: pointer;">
-                                <input type="radio" name="Role" value="Instructor" class="d-none" id="roleInstructor" />
-                                <div class="fs-4 text-warning mb-1"><i class="bi bi-person-badge"></i></div>
-                                <div class="fw-bold small text-dark">Course Instructor</div>
-                                <div class="text-muted" style="font-size: 0.75rem;">Admin review required</div>
-                            </label>
+                        <div class="ep-role-option @(Model?.Role == "Instructor" ? "active" : "")" 
+                             id="roleBtnInstructor" 
+                             onclick="selectRole('Instructor')">
+                            <i class="bi bi-person-workspace"></i> Course Instructor
                         </div>
                     </div>
-                </div>
 
-                <div class="mb-3">
-                    @Html.LabelFor(m => m.FullName, new { @class = "form-label fw-semibold text-dark small" })
-                    <div class="input-group">
-                        <span class="input-group-text bg-white border-end-0 text-muted">
-                            <i class="bi bi-person"></i>
-                        </span>
-                        @Html.TextBoxFor(m => m.FullName, new { @class = "form-control border-start-0 ps-0", placeholder = "e.g. John Doe" })
+                    <!-- Contextual Notice based on Selected Role -->
+                    <div id="roleCalloutStudent" class="ep-role-callout" style="@(Model?.Role == "Instructor" ? "display:none;" : "")">
+                        <i class="bi bi-info-circle text-primary mt-1"></i>
+                        <span>Instant access to course catalog, video classroom, interactive quizzes, and certified gradebook.</span>
                     </div>
-                    @Html.ValidationMessageFor(m => m.FullName, "", new { @class = "text-danger small" })
-                </div>
 
-                <div class="mb-3">
-                    @Html.LabelFor(m => m.Email, new { @class = "form-label fw-semibold text-dark small" })
-                    <div class="input-group">
-                        <span class="input-group-text bg-white border-end-0 text-muted">
-                            <i class="bi bi-envelope"></i>
-                        </span>
-                        @Html.TextBoxFor(m => m.Email, new { @class = "form-control border-start-0 ps-0", placeholder = "john@example.com" })
-                    </div>
-                    @Html.ValidationMessageFor(m => m.Email, "", new { @class = "text-danger small" })
-                </div>
-
-                <div class="row g-2 mb-3">
-                    <div class="col-12 col-md-6">
-                        @Html.LabelFor(m => m.Password, new { @class = "form-label fw-semibold text-dark small" })
-                        @Html.PasswordFor(m => m.Password, new { @class = "form-control", placeholder = "At least 4 chars" })
-                        @Html.ValidationMessageFor(m => m.Password, "", new { @class = "text-danger small" })
-                    </div>
-                    <div class="col-12 col-md-6">
-                        @Html.LabelFor(m => m.ConfirmPassword, new { @class = "form-label fw-semibold text-dark small" })
-                        @Html.PasswordFor(m => m.ConfirmPassword, new { @class = "form-control", placeholder = "Confirm password" })
-                        @Html.ValidationMessageFor(m => m.ConfirmPassword, "", new { @class = "text-danger small" })
+                    <div id="roleCalloutInstructor" class="ep-role-callout" style="@(Model?.Role == "Instructor" ? "" : "display:none;")">
+                        <i class="bi bi-shield-check text-warning mt-1"></i>
+                        <span>Instructor accounts undergo accreditation review. Once approved, you keep <strong>90% net revenue</strong> on your courses.</span>
                     </div>
                 </div>
 
-                <div class="alert alert-info py-2 small rounded-3 mb-4" id="instructorNotice" style="display: none;">
-                    <i class="bi bi-info-circle-fill me-1"></i>
-                    <strong>Notice for Instructors:</strong> To ensure high course quality, new instructor accounts must be reviewed and verified by an administrator before publishing courses.
+                <!-- Full Name -->
+                <div class="ep-form-group">
+                    <label class="ep-form-label" for="regFullName">Full Name</label>
+                    <div class="ep-input-wrapper">
+                        <i class="bi bi-person ep-input-icon"></i>
+                        @Html.TextBoxFor(m => m.FullName, new { 
+                            @class = "ep-form-control", 
+                            id = "regFullName", 
+                            placeholder = "e.g. Alex Morgan", 
+                            required = "required",
+                            autocomplete = "name"
+                        })
+                    </div>
+                    @Html.ValidationMessageFor(m => m.FullName, "", new { @class = "ep-field-error" })
                 </div>
 
-                <button type="submit" class="lms-cta-btn w-100 justify-content-center py-2 fs-6">
-                    Create Account <i class="bi bi-arrow-right"></i>
+                <!-- Email Address -->
+                <div class="ep-form-group">
+                    <label class="ep-form-label" for="regEmail">Email Address</label>
+                    <div class="ep-input-wrapper">
+                        <i class="bi bi-envelope ep-input-icon"></i>
+                        @Html.TextBoxFor(m => m.Email, new { 
+                            @class = "ep-form-control", 
+                            id = "regEmail", 
+                            placeholder = "name@company.com", 
+                            type = "email", 
+                            required = "required",
+                            autocomplete = "email"
+                        })
+                    </div>
+                    @Html.ValidationMessageFor(m => m.Email, "", new { @class = "ep-field-error" })
+                </div>
+
+                <!-- Password with Real-Time Requirements -->
+                <div class="ep-form-group">
+                    <label class="ep-form-label" for="regPassword">Password</label>
+                    <div class="ep-input-wrapper">
+                        <i class="bi bi-lock ep-input-icon"></i>
+                        @Html.PasswordFor(m => m.Password, new { 
+                            @class = "ep-form-control", 
+                            id = "regPassword", 
+                            placeholder = "At least 4 characters", 
+                            required = "required",
+                            autocomplete = "new-password",
+                            oninput = "validatePasswordRequirements(this.value)"
+                        })
+                        <button type="button" class="ep-pw-toggle" onclick="togglePasswordVisibility('regPassword', this)" aria-label="Toggle password visibility">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                    @Html.ValidationMessageFor(m => m.Password, "", new { @class = "ep-field-error" })
+
+                    <div class="ep-pw-requirements">
+                        <span id="reqLength" class="ep-req-pill"><i class="bi bi-dot"></i> At least 4 chars</span>
+                        <span id="reqMatch" class="ep-req-pill"><i class="bi bi-dot"></i> Passwords match</span>
+                    </div>
+                </div>
+
+                <!-- Confirm Password -->
+                <div class="ep-form-group">
+                    <label class="ep-form-label" for="regConfirmPassword">Confirm Password</label>
+                    <div class="ep-input-wrapper">
+                        <i class="bi bi-shield-lock ep-input-icon"></i>
+                        @Html.PasswordFor(m => m.ConfirmPassword, new { 
+                            @class = "ep-form-control", 
+                            id = "regConfirmPassword", 
+                            placeholder = "Re-enter your password", 
+                            required = "required",
+                            autocomplete = "new-password",
+                            oninput = "checkPasswordMatch()"
+                        })
+                        <button type="button" class="ep-pw-toggle" onclick="togglePasswordVisibility('regConfirmPassword', this)" aria-label="Toggle confirm password visibility">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                    @Html.ValidationMessageFor(m => m.ConfirmPassword, "", new { @class = "ep-field-error" })
+                </div>
+
+                <!-- Terms and Privacy Check -->
+                <div class="ep-terms-check">
+                    <input type="checkbox" id="termsCheck" required class="form-check-input mt-0" checked />
+                    <label for="termsCheck" class="m-0 cursor-pointer">
+                        I agree to the <a href="@Url.Action("About", "Home")">Terms of Enrollment</a> and <a href="@Url.Action("About", "Home")">Privacy Framework</a>.
+                    </label>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" id="btnRegister" class="ep-reg-btn">
+                    <span id="regBtnText">Create Account</span>
+                    <i class="bi bi-arrow-right" id="regBtnIcon"></i>
                 </button>
             }
 
-            <div class="text-center mt-4 pt-3 border-top">
-                <span class="text-muted small">Already have an account?</span>
-                <a href="@Url.Action("Login", "Account")" class="text-primary fw-semibold small text-decoration-none ms-1">Sign In</a>
+            <!-- Social Authentication Options -->
+            <div class="ep-reg-divider">
+                <span>Or sign up with</span>
             </div>
+
+            <div class="ep-social-grid">
+                <button type="button" class="ep-social-btn" onclick="alert('SSO Authentication is configured through enterprise organization domain.')">
+                    <i class="bi bi-github fs-6"></i>
+                    <span>GitHub</span>
+                </button>
+                <button type="button" class="ep-social-btn" onclick="alert('Google Workspace Authentication is active for accredited enterprise accounts.')">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
+                    </svg>
+                    <span>Google</span>
+                </button>
+            </div>
+
+            <!-- Sign In Link for Existing Users -->
+            <div class="ep-reg-footer">
+                Already registered with EduPulse? 
+                <a href="@Url.Action("Login", "Account")">Sign In to Portal</a>
+            </div>
+
         </div>
+
     </div>
 </div>
 
-@section scripts {
-    <script>
-        $(document).ready(function () {
-            function updateRoleStyle() {
-                var selected = $('input[name="Role"]:checked').val();
-                if (selected === 'Student') {
-                    $('#roleStudentCard').addClass('border-primary bg-primary bg-opacity-10').removeClass('border-warning bg-warning bg-opacity-10');
-                    $('#roleInstructorCard').removeClass('border-warning bg-warning bg-opacity-10 border-primary bg-primary bg-opacity-10');
-                    $('#instructorNotice').slideUp();
-                } else {
-                    $('#roleInstructorCard').addClass('border-warning bg-warning bg-opacity-10').removeClass('border-primary bg-primary bg-opacity-10');
-                    $('#roleStudentCard').removeClass('border-primary bg-primary bg-opacity-10 border-warning bg-warning bg-opacity-10');
-                    $('#instructorNotice').slideDown();
-                }
-            }
+<!-- Dynamic Role Selection, Password Feedback & Loading Script -->
+<script>
+    function selectRole(role) {
+        document.getElementById('selectedRole').value = role;
 
-            $('input[name="Role"]').on('change', updateRoleStyle);
-            updateRoleStyle();
-        });
-    </script>
-}
+        var btnStudent = document.getElementById('roleBtnStudent');
+        var btnInstructor = document.getElementById('roleBtnInstructor');
+        var calloutStudent = document.getElementById('roleCalloutStudent');
+        var calloutInstructor = document.getElementById('roleCalloutInstructor');
+        var regBtnText = document.getElementById('regBtnText');
+
+        if (role === 'Instructor') {
+            btnStudent.classList.remove('active');
+            btnInstructor.classList.add('active');
+            calloutStudent.style.display = 'none';
+            calloutInstructor.style.display = 'flex';
+            if (regBtnText) regBtnText.innerText = "Apply as Instructor";
+        } else {
+            btnInstructor.classList.remove('active');
+            btnStudent.classList.add('active');
+            calloutInstructor.style.display = 'none';
+            calloutStudent.style.display = 'flex';
+            if (regBtnText) regBtnText.innerText = "Create Account";
+        }
+    }
+
+    function togglePasswordVisibility(fieldId, btn) {
+        var input = document.getElementById(fieldId);
+        if (!input) return;
+        var icon = btn.querySelector('i');
+        if (input.type === "password") {
+            input.type = "text";
+            icon.className = "bi bi-eye-slash";
+        } else {
+            input.type = "password";
+            icon.className = "bi bi-eye";
+        }
+    }
+
+    function validatePasswordRequirements(val) {
+        var reqLength = document.getElementById('reqLength');
+        if (reqLength) {
+            if (val.length >= 4) {
+                reqLength.className = "ep-req-pill valid";
+                reqLength.innerHTML = '<i class="bi bi-check-circle-fill"></i> At least 4 chars';
+            } else {
+                reqLength.className = "ep-req-pill";
+                reqLength.innerHTML = '<i class="bi bi-dot"></i> At least 4 chars';
+            }
+        }
+        checkPasswordMatch();
+    }
+
+    function checkPasswordMatch() {
+        var p1 = document.getElementById('regPassword');
+        var p2 = document.getElementById('regConfirmPassword');
+        var reqMatch = document.getElementById('reqMatch');
+        if (!p1 || !p2 || !reqMatch) return;
+
+        if (p2.value.length > 0 && p1.value === p2.value) {
+            reqMatch.className = "ep-req-pill valid";
+            reqMatch.innerHTML = '<i class="bi bi-check-circle-fill"></i> Passwords match';
+        } else {
+            reqMatch.className = "ep-req-pill";
+            reqMatch.innerHTML = '<i class="bi bi-dot"></i> Passwords match';
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        var form = document.getElementById("registerForm");
+        var btn = document.getElementById("btnRegister");
+        var btnText = document.getElementById("regBtnText");
+        var btnIcon = document.getElementById("regBtnIcon");
+
+        if (form && btn) {
+            form.addEventListener("submit", function () {
+                if (form.checkValidity()) {
+                    btn.disabled = true;
+                    btnText.innerText = "Creating Account...";
+                    if (btnIcon) {
+                        btnIcon.className = "spinner-border spinner-border-sm ms-1";
+                    }
+                }
+            });
+        }
+    });
+</script>

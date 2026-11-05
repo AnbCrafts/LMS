@@ -125,21 +125,95 @@
                 }
                 else if (isPdfDoc)
                 {
-                    <div>
-                        <div class="p-3 bg-light border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <div class="ep-pdf-viewer-card" style="background: #ffffff; border-radius: 14px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+                        <!-- Top PDF Toolbar -->
+                        <div class="p-2 px-3 bg-white border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <!-- Left: Title & File info -->
                             <div class="d-flex align-items-center gap-2">
-                                <i class="bi bi-file-earmark-pdf-fill text-danger fs-4"></i>
+                                <span style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; background: #fee2e2; color: #dc2626; flex-shrink: 0;">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                                    </svg>
+                                </span>
                                 <div>
-                                    <strong class="text-dark small d-block">Official Lesson Slides & Lecture PDF</strong>
-                                    <span class="text-muted" style="font-size: 0.72rem;">@mediaUrl.Split('/').Last()</span>
+                                    <strong class="text-dark small d-block" style="line-height: 1.2;">Official Lesson Slides &amp; Lecture PDF</strong>
+                                    <span class="text-secondary font-monospace" style="font-size: 0.72rem;">@mediaUrl.Split('/').Last()</span>
                                 </div>
                             </div>
-                            <a href="@mediaUrl" target="_blank" download class="btn btn-sm btn-outline-danger rounded-pill px-3">
-                                <i class="bi bi-download me-1"></i> Open / Download PDF
-                            </a>
+
+                            <!-- Center: Page Nav & Zoom Controls -->
+                            <div class="d-flex align-items-center gap-1 bg-light rounded-2 p-1 border">
+                                <button type="button" class="btn btn-sm btn-light border-0 px-2 py-1 text-dark" id="pdfPrevPage" title="Previous Page">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                                </button>
+                                <span class="small px-2 text-secondary font-monospace fw-semibold" style="font-size: 0.75rem;">
+                                    Page <span id="pdfCurrentPage" class="text-dark fw-bold">1</span> of <span id="pdfTotalPages" class="text-dark fw-bold">-</span>
+                                </span>
+                                <button type="button" class="btn btn-sm btn-light border-0 px-2 py-1 text-dark" id="pdfNextPage" title="Next Page">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                </button>
+                                <div class="vr mx-1" style="height: 16px;"></div>
+                                <button type="button" class="btn btn-sm btn-light border-0 px-2 py-1 text-dark" id="pdfZoomOut" title="Zoom Out">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                </button>
+                                <span id="pdfZoomVal" class="small px-1 text-secondary font-monospace" style="font-size: 0.75rem; min-width: 44px; text-align: center;">100%</span>
+                                <button type="button" class="btn btn-sm btn-light border-0 px-2 py-1 text-dark" id="pdfZoomIn" title="Zoom In">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-light border-0 px-2 py-1 text-dark" id="pdfFitWidth" title="Fit to Container Width" style="font-size: 0.72rem; font-weight: 600;">
+                                    Fit
+                                </button>
+                            </div>
+
+                            <!-- Right: External Actions -->
+                            <div class="d-flex align-items-center gap-2">
+                                <a href="@Url.Content(mediaUrl)" target="_blank" class="btn btn-sm btn-outline-secondary rounded-2 px-3 py-1 font-monospace" style="font-size: 0.75rem;" title="Open in dedicated browser tab">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1">
+                                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                                        <polyline points="15 3 21 3 21 9"></polyline>
+                                        <line x1="10" y1="14" x2="21" y2="3"></line>
+                                    </svg>
+                                    Full Tab
+                                </a>
+                                <a href="@Url.Content(mediaUrl)" download class="btn btn-sm btn-dark rounded-2 px-3 py-1 font-monospace" style="font-size: 0.75rem;" title="Download PDF file">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="7 10 12 15 17 10"></polyline>
+                                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                                    </svg>
+                                    Download
+                                </a>
+                            </div>
                         </div>
-                        <div class="ratio ratio-16x9" style="min-height: 420px;">
-                            <iframe src="@mediaUrl" title="Lesson Document"></iframe>
+
+                        <!-- Canvas Stage Area -->
+                        <div id="pdfViewportContainer" style="height: 620px; overflow: auto; background: #334155; position: relative; display: flex; flex-direction: column; align-items: center; padding: 1.5rem;">
+                            <!-- Loading Spinner -->
+                            <div id="pdfLoadingSpinner" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #ffffff; text-align: center; z-index: 10;">
+                                <div class="spinner-border spinner-border-sm text-light mb-2" role="status"></div>
+                                <div class="small text-light text-opacity-75 font-monospace">Rendering verified lesson slides...</div>
+                            </div>
+
+                            <!-- Fallback Alert Box (Initially hidden) -->
+                            <div id="pdfErrorFallback" class="p-4 bg-white rounded-3 shadow-sm text-center m-auto" style="display: none; max-width: 440px;">
+                                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" class="mb-2">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                                </svg>
+                                <h6 class="fw-bold text-dark mb-1">Inline Preview Unavailable</h6>
+                                <p class="text-secondary small mb-3">You can open the original PDF in a new tab or download it directly to view.</p>
+                                <div class="d-flex justify-content-center gap-2">
+                                    <a href="@Url.Content(mediaUrl)" target="_blank" class="btn btn-sm btn-outline-dark rounded-2">Open Full Tab</a>
+                                    <a href="@Url.Content(mediaUrl)" download class="btn btn-sm btn-dark rounded-2">Download PDF</a>
+                                </div>
+                            </div>
+
+                            <!-- PDF Canvas -->
+                            <canvas id="pdfViewerCanvas" style="display: none; max-width: 100%; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.3); border-radius: 4px; background: #ffffff;"></canvas>
                         </div>
                     </div>
                 }
@@ -152,64 +226,70 @@
             }
             else
             {
-                <div class="position-relative d-flex align-items-center justify-content-center" style="min-height: 380px; background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);">
+                <div class="position-relative d-flex align-items-center justify-content-center" style="min-height: 380px; background: #0f172a;">
                     <div class="text-center text-white p-4">
-                        <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3 shadow-lg" 
-                             style="width: 72px; height: 72px; background: rgba(79, 70, 229, 0.9); cursor: pointer;">
-                            <i class="bi bi-play-fill fs-1 text-white ms-1"></i>
+                        <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-3 shadow-sm" 
+                             style="width: 64px; height: 64px; background: #2563eb; cursor: pointer;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                            </svg>
                         </div>
                         <h5 class="fw-bold mb-1">Lesson @activeNum: @Model.ActiveLesson.Title</h5>
-                        <p class="text-white-50 small mb-0">HD Lecture &middot; @Model.ActiveLesson.Duration</p>
+                        <p class="text-secondary small mb-0">Instructional Lecture &middot; @Model.ActiveLesson.Duration</p>
                     </div>
                 </div>
             }
         </div>
 
-        <!-- IN-LINE AI SOCRATIC LESSON ASSISTANT BAR (Tier 1 Upgrade 1) -->
-        <div class="card border-0 shadow-sm rounded-4 mb-4 p-3" 
-             style="background: linear-gradient(135deg, #f0fdf4 0%, #eff6ff 100%); border: 1.5px solid #bfdbfe !important;">
+        <!-- IN-LINE AI SOCRATIC LESSON ASSISTANT BAR -->
+        <div class="card border-0 shadow-sm rounded-3 mb-4 p-3" 
+             style="background: #f8fafc; border: 1px solid #e2e8f0 !important;">
             <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
                 <div class="d-flex align-items-center gap-2">
-                    <span class="rounded-circle text-white d-inline-flex align-items-center justify-content-center shadow-xs" 
-                          style="width: 34px; height: 34px; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);">
-                        <i class="bi bi-stars"></i>
+                    <span class="rounded-2 text-white d-inline-flex align-items-center justify-content-center" 
+                          style="width: 32px; height: 32px; background: #0f172a;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                            <line x1="8" y1="21" x2="16" y2="21"></line>
+                            <line x1="12" y1="17" x2="12" y2="21"></line>
+                        </svg>
                     </span>
                     <div>
-                        <strong class="text-dark small d-block">AI Socratic Study Assistant &middot; Lesson @activeNum</strong>
-                        <span class="text-muted" style="font-size: 0.72rem;">Ask instant conceptual questions grounded in this lesson's slides and curriculum</span>
+                        <strong class="text-dark small d-block">Academic Workspace Copilot &middot; Lesson @activeNum</strong>
+                        <span class="text-secondary" style="font-size: 0.72rem;">Ask instant conceptual questions grounded in verified course materials</span>
                     </div>
                 </div>
-                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 small">
-                    <i class="bi bi-cpu-fill me-1"></i> Hybrid RAG (Dense + BM25)
+                <span class="badge bg-white text-secondary border rounded-pill px-3 py-1 font-monospace" style="font-size: 0.7rem;">
+                    Course-Scoped RAG
                 </span>
             </div>
 
             <!-- Quick Socratic Inquiry Chips -->
             <div class="d-flex align-items-center gap-2 flex-wrap mt-1">
-                <span class="text-muted small fw-semibold me-1" style="font-size: 0.78rem;">Quick Actions:</span>
+                <span class="text-secondary small fw-semibold me-1" style="font-size: 0.75rem;">Quick Prompts:</span>
                 
-                <button type="button" class="btn btn-sm btn-white bg-white border rounded-pill px-3 py-1 text-dark shadow-xs" 
-                        style="font-size: 0.78rem;"
+                <button type="button" class="btn btn-sm btn-white bg-white border rounded-2 px-3 py-1 text-dark shadow-xs" 
+                        style="font-size: 0.75rem;"
                         onclick="openAiDrawerWithPrompt('Summarize the core technical concepts of Lesson @activeNum (@Model.ActiveLesson.Title) in 3 key takeaways with analogies.')">
                     <i class="bi bi-card-checklist text-primary me-1"></i> 3 Key Takeaways
                 </button>
 
-                <button type="button" class="btn btn-sm btn-white bg-white border rounded-pill px-3 py-1 text-dark shadow-xs" 
-                        style="font-size: 0.78rem;"
+                <button type="button" class="btn btn-sm btn-white bg-white border rounded-2 px-3 py-1 text-dark shadow-xs" 
+                        style="font-size: 0.75rem;"
                         onclick="openAiDrawerWithPrompt('What is the most challenging architectural concept in Lesson @activeNum (@Model.ActiveLesson.Title), and how does it work under the hood?')">
-                    <i class="bi bi-lightbulb-fill text-warning me-1"></i> Explain Hardest Concept
+                    <i class="bi bi-lightbulb-fill text-warning me-1"></i> Core Architecture
                 </button>
 
-                <button type="button" class="btn btn-sm btn-white bg-white border rounded-pill px-3 py-1 text-dark shadow-xs" 
-                        style="font-size: 0.78rem;"
+                <button type="button" class="btn btn-sm btn-white bg-white border rounded-2 px-3 py-1 text-dark shadow-xs" 
+                        style="font-size: 0.75rem;"
                         onclick="openAiDrawerWithPrompt('Quiz me with 2 conceptual questions based on Lesson @activeNum (@Model.ActiveLesson.Title) without giving away the answers.')">
-                    <i class="bi bi-patch-question-fill text-success me-1"></i> Quiz Me Socratic
+                    <i class="bi bi-patch-question-fill text-success me-1"></i> Socratic Check
                 </button>
 
-                <button type="button" class="btn btn-sm btn-white bg-white border rounded-pill px-3 py-1 text-dark shadow-xs" 
-                        style="font-size: 0.78rem;"
+                <button type="button" class="btn btn-sm btn-white bg-white border rounded-2 px-3 py-1 text-dark shadow-xs" 
+                        style="font-size: 0.75rem;"
                         onclick="openAiDrawerWithPrompt('What practical real-world production project can I build using what is taught in Lesson @activeNum (@Model.ActiveLesson.Title)?')">
-                    <i class="bi bi-laptop-fill text-info me-1"></i> Real-World Project Ideas
+                    <i class="bi bi-laptop-fill text-info me-1"></i> Production Application
                 </button>
             </div>
         </div>
@@ -245,19 +325,22 @@
                 var studyMaterials = ViewBag.StudyMaterials as IEnumerable<WebApplication1.Models.StudyMaterialItem>;
                 if (studyMaterials != null && studyMaterials.Any())
                 {
-                    <div class="card border-0 shadow-sm rounded-4 my-4" style="background: linear-gradient(135deg, #f8fafc 0%, #ede9fe 100%); border: 1.5px solid #ddd6fe !important;">
+                    <div class="card border-0 shadow-sm rounded-3 my-4" style="background: #ffffff; border: 1px solid #e2e8f0 !important;">
                         <div class="card-body p-4">
                             <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
                                 <div class="d-flex align-items-center gap-2">
-                                    <span class="badge bg-purple text-white p-2 rounded-circle" style="background: #7c3aed; width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center;">
-                                        <i class="bi bi-file-earmark-pdf-fill fs-5"></i>
+                                    <span class="rounded-2 text-dark p-2" style="background: #f1f5f9; width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center;">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                            <polyline points="14 2 14 8 20 8"></polyline>
+                                        </svg>
                                     </span>
                                     <div>
-                                        <h5 class="fw-bold text-dark m-0">Official Course Study Guides & Architecture Reference</h5>
-                                        <div class="text-muted small">Download verified PDFs, cheatsheets, and lecture materials designed by your instructor</div>
+                                        <h5 class="fw-bold text-dark m-0" style="font-size: 0.95rem;">Official Course Study Guides &amp; Architecture Reference</h5>
+                                        <div class="text-secondary small">Download verified PDFs, cheatsheets, and lecture materials designed by your instructor</div>
                                     </div>
                                 </div>
-                                <span class="badge bg-purple text-white px-3 py-2 rounded-pill" style="background: #7c3aed;">
+                                <span class="badge bg-light text-secondary border rounded-pill px-3 py-1 font-monospace" style="font-size: 0.725rem;">
                                     @studyMaterials.Count() Resource(s) Available
                                 </span>
                             </div>
@@ -266,15 +349,18 @@
                                 @foreach (var mat in studyMaterials)
                                 {
                                     <div class="col-12 col-md-6">
-                                        <div class="p-3 bg-white rounded-3 border d-flex align-items-center justify-content-between gap-3 shadow-sm h-100">
+                                        <div class="p-3 bg-white rounded-3 border d-flex align-items-center justify-content-between gap-3 shadow-xs h-100">
                                             <div class="d-flex align-items-center gap-2 text-truncate">
-                                                <i class="bi bi-file-earmark-pdf text-danger fs-3 flex-shrink-0"></i>
+                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" class="flex-shrink-0">
+                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                                </svg>
                                                 <div class="text-truncate">
                                                     <div class="fw-bold text-dark small text-truncate" title="@mat.DisplayName">@mat.DisplayName</div>
-                                                    <div class="text-muted" style="font-size: 0.75rem;">Verified Study PDF &bull; @mat.FileSizeKb KB</div>
+                                                    <div class="text-secondary" style="font-size: 0.725rem;">Verified Study PDF &bull; @mat.FileSizeKb KB</div>
                                                 </div>
                                             </div>
-                                            <a href="@mat.Url" target="_blank" download class="btn btn-sm btn-outline-purple rounded-pill px-3 flex-shrink-0" style="border-color: #7c3aed; color: #7c3aed;">
+                                            <a href="@mat.Url" target="_blank" download class="btn btn-sm btn-outline-dark rounded-2 px-3 flex-shrink-0" style="font-size: 0.75rem;">
                                                 <i class="bi bi-download me-1"></i> Download
                                             </a>
                                         </div>
@@ -366,15 +452,18 @@
             <!-- Hands-on Assignment & Practical Task Section -->
             @if (!string.IsNullOrWhiteSpace(Model.ActiveLesson.AssignmentPrompt))
             {
-                <div class="card border-0 shadow-sm p-4 rounded-4 my-4" style="background: #faf5ff; border: 1.5px solid #d8b4fe !important;">
+                <div class="card border-0 shadow-sm p-4 rounded-3 my-4" style="background: #f8fafc; border: 1px solid #e2e8f0 !important;">
                     <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
                         <div class="d-flex align-items-center gap-2">
-                            <span class="badge bg-purple rounded-circle p-2 text-white" style="background: #9333ea; width: 32px; height: 32px;">
-                                <i class="bi bi-pencil-fill"></i>
+                            <span class="rounded-2 p-2 text-white" style="background: #0f172a; width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 20h9"></path>
+                                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                                </svg>
                             </span>
                             <div>
-                                <h5 class="fw-bold text-dark m-0">Lesson @activeNum Practical Assignment</h5>
-                                <div class="text-muted small">Assigned by Instructor: @Model.Course.InstructorName</div>
+                                <h5 class="fw-bold text-dark m-0" style="font-size: 0.95rem;">Lesson @activeNum Practical Assignment</h5>
+                                <div class="text-secondary small">Assigned by Instructor: @Model.Course.InstructorName</div>
                             </div>
                         </div>
                         <div>
@@ -491,8 +580,13 @@
                                 </div>
                             </div>
 
-                            <button type="submit" class="btn btn-purple text-white rounded-pill px-4 py-2 fw-bold shadow-sm" style="background: #9333ea;">
-                                <i class="bi bi-upload me-1"></i> Submit Assignment (Final)
+                            <button type="submit" class="btn btn-dark rounded-2 px-4 py-2 fw-semibold shadow-xs">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
+                                Submit Assignment (Final)
                             </button>
                         }
                     }
@@ -631,3 +725,145 @@
     window.CURRENT_COURSE_ID = @Model.Course.CourseId;
     window.CURRENT_COURSE_TITLE = '@Html.Raw(HttpUtility.JavaScriptStringEncode(Model.Course.Title))';
 </script>
+
+@if (!string.IsNullOrWhiteSpace(Model.ActiveLesson.VideoUrl) && Model.ActiveLesson.VideoUrl.Trim().EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+{
+    var pdfDocUrl = Url.Content(Model.ActiveLesson.VideoUrl.Trim());
+    <script src="@Url.Content("~/Scripts/pdfjs/pdf.min.js")"></script>
+    <script>
+        (function () {
+            var pdfUrl = '@pdfDocUrl';
+            if (!pdfUrl) return;
+
+            var pdfDoc = null;
+            var pageNum = 1;
+            var pageRendering = false;
+            var pageNumPending = null;
+            var scale = 1.25;
+            var canvas = document.getElementById('pdfViewerCanvas');
+            if (!canvas) return;
+            var ctx = canvas.getContext('2d');
+            var spinner = document.getElementById('pdfLoadingSpinner');
+            var errorBox = document.getElementById('pdfErrorFallback');
+            var totalPagesEl = document.getElementById('pdfTotalPages');
+            var currentPageEl = document.getElementById('pdfCurrentPage');
+            var zoomValEl = document.getElementById('pdfZoomVal');
+            var container = document.getElementById('pdfViewportContainer');
+
+            if (window.pdfjsLib) {
+                pdfjsLib.GlobalWorkerOptions.workerSrc = '@Url.Content("~/Scripts/pdfjs/pdf.worker.min.js")';
+
+                function renderPage(num) {
+                    pageRendering = true;
+                    pdfDoc.getPage(num).then(function (page) {
+                        var viewport = page.getViewport({ scale: scale });
+                        var outputScale = window.devicePixelRatio || 1;
+
+                        canvas.width = Math.floor(viewport.width * outputScale);
+                        canvas.height = Math.floor(viewport.height * outputScale);
+                        canvas.style.width = Math.floor(viewport.width) + "px";
+                        canvas.style.height = Math.floor(viewport.height) + "px";
+
+                        var transform = outputScale !== 1
+                            ? [outputScale, 0, 0, outputScale, 0, 0]
+                            : null;
+
+                        var renderContext = {
+                            canvasContext: ctx,
+                            transform: transform,
+                            viewport: viewport
+                        };
+
+                        var renderTask = page.render(renderContext);
+                        renderTask.promise.then(function () {
+                            pageRendering = false;
+                            if (spinner) spinner.style.display = 'none';
+                            canvas.style.display = 'block';
+
+                            if (pageNumPending !== null) {
+                                renderPage(pageNumPending);
+                                pageNumPending = null;
+                            }
+                        }).catch(function (e) {
+                            console.error('Page render error:', e);
+                            pageRendering = false;
+                        });
+                    }).catch(function (err) {
+                        console.error('PDF getPage error:', err);
+                        if (spinner) spinner.style.display = 'none';
+                        if (errorBox) errorBox.style.display = 'block';
+                    });
+
+                    if (currentPageEl) currentPageEl.textContent = num;
+                    if (zoomValEl) zoomValEl.textContent = Math.round(scale * 100) + '%';
+                }
+
+                function queueRenderPage(num) {
+                    if (pageRendering) {
+                        pageNumPending = num;
+                    } else {
+                        renderPage(num);
+                    }
+                }
+
+                var prevBtn = document.getElementById('pdfPrevPage');
+                var nextBtn = document.getElementById('pdfNextPage');
+                if (prevBtn) {
+                    prevBtn.addEventListener('click', function () {
+                        if (pageNum <= 1) return;
+                        pageNum--;
+                        queueRenderPage(pageNum);
+                    });
+                }
+                if (nextBtn) {
+                    nextBtn.addEventListener('click', function () {
+                        if (!pdfDoc || pageNum >= pdfDoc.numPages) return;
+                        pageNum++;
+                        queueRenderPage(pageNum);
+                    });
+                }
+
+                var zoomInBtn = document.getElementById('pdfZoomIn');
+                var zoomOutBtn = document.getElementById('pdfZoomOut');
+                var fitWidthBtn = document.getElementById('pdfFitWidth');
+
+                if (zoomInBtn) {
+                    zoomInBtn.addEventListener('click', function () {
+                        scale = Math.min(3.0, scale + 0.25);
+                        queueRenderPage(pageNum);
+                    });
+                }
+                if (zoomOutBtn) {
+                    zoomOutBtn.addEventListener('click', function () {
+                        scale = Math.max(0.5, scale - 0.25);
+                        queueRenderPage(pageNum);
+                    });
+                }
+                if (fitWidthBtn) {
+                    fitWidthBtn.addEventListener('click', function () {
+                        if (!pdfDoc) return;
+                        pdfDoc.getPage(pageNum).then(function (page) {
+                            var cWidth = (container ? container.clientWidth : 800) - 60;
+                            var defaultViewport = page.getViewport({ scale: 1.0 });
+                            scale = Math.max(0.6, Math.min(2.5, cWidth / defaultViewport.width));
+                            queueRenderPage(pageNum);
+                        });
+                    });
+                }
+
+                pdfjsLib.getDocument(pdfUrl).promise.then(function (pdf) {
+                    pdfDoc = pdf;
+                    if (totalPagesEl) totalPagesEl.textContent = pdf.numPages;
+                    renderPage(pageNum);
+                }).catch(function (error) {
+                    console.error('PDF.js getDocument error:', error);
+                    if (spinner) spinner.style.display = 'none';
+                    if (errorBox) errorBox.style.display = 'block';
+                });
+            } else {
+                if (spinner) spinner.style.display = 'none';
+                if (errorBox) errorBox.style.display = 'block';
+            }
+        })();
+    </script>
+}

@@ -79,6 +79,10 @@ def handle_chat(req: ChatRequest):
     if not req.query or not req.query.strip():
         raise HTTPException(status_code=400, detail="Query cannot be empty.")
     
+    clean_q = req.query.strip()
+    if len(clean_q) <= 1 and not clean_q.isalnum():
+        raise HTTPException(status_code=400, detail="Please enter a meaningful question or topic.")
+    
     # 1. Anti-Spam & Burst Rate Limiting (Max 5 queries per 30s)
     user_key = f"{req.user_id or 'anon'}_{req.user_role or 'student'}"
     is_allowed, retry_after, limit_msg = rate_limiter.check_rate_limit(user_key)
@@ -119,7 +123,7 @@ def handle_chat(req: ChatRequest):
         result["cache_similarity"] = None
 
         # 5. Save verified answer to Semantic Cache (for static student queries)
-        if not is_instructor and q_vec and result.get("model_used") != "offline-extractive-fallback":
+        if not is_instructor and q_vec and result.get("model_used") not in ("offline-extractive-fallback", "security-guardrail-interceptor", "grounding-threshold-guardrail"):
             semantic_cache.put(req.query, q_vec, course_key, result)
         rate_limiter.store_duplicate(user_key, req.query, result)
 

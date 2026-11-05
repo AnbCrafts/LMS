@@ -42,8 +42,8 @@ def detect_instructor_intent(query: str) -> Tuple[str, Dict[str, Any]]:
     """
     q = query.lower().strip()
 
-    # Intent 1: Direct Grade Application
-    grade_match = re.search(r'(?:submit|apply|save|record)\s+(?:grade|score|marks)\s*(?:of)?\s*(\d+)(?:\s*(?:for|to|on)\s*(?:submission\s*#?)?(\d+))?', q)
+    # Intent 1: Direct Grade Application (matches positive and negative integers for validation)
+    grade_match = re.search(r'(?:submit|apply|save|record)\s+(?:grade|score|marks)\s*(?:of)?\s*(-?\d+)(?:\s*(?:for|to|on)\s*(?:submission\s*#?)?(\d+))?', q)
     if grade_match:
         return "grade_apply", {
             "marks": int(grade_match.group(1)),
@@ -226,8 +226,18 @@ def get_target_submission(instructor_id: int, params: Dict[str, Any]) -> Optiona
             sql += " AND LOWER(u.FullName) LIKE ?"
             args.append(f"%{target_name.lower()}%")
         else:
-            # Default to oldest pending submission
-            sql += " AND s.Status IN ('Pending', 'Pending Review') ORDER BY s.SubmittedAt ASC"
+            raw_q = params.get("raw_query", "").lower()
+            explicit_name = re.search(r'evaluate\s+([a-zA-Z\s]+?)(?:\'s)?\s+(?:submission|assignment|task)', raw_q)
+            if explicit_name:
+                cand = explicit_name.group(1).strip()
+                if cand not in ("this", "the", "an", "a", "pending", "my", "student"):
+                    sql += " AND LOWER(u.FullName) LIKE ?"
+                    args.append(f"%{cand}%")
+                else:
+                    sql += " AND s.Status IN ('Pending', 'Pending Review') ORDER BY s.SubmittedAt ASC"
+            else:
+                # Default to oldest pending submission only when no student is specified
+                sql += " AND s.Status IN ('Pending', 'Pending Review') ORDER BY s.SubmittedAt ASC"
 
         cur.execute(sql, args)
         row = cur.fetchone()

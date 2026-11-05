@@ -58,12 +58,173 @@ body {
 }
 
 /* ==========================================================================
-   1. Modern Navigation Header
+   1. Modern Navigation Header (EduPulse Platform Header & App Header)
    ========================================================================== */
+
+/* --- EduPulse Landing Page Header (Minimal, Academic, Trust-First) --- */
+.ep-navbar {
+    background-color: rgba(255, 255, 255, 0.97);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid #edf0f4;
+    height: 64px;
+    position: sticky;
+    top: 0;
+    z-index: 1030;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.ep-navbar.ep-navbar-scrolled {
+    box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 1px 2px -1px rgba(15, 23, 42, 0.03);
+    border-bottom-color: #e2e8f0;
+}
+
+.ep-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    text-decoration: none !important;
+    color: #0f172a !important;
+}
+
+.ep-brand-mark {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ep-brand-text {
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    color: #0f172a;
+}
+
+.ep-nav-links {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.ep-nav-link {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #475569 !important;
+    padding: 0.4rem 0.65rem;
+    border-radius: 6px;
+    text-decoration: none !important;
+    transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.ep-nav-link:hover {
+    color: #0f172a !important;
+    background-color: #f8fafc;
+}
+
+.ep-nav-link.active {
+    color: #0f172a !important;
+    font-weight: 600;
+    background-color: #f1f5f9;
+}
+
+.ep-nav-spacer {
+    flex-grow: 1;
+}
+
+.ep-btn-subtle {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #475569 !important;
+    padding: 0.45rem 0.85rem;
+    border-radius: 6px;
+    text-decoration: none !important;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ep-btn-subtle:hover {
+    color: #0f172a !important;
+    background-color: #f1f5f9;
+}
+
+.ep-btn-primary {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #ffffff !important;
+    background-color: #0f172a;
+    border: 1px solid #0f172a;
+    padding: 0.45rem 1rem;
+    border-radius: 6px;
+    text-decoration: none !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ep-btn-primary:hover {
+    background-color: #1e293b;
+    border-color: #1e293b;
+    color: #ffffff !important;
+}
+
+.ep-hamburger {
+    background: transparent;
+    border: none;
+    padding: 8px 6px;
+    display: inline-flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4.5px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background-color 0.15s ease;
+}
+
+.ep-hamburger:hover {
+    background-color: #f1f5f9;
+}
+
+.ep-hamburger-line {
+    width: 20px;
+    height: 1.75px;
+    background-color: #0f172a;
+    border-radius: 2px;
+}
+
+.ep-offcanvas {
+    border-left: 1px solid #e2e8f0;
+    background-color: #ffffff;
+}
+
+.ep-mobile-link {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 0.85rem;
+    border-radius: 8px;
+    font-size: 0.925rem;
+    font-weight: 500;
+    color: #334155 !important;
+    text-decoration: none !important;
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.ep-mobile-link:hover,
+.ep-mobile-link.active {
+    background-color: #f1f5f9;
+    color: #0f172a !important;
+    font-weight: 600;
+}
+
+/* --- Internal Portal Header (Cleaned of test-purpose clutter) --- */
 .lms-navbar {
     background: #ffffff;
     border-bottom: 1px solid var(--border-subtle);
-    padding: 14px 0;
+    padding: 12px 0;
     position: sticky;
     top: 0;
     z-index: 1000;

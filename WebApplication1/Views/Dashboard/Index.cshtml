@@ -1,452 +1,959 @@
 @model IEnumerable<WebApplication1.Models.StudentDashboardViewModel>
 
 @{
-    ViewBag.Title = "My Learning Dashboard & Gradebook";
+    ViewBag.Title = "Learning Workspace | EduPulse";
 
+    string userName = Session["UserName"] as string ?? "Learner";
     int totalCourses = Model != null ? Model.Count() : 0;
     int completedCourses = Model != null ? Model.Count(x => x.Progress >= 100) : 0;
-    int avgProgress = totalCourses > 0 ? (int)Model.Average(x => x.Progress) : 0;
-    string userName = Session["UserName"] as string ?? "Student";
+    int inProgressCourses = Model != null ? Model.Count(x => x.Progress > 0 && x.Progress < 100) : 0;
+
+    // Three Dynamic States
+    bool isFirstTimeUser = (totalCourses == 0);
+    bool isInactiveLearner = (totalCourses > 0 && Model.All(x => x.Progress == 0));
+    bool isActiveLearner = (totalCourses > 0 && Model.Any(x => x.Progress > 0));
+
+    // Active course to resume
+    var activeCourse = Model?.OrderByDescending(x => x.Progress).FirstOrDefault(x => x.Progress < 100) 
+                       ?? Model?.FirstOrDefault();
 
     var allSubmissions = ViewBag.AllSubmissions as IEnumerable<WebApplication1.Models.StudentSubmission> ?? new List<WebApplication1.Models.StudentSubmission>();
     var allQuizzes = ViewBag.AllQuizAttempts as IEnumerable<WebApplication1.Models.StudentQuizAttempt> ?? new List<WebApplication1.Models.StudentQuizAttempt>();
+    var recommendedCourses = ViewBag.RecommendedCourses as IEnumerable<WebApplication1.Models.Course> ?? new List<WebApplication1.Models.Course>();
+    var recentActivity = ViewBag.RecentActivity as IEnumerable<WebApplication1.Models.RecentActivityItem> ?? new List<WebApplication1.Models.RecentActivityItem>();
+    var certificates = ViewBag.Certificates as IEnumerable<WebApplication1.Models.StudentDashboardViewModel> ?? new List<WebApplication1.Models.StudentDashboardViewModel>();
 
     int pendingAssignments = allSubmissions.Count(s => s.IsPending);
-    int approvedAssignments = allSubmissions.Count(s => s.IsApproved);
 }
 
-<!-- Welcome Banner -->
-<div class="lms-dashboard-header">
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-        <div>
-            <h1>Welcome back, @userName! <i class="bi bi-mortarboard-fill text-warning ms-1"></i></h1>
-            <p>Track your active curriculums, assignment submissions, verification statuses, and verified certificate grades.</p>
-        </div>
-        <div>
-            <a href="@Url.Action("Index", "Courses")" class="btn btn-light fw-bold px-4 py-2" style="border-radius: 10px; color: #312e81;">
-                <i class="bi bi-compass me-1"></i> Browse More Courses
-            </a>
-        </div>
-    </div>
-</div>
+<!-- Self-Contained Resilient Styling for EduPulse Student Learning Workspace -->
+<style>
+    .ep-dash-page {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
+        color: #0f172a;
+        background-color: #f8fafc;
+        min-height: calc(100vh - 64px);
+        padding: 2.5rem 1.5rem 4rem 1.5rem;
+    }
 
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert alert-success alert-dismissible fade show mb-4 rounded-3 shadow-sm border-0" role="alert">
-        <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-}
+    .ep-dash-container {
+        max-width: 1320px;
+        margin: 0 auto;
+    }
 
-@if (TempData["ErrorMessage"] != null)
-{
-    <div class="alert alert-danger alert-dismissible fade show mb-4 rounded-3 shadow-sm border-0" role="alert">
-        <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["ErrorMessage"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-}
+    /* Common Card Surface */
+    .ep-card {
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+        margin-bottom: 1.5rem;
+    }
 
-<!-- KPI Stat Cards -->
-<div class="lms-kpi-grid mb-4">
-    <div class="lms-kpi-card">
-        <div class="lms-kpi-icon icon-blue">
-            <i class="bi bi-book-half"></i>
-        </div>
-        <div>
-            <div class="lms-kpi-number">@totalCourses</div>
-            <div class="lms-kpi-label">Enrolled Courses</div>
-            <div class="text-muted small" style="font-size: 0.72rem;">@avgProgress% Average Progress</div>
-        </div>
-    </div>
+    .ep-card-header-clean {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.25rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid #f1f5f9;
+    }
 
-    <div class="lms-kpi-card">
-        <div class="lms-kpi-icon icon-emerald">
-            <i class="bi bi-trophy-fill"></i>
-        </div>
-        <div>
-            <div class="lms-kpi-number text-success">@completedCourses</div>
-            <div class="lms-kpi-label">Completed Courses</div>
-            <div class="text-muted small" style="font-size: 0.72rem;">Certificates Unlocked</div>
-        </div>
-    </div>
+    .ep-card-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0;
+        letter-spacing: -0.015em;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
 
-    <div class="lms-kpi-card" style="border: 2px solid @(pendingAssignments > 0 ? "#f59e0b" : "#e2e8f0") !important;">
-        <div class="lms-kpi-icon" style="background: #fef3c7; color: #d97706;">
-            <i class="bi bi-hourglass-split"></i>
-        </div>
-        <div>
-            <div class="lms-kpi-number text-warning">@pendingAssignments</div>
-            <div class="lms-kpi-label">Assignments Pending</div>
-            <div class="text-muted small" style="font-size: 0.72rem;">Under instructor review</div>
-        </div>
-    </div>
+    /* Top Resume Hero Card */
+    .ep-resume-hero {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        color: #ffffff;
+        border-radius: 14px;
+        padding: 2.25rem;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 2rem;
+        box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.15);
+    }
 
-    <div class="lms-kpi-card">
-        <div class="lms-kpi-icon icon-indigo">
-            <i class="bi bi-patch-check-fill"></i>
-        </div>
-        <div>
-            <div class="lms-kpi-number text-primary">@approvedAssignments</div>
-            <div class="lms-kpi-label">Graded & Approved</div>
-            <div class="text-muted small" style="font-size: 0.72rem;">Marks released by mentor</div>
-        </div>
-    </div>
-</div>
+    .ep-resume-eyebrow {
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #94a3b8;
+        margin-bottom: 0.5rem;
+    }
 
-<!-- Tabs Navigation -->
-<ul class="nav nav-pills mb-4 gap-2" id="dashboardTabs" role="tablist">
-    <li class="nav-item">
-        <button class="nav-link active rounded-pill px-4 py-2 fw-semibold" id="courses-tab" data-bs-toggle="pill" data-bs-target="#tab-courses" type="button">
-            <i class="bi bi-journal-code me-1"></i> My Courses (@totalCourses)
-        </button>
-    </li>
-    <li class="nav-item">
-        <button class="nav-link rounded-pill px-4 py-2 fw-semibold position-relative" id="assignments-tab" data-bs-toggle="pill" data-bs-target="#tab-assignments" type="button">
-            <i class="bi bi-pencil-square me-1"></i> Assignments & Gradebook
-            @if (pendingAssignments > 0)
-            {
-                <span class="badge bg-warning text-dark rounded-pill ms-1">@pendingAssignments pending</span>
-            }
-        </button>
-    </li>
-    <li class="nav-item">
-        <button class="nav-link rounded-pill px-4 py-2 fw-semibold" id="quizzes-tab" data-bs-toggle="pill" data-bs-target="#tab-quizzes" type="button">
-            <i class="bi bi-patch-question me-1"></i> Quiz History (@allQuizzes.Count())
-        </button>
-    </li>
-</ul>
+    .ep-resume-title {
+        font-size: 1.85rem;
+        font-weight: 800;
+        color: #ffffff;
+        letter-spacing: -0.025em;
+        margin-bottom: 0.5rem;
+        line-height: 1.25;
+    }
 
-<div class="tab-content">
-    <!-- TAB 1: ENROLLED COURSES -->
-    <div class="tab-pane fade show active" id="tab-courses">
-        <div class="lms-table-card">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h4 class="fw-bold text-dark m-0">In-Progress Curriculums</h4>
-                <span class="badge bg-light text-muted border px-3 py-2 rounded-pill">@totalCourses Enrolled</span>
+    .ep-resume-desc {
+        font-size: 0.95rem;
+        color: #cbd5e1;
+        margin: 0;
+        max-width: 680px;
+    }
+
+    .ep-resume-btn {
+        background-color: #ffffff;
+        color: #0f172a !important;
+        font-size: 0.925rem;
+        font-weight: 650;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        text-decoration: none !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        transition: all 0.15s ease;
+    }
+
+    .ep-resume-btn:hover {
+        background-color: #f1f5f9;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
+    }
+
+    /* Compact Metrics Row */
+    .ep-metrics-row {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .ep-metric-box {
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 1.25rem 1rem;
+        text-align: center;
+    }
+
+    .ep-metric-val {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: #0f172a;
+        line-height: 1;
+        margin-bottom: 0.35rem;
+        letter-spacing: -0.02em;
+    }
+
+    .ep-metric-lbl {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+    }
+
+    /* 2-Column Main Body Layout */
+    .ep-dash-grid {
+        display: grid;
+        grid-template-columns: 1.9fr 1fr;
+        gap: 1.75rem;
+        align-items: start;
+    }
+
+    /* Enrolled Course Card */
+    .ep-course-tile {
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+        display: flex;
+        flex-direction: column;
+        transition: all 0.15s ease;
+    }
+
+    .ep-course-tile:hover {
+        border-color: #cbd5e1;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+    }
+
+    .ep-tile-top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .ep-tile-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 0.25rem;
+        text-decoration: none !important;
+    }
+
+    .ep-tile-title:hover {
+        color: #2563eb;
+    }
+
+    .ep-tile-instructor {
+        font-size: 0.8rem;
+        color: #64748b;
+    }
+
+    .ep-tile-level-badge {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        padding: 3px 8px;
+        border-radius: 4px;
+        background-color: #f1f5f9;
+        color: #334155;
+        border: 1px solid #e2e8f0;
+        white-space: nowrap;
+    }
+
+    .ep-progress-frame {
+        margin: 0.75rem 0 1rem 0;
+    }
+
+    .ep-progress-bar-container {
+        height: 6px;
+        background-color: #e2e8f0;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    .ep-progress-bar-fill {
+        height: 100%;
+        background-color: #0f172a;
+        border-radius: 3px;
+        transition: width 0.3s ease;
+    }
+
+    .ep-progress-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #475569;
+        margin-top: 4px;
+    }
+
+    .ep-tile-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-top: 0.75rem;
+        border-top: 1px solid #f8fafc;
+    }
+
+    .ep-btn-sm-primary {
+        background-color: #0f172a;
+        color: #ffffff !important;
+        font-size: 0.825rem;
+        font-weight: 600;
+        padding: 0.45rem 1rem;
+        border-radius: 6px;
+        text-decoration: none !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.15s ease;
+    }
+
+    .ep-btn-sm-primary:hover {
+        background-color: #1e293b;
+    }
+
+    .ep-btn-sm-subtle {
+        background-color: transparent;
+        color: #64748b !important;
+        font-size: 0.825rem;
+        font-weight: 500;
+        padding: 0.45rem 0.75rem;
+        border: none;
+        text-decoration: none !important;
+        transition: color 0.15s ease;
+    }
+
+    .ep-btn-sm-subtle:hover {
+        color: #0f172a !important;
+    }
+
+    /* Deadlines List */
+    .ep-deadline-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 0.85rem;
+    }
+
+    .ep-deadline-item:last-child {
+        border-bottom: none;
+    }
+
+    .ep-deadline-pill {
+        font-size: 0.72rem;
+        font-weight: 700;
+        padding: 3px 8px;
+        border-radius: 4px;
+    }
+
+    .ep-pill-pending {
+        background-color: #fffbeb;
+        color: #b45309;
+        border: 1px solid #fde68a;
+    }
+
+    .ep-pill-review {
+        background-color: #eff6ff;
+        color: #1d4ed8;
+        border: 1px solid #bfdbfe;
+    }
+
+    /* Activity Timeline */
+    .ep-activity-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .ep-activity-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        font-size: 0.825rem;
+    }
+
+    .ep-activity-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
+        background-color: #f1f5f9;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 0.85rem;
+    }
+
+    .ep-activity-text {
+        color: #334155;
+        font-weight: 500;
+    }
+
+    .ep-activity-time {
+        font-size: 0.72rem;
+        color: #94a3b8;
+    }
+
+    /* Streak Visualizer */
+    .ep-streak-card {
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .ep-streak-days {
+        display: flex;
+        justify-content: space-between;
+        gap: 6px;
+        margin-top: 1rem;
+    }
+
+    .ep-streak-day {
+        flex: 1;
+        text-align: center;
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 8px 4px;
+        font-size: 0.75rem;
+    }
+
+    .ep-streak-day.active {
+        background-color: #0f172a;
+        color: #ffffff;
+        border-color: #0f172a;
+        font-weight: 600;
+    }
+
+    /* Certificate Preview in Sidebar */
+    .ep-cert-card {
+        border: 1px solid #e2e8f0;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        border-radius: 10px;
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+    }
+
+    .ep-cert-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 0.5rem;
+    }
+
+    .ep-cert-title {
+        font-size: 0.925rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    /* Onboarding / First Time User Styles */
+    .ep-onboard-card {
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .ep-checklist-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 0;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 0.9rem;
+    }
+
+    .ep-checklist-item.done {
+        color: #16a34a;
+        font-weight: 600;
+    }
+
+    .ep-checklist-item.pending {
+        color: #475569;
+    }
+
+    /* Recommended Courses Grid */
+    .ep-rec-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+
+    .ep-rec-card {
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    /* Responsive Rules */
+    @@media (max-width: 1200px) {
+        .ep-metrics-row {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+
+    @@media (max-width: 991.98px) {
+        .ep-dash-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .ep-resume-hero {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .ep-rec-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @@media (max-width: 575.98px) {
+        .ep-dash-page {
+            padding: 1.25rem 1rem 3rem 1rem;
+        }
+
+        .ep-metrics-row {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .ep-resume-title {
+            font-size: 1.45rem;
+        }
+    }
+</style>
+
+<div class="ep-dash-page">
+    <div class="ep-dash-container">
+
+        <!-- Global Messages -->
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show rounded-3 shadow-sm border-0 mb-4" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show rounded-3 shadow-sm border-0 mb-4" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["ErrorMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        <!-- STATE 1: BRAND-NEW USER (0 Enrolled Courses) - ONBOARDING WORKSPACE -->
+        @if (isFirstTimeUser)
+        {
+            <div class="ep-onboarding-flow">
+                <div class="ep-onboard-card">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="badge bg-dark px-3 py-1 rounded-pill small">Welcome to EduPulse</span>
+                </div>
+                <h1 class="ep-resume-title text-dark mb-2">Welcome to your learning workspace, @userName!</h1>
+                <p class="text-muted" style="max-width: 680px; font-size: 1.05rem; line-height: 1.6;">
+                    Your account is set up and ready. EduPulse provides structured, sequential engineering curriculums with hands-on coding rubrics, synchronized slides, and verifiable digital credentials.
+                </p>
+
+                <div class="d-flex align-items-center gap-3 mt-4 flex-wrap">
+                    <a href="@Url.Action("Index", "Courses")" class="ep-btn-lg-primary" style="background-color: #0f172a; color: #fff; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                        <i class="bi bi-compass me-1"></i> Explore & Enroll in Curriculums
+                    </a>
+                    <a href="@Url.Action("Profile", "Account")" class="btn btn-outline-secondary px-4 py-2 rounded-2 fw-semibold" style="font-size: 0.925rem;">
+                        <i class="bi bi-person me-1"></i> Complete Your Profile
+                    </a>
+                </div>
             </div>
 
-            <div class="table-responsive">
-                <table class="lms-modern-table align-middle">
-                    <thead>
-                        <tr>
-                            <th style="width: 28%;">Course</th>
-                            <th style="width: 14%;">Instructor</th>
-                            <th style="width: 15%;">Calculated Grade</th>
-                            <th style="width: 20%;">Progress</th>
-                            <th style="width: 23%; text-align: right;">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @if (Model != null && Model.Any())
-                        {
-                            foreach (var item in Model)
-                            {
-                                var grade = item.GradeSummary;
-                                bool isComplete = item.Progress >= 100;
+            <!-- Getting Started & Onboarding Checklist -->
+            <div class="row g-4 mb-4">
+                <div class="col-12 col-lg-7">
+                    <div class="ep-card h-100">
+                        <div class="ep-card-header-clean">
+                            <h2 class="ep-card-title"><i class="bi bi-check2-square text-primary"></i> Onboarding Checklist</h2>
+                            <span class="badge bg-light text-dark border">1 of 5 Completed</span>
+                        </div>
+                        <div class="ep-checklist-item done">
+                            <i class="bi bi-check-circle-fill"></i>
+                            <div>Create your EduPulse Member Account & Verified ID</div>
+                        </div>
+                        <div class="ep-checklist-item pending">
+                            <i class="bi bi-circle text-muted"></i>
+                            <div>Explore Course Directory and choose your primary engineering track</div>
+                        </div>
+                        <div class="ep-checklist-item pending">
+                            <i class="bi bi-circle text-muted"></i>
+                            <div>Enroll in your first curriculum and inspect the sequential syllabus</div>
+                        </div>
+                        <div class="ep-checklist-item pending">
+                            <i class="bi bi-circle text-muted"></i>
+                            <div>Complete Lesson 01 video and synchronized slide deck review</div>
+                        </div>
+                        <div class="ep-checklist-item pending">
+                            <i class="bi bi-circle text-muted"></i>
+                            <div>Pass diagnostic module quizzes to unlock your verified certificate</div>
+                        </div>
+                    </div>
+                </div>
 
-                                <tr>
-                                    <td>
-                                        <div class="fw-bold text-dark">@item.Course</div>
-                                        <div class="text-muted small">
-                                            <span class="badge bg-secondary-subtle text-secondary me-1">@item.Level</span>
-                                            @item.DurationWeeks Weeks &bull; Enrolled @item.EnrolledAt.ToString("MMM dd, yyyy")
+                <div class="col-12 col-lg-5">
+                    <div class="ep-card h-100">
+                        <div class="ep-card-header-clean">
+                            <h2 class="ep-card-title"><i class="bi bi-shield-check text-success"></i> The EduPulse Standard</h2>
+                        </div>
+                        <p class="text-muted small mb-3">
+                            Here is how learning works on EduPulse:
+                        </p>
+                        <div class="d-flex flex-column gap-3 small">
+                            <div class="d-flex gap-2">
+                                <span class="badge bg-light text-dark border p-2"><i class="bi bi-camera-video"></i></span>
+                                <div>
+                                    <div class="fw-bold text-dark">Dual-Pane Active Classroom</div>
+                                    <div class="text-muted">Video lesson and PDF slides side-by-side.</div>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <span class="badge bg-light text-dark border p-2"><i class="bi bi-file-code"></i></span>
+                                <div>
+                                    <div class="fw-bold text-dark">Practical Rubrics</div>
+                                    <div class="text-muted">Submit projects evaluated against industry criteria.</div>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <span class="badge bg-light text-dark border p-2"><i class="bi bi-award"></i></span>
+                                <div>
+                                    <div class="fw-bold text-dark">Cryptographic Certifications</div>
+                                    <div class="text-muted">Tamper-proof credentials with digital signatures.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recommended Beginner-Friendly Courses -->
+            @if (recommendedCourses.Any())
+            {
+                <div class="ep-card">
+                    <div class="ep-card-header-clean">
+                        <h2 class="ep-card-title"><i class="bi bi-stars text-primary"></i> Recommended Curriculums for You</h2>
+                        <a href="@Url.Action("Index", "Courses")" class="text-muted small text-decoration-none">View All &rarr;</a>
+                    </div>
+                    <div class="ep-rec-grid">
+                        @foreach (var c in recommendedCourses.Take(4))
+                        {
+                            <div class="ep-rec-card">
+                                <div>
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <span class="badge bg-light text-dark border small">@c.Level</span>
+                                        <span class="text-muted small">@c.DurationWeeks Weeks</span>
+                                    </div>
+                                    <h4 class="fw-bold text-dark mb-1" style="font-size: 1rem;">@c.Title</h4>
+                                    <div class="text-muted small mb-2"><i class="bi bi-person me-1"></i>@c.InstructorName</div>
+                                    <p class="text-muted small mb-3" style="line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                        @c.Description
+                                    </p>
+                                </div>
+                                <div class="d-flex align-items-center justify-content-between pt-2 border-top">
+                                    <span class="fw-bold text-dark">$@c.Price.ToString("F2")</span>
+                                    <a href="@Url.Action("Details", "Courses", new { id = c.CourseId })" class="ep-btn-sm-primary">
+                                        View Curriculum
+                                    </a>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+            </div>
+        }
+
+        <!-- STATE 2 & 3: ENROLLED USERS (INACTIVE OR ACTIVE LEARNER WORKSPACE) -->
+        @if (!isFirstTimeUser)
+        {
+            <div class="ep-enrolled-workspace">
+                <!-- Top Hero: Resume Next Lesson -->
+                @if (activeCourse != null)
+                {
+                <div class="ep-resume-hero">
+                    <div>
+                        <div class="ep-resume-eyebrow">
+                            @(activeCourse.Progress == 0 ? "Course Ready to Start" : "Active Curriculum in Progress")
+                        </div>
+                        <h1 class="ep-resume-title">
+                            @(activeCourse.Progress == 0 ? "Start: " : "Resume: ") @activeCourse.Course
+                        </h1>
+                        <p class="ep-resume-desc">
+                            Instructor: @activeCourse.InstructorName &bull; Level: @activeCourse.Level &bull; 
+                            @(activeCourse.Progress == 0 ? "Lesson 01 is waiting. Jump into your dual-pane classroom." : $"Currently at {activeCourse.Progress}% completion.")
+                        </p>
+                    </div>
+                    <a href="@Url.Action("Learn", "Courses", new { id = activeCourse.CourseId })" class="ep-resume-btn">
+                        <span>@(activeCourse.Progress == 0 ? "Start Learning Now" : "Continue Course")</span>
+                        <i class="bi bi-play-circle-fill fs-5"></i>
+                    </a>
+                </div>
+            }
+
+            <!-- Compact Metrics Row (Platform Data Driven) -->
+            <div class="ep-metrics-row">
+                <div class="ep-metric-box">
+                    <div class="ep-metric-val">@totalCourses</div>
+                    <div class="ep-metric-lbl">Enrolled Courses</div>
+                </div>
+                <div class="ep-metric-box">
+                    <div class="ep-metric-val">@inProgressCourses</div>
+                    <div class="ep-metric-lbl">In Progress</div>
+                </div>
+                <div class="ep-metric-box">
+                    <div class="ep-metric-val text-success">@completedCourses</div>
+                    <div class="ep-metric-lbl">Completed</div>
+                </div>
+                <div class="ep-metric-box">
+                    <div class="ep-metric-val text-primary">@certificates.Count()</div>
+                    <div class="ep-metric-lbl">Certifications</div>
+                </div>
+                <div class="ep-metric-box">
+                    <div class="ep-metric-val">@allSubmissions.Count()</div>
+                    <div class="ep-metric-lbl">Assignments Evaluated</div>
+                </div>
+                <div class="ep-metric-box">
+                    <div class="ep-metric-val text-warning">
+                        @(allQuizzes.Any() ? allQuizzes.Average(q => (double)q.ScorePercentage).ToString("0") + "%" : "100%")
+                    </div>
+                    <div class="ep-metric-lbl">Avg Quiz Score</div>
+                </div>
+            </div>
+
+            <!-- Main Dashboard Body: 2-Column Productivity Workspace -->
+            <div class="ep-dash-grid">
+                
+                <!-- PRIMARY COLUMN: Continue Learning, Deadlines & Timeline -->
+                <div>
+                    
+                    <!-- 1. Continue Learning Cards (Highest Priority Action) -->
+                    <div class="ep-card">
+                        <div class="ep-card-header-clean">
+                            <h2 class="ep-card-title">
+                                <i class="bi bi-journal-bookmark-fill text-primary"></i> 
+                                Continue Learning
+                            </h2>
+                            <span class="badge bg-light text-dark border">@totalCourses Active @(totalCourses == 1 ? "Curriculum" : "Curriculums")</span>
+                        </div>
+
+                        @foreach (var c in Model)
+                        {
+                            <div class="ep-course-tile">
+                                <div class="ep-tile-top">
+                                    <div>
+                                        <a href="@Url.Action("Learn", "Courses", new { id = c.CourseId })" class="ep-tile-title">
+                                            @c.Course
+                                        </a>
+                                        <div class="ep-tile-instructor">
+                                            <i class="bi bi-person me-1"></i> @c.InstructorName &bull; @c.DurationWeeks Weeks
                                         </div>
-                                    </td>
-                                    <td>
-                                        <div class="fw-semibold text-dark small"><i class="bi bi-person me-1 text-primary"></i>@item.InstructorName</div>
-                                    </td>
-                                    <td>
-                                        @if (grade != null && (grade.QuizzesTaken > 0 || grade.AssignmentsSubmitted > 0))
+                                    </div>
+                                    <span class="ep-tile-level-badge">@c.Level</span>
+                                </div>
+
+                                <div class="ep-progress-frame">
+                                    <div class="ep-progress-bar-container">
+                                        <div class="ep-progress-bar-fill" style="width: @(c.Progress)%;"></div>
+                                    </div>
+                                    <div class="ep-progress-meta">
+                                        <span>Progress: @c.Progress% Completed</span>
+                                        @if (c.Progress >= 100)
                                         {
-                                            <div class="d-flex align-items-center gap-2">
-                                                <span class="badge @(grade.IsPassing ? "bg-success" : "bg-warning text-dark") px-2 py-1 fs-6">
-                                                    Grade @grade.LetterGrade
-                                                </span>
-                                                <span class="fw-bold text-dark small">@grade.FinalScore.ToString("0.0")%</span>
-                                            </div>
-                                            if (grade.HasPendingAssignments)
-                                            {
-                                                <div class="text-warning" style="font-size: 0.7rem;"><i class="bi bi-hourglass-split"></i> @grade.AssignmentsPending assignment(s) in review</div>
-                                            }
+                                            <span class="text-success"><i class="bi bi-check-circle-fill me-1"></i> Certified</span>
+                                        }
+                                        else if (c.Progress == 0)
+                                        {
+                                            <span class="text-muted">Not started</span>
                                         }
                                         else
                                         {
-                                            <span class="badge bg-light text-muted border small">No scores yet</span>
+                                            <span class="text-primary">In progress</span>
                                         }
-                                    </td>
-                                    <td>
-                                        <div class="d-flex justify-content-between small text-muted mb-1">
-                                            <span>Milestone</span>
-                                            <span class="fw-bold text-dark">@item.Progress%</span>
-                                        </div>
-                                        <div class="lms-bar-track">
-                                            <div class="lms-bar-fill @(isComplete ? "bg-success" : "")" style="width: @item.Progress%;"></div>
-                                        </div>
-                                    </td>
-                                    <td class="text-end">
-                                        <div class="btn-group btn-group-sm">
-                                            <a href="@Url.Action("Learn", "Courses", new { id = item.CourseId })" class="btn btn-primary rounded-pill px-3">
-                                                <i class="bi bi-play-circle me-1"></i> Classroom
-                                            </a>
-                                            @if (isComplete)
-                                            {
-                                                <a href="@Url.Action("Certificate", "Courses", new { id = item.CourseId })" class="btn btn-warning rounded-pill px-3 fw-bold text-dark ms-1 shadow-sm">
-                                                    <i class="bi bi-award-fill me-1"></i> Certificate
-                                                </a>
-                                            }
-                                            <button type="button" class="btn btn-outline-danger rounded-pill px-2 ms-1" data-bs-toggle="modal" data-bs-target="#dropModal-@item.CourseId" title="Drop Course">
-                                                <i class="bi bi-x-circle"></i>
-                                            </button>
-                                        </div>
+                                    </div>
+                                </div>
 
-                                        <!-- Drop Modal -->
-                                        <div class="modal fade" id="dropModal-@item.CourseId" tabindex="-1">
-                                            <div class="modal-dialog modal-dialog-centered">
-                                                <div class="modal-content border-0 shadow">
-                                                    <div class="modal-header">
-                                                        <h5 class="modal-title fw-bold text-danger">Drop Course</h5>
-                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                    </div>
-                                                    <div class="modal-body text-start">
-                                                        Are you sure you want to drop <strong>@item.Course</strong>? Your progress will be reset.
-                                                    </div>
-                                                    <div class="modal-footer">
-                                                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                                                        @using (Html.BeginForm("Unenroll", "Dashboard", FormMethod.Post, new { @class = "d-inline" }))
-                                                        {
-                                                            @Html.AntiForgeryToken()
-                                                            <input type="hidden" name="courseId" value="@item.CourseId" />
-                                                            <button type="submit" class="btn btn-danger btn-sm">Yes, Drop Course</button>
-                                                        }
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
+                                <div class="ep-tile-actions">
+                                    <div class="d-flex gap-2">
+                                        <a href="@Url.Action("Learn", "Courses", new { id = c.CourseId })" class="ep-btn-sm-primary">
+                                            @(c.Progress == 0 ? "Start Lesson 01" : "Resume Learning")
+                                            <i class="bi bi-arrow-right"></i>
+                                        </a>
+                                        @if (c.Progress >= 100)
+                                        {
+                                            <a href="@Url.Action("Certificate", "Courses", new { id = c.CourseId })" class="btn btn-outline-success btn-sm rounded-2 fw-semibold">
+                                                <i class="bi bi-award-fill me-1"></i> View Certificate
+                                            </a>
+                                        }
+                                    </div>
+
+                                    @using (Html.BeginForm("Unenroll", "Dashboard", FormMethod.Post, new { onsubmit = "return confirm('Are you sure you want to drop this course? Your progress will be archived.');" }))
+                                    {
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="courseId" value="@c.CourseId" />
+                                        <button type="submit" class="ep-btn-sm-subtle" title="Drop course">
+                                            <i class="bi bi-x-circle me-1"></i> Drop
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- 2. Upcoming Deadlines & Assessment Backlog -->
+                    <div class="ep-card">
+                        <div class="ep-card-header-clean">
+                            <h2 class="ep-card-title">
+                                <i class="bi bi-calendar-check text-warning"></i> 
+                                Upcoming Deadlines & Action Items
+                            </h2>
+                            <span class="badge bg-light text-muted border">@pendingAssignments Pending</span>
+                        </div>
+
+                        @if (pendingAssignments > 0)
+                        {
+                            foreach (var sub in allSubmissions.Where(s => s.IsPending))
+                            {
+                                <div class="ep-deadline-item">
+                                    <div>
+                                        <div class="fw-bold text-dark">@(string.IsNullOrWhiteSpace(sub.ModuleTitle) ? "Module Project Submission" : sub.ModuleTitle)</div>
+                                        <div class="text-muted small">Submitted on @sub.SubmittedAt.ToString("MMM dd, yyyy") &bull; Awaiting Instructor Grading</div>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="ep-deadline-pill ep-pill-pending">Instructor Review</span>
+                                        <a href="@Url.Action("Learn", "Courses", new { id = sub.CourseId })" class="btn btn-sm btn-outline-secondary rounded-2">
+                                            View Submission
+                                        </a>
+                                    </div>
+                                </div>
                             }
                         }
                         else
                         {
-                            <tr>
-                                <td colspan="5" class="text-center py-5">
-                                    <i class="bi bi-journal-x fs-1 text-muted"></i>
-                                    <h5 class="fw-bold text-dark mt-2">You are not enrolled in any courses yet</h5>
-                                    <p class="text-muted small">Explore our curriculum catalog to start learning modern tech skills.</p>
-                                    <a href="@Url.Action("Index", "Courses")" class="lms-cta-btn">
-                                        <i class="bi bi-compass me-1"></i> Explore Catalog
-                                    </a>
-                                </td>
-                            </tr>
+                            <div class="text-center py-4 text-muted small">
+                                <i class="bi bi-check-circle-fill text-success fs-4 d-block mb-1"></i>
+                                You have no overdue or pending assignments. All submissions are up to date!
+                            </div>
                         }
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
+                    </div>
 
-    <!-- TAB 2: ASSIGNMENTS & GRADEBOOK (CATEGORISED BY COURSE) -->
-    <div class="tab-pane fade" id="tab-assignments">
-        <div class="card border-0 shadow-sm p-4 rounded-4">
-            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-                <div>
-                    <h4 class="fw-bold text-dark mb-1">
-                        <i class="bi bi-clipboard-check-fill text-primary me-2"></i> Submitted Assignments & Mentor Verification
-                    </h4>
-                    <p class="text-muted small mb-0">Track verification status, awarded marks, and personalized instructor feedback categorized by course.</p>
-                </div>
-            </div>
-
-            @if (Model != null && Model.Any())
-            {
-                foreach (var courseItem in Model)
-                {
-                    var courseSubs = allSubmissions.Where(s => s.CourseId == courseItem.CourseId).ToList();
-                    var grade = courseItem.GradeSummary;
-
-                    <div class="card border mb-4 rounded-3 overflow-hidden shadow-sm">
-                        <!-- Course Header Bar -->
-                        <div class="card-header bg-light d-flex justify-content-between align-items-center py-3 px-4 flex-wrap gap-2">
-                            <div>
-                                <h5 class="fw-bold text-dark mb-0">
-                                    <i class="bi bi-book text-primary me-2"></i> @courseItem.Course
-                                </h5>
-                                <span class="text-muted small">Instructor: @courseItem.InstructorName</span>
-                            </div>
-                            <div class="d-flex align-items-center gap-2">
-                                @if (grade != null && (grade.QuizzesTaken > 0 || grade.AssignmentsSubmitted > 0))
-                                {
-                                    <span class="badge bg-primary px-3 py-2 rounded-pill fs-6">
-                                        Overall Course Grade: @grade.LetterGrade (@grade.FinalScore.ToString("0.0")%)
-                                    </span>
-                                }
-                                <a href="@Url.Action("Learn", "Courses", new { id = courseItem.CourseId })" class="btn btn-outline-primary btn-sm rounded-pill px-3">
-                                    Open Classroom
-                                </a>
-                            </div>
+                    <!-- 3. Recent Learning Activity Timeline -->
+                    <div class="ep-card">
+                        <div class="ep-card-header-clean">
+                            <h2 class="ep-card-title">
+                                <i class="bi bi-clock-history text-secondary"></i> 
+                                Recent Learning Activity
+                            </h2>
                         </div>
 
-                        <!-- Submissions Table for this Course -->
-                        <div class="card-body p-0">
-                            @if (courseSubs.Any())
-                            {
-                                <div class="table-responsive">
-                                    <table class="table table-hover align-middle mb-0">
-                                        <thead class="table-light small">
-                                            <tr>
-                                                <th style="width: 25%;">Assignment Task</th>
-                                                <th style="width: 15%;">Module</th>
-                                                <th style="width: 15%;">Submitted On</th>
-                                                <th style="width: 18%;">Status & Verification</th>
-                                                <th style="width: 12%;">Marks</th>
-                                                <th style="width: 15%;">Feedback</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach (var sub in courseSubs)
-                                            {
-                                                <tr>
-                                                    <td>
-                                                        <div class="fw-bold text-dark">@sub.SubmissionTitle</div>
-                                                        @if (!string.IsNullOrWhiteSpace(sub.SubmissionFileUrl))
-                                                        {
-                                                            <a href="@sub.SubmissionFileUrl" target="_blank" class="small text-primary text-decoration-none">
-                                                                <i class="bi bi-link-45deg"></i> Project Repo / Demo
-                                                            </a>
-                                                        }
-                                                    </td>
-                                                    <td>
-                                                        <span class="badge bg-secondary-subtle text-secondary">
-                                                            @(sub.ModuleNumber.HasValue ? $"Module {sub.ModuleNumber}" : "Capstone")
-                                                        </span>
-                                                    </td>
-                                                    <td class="text-muted small">
-                                                        @sub.SubmittedAt.ToString("MMM dd, yyyy")
-                                                    </td>
-                                                    <td>
-                                                        @if (sub.IsPending)
-                                                        {
-                                                            <span class="badge bg-warning-subtle text-warning px-3 py-2 rounded-pill fw-semibold">
-                                                                <i class="bi bi-hourglass-split me-1"></i> Marks Pending
-                                                            </span>
-                                                            <div class="text-muted" style="font-size: 0.7rem;">Under instructor verification</div>
-                                                        }
-                                                        else if (sub.IsApproved)
-                                                        {
-                                                            <span class="badge bg-success px-3 py-1 rounded-pill">
-                                                                <i class="bi bi-check2-circle me-1"></i> Approved & Verified
-                                                            </span>
-                                                        }
-                                                        else
-                                                        {
-                                                            <span class="badge bg-danger px-3 py-1 rounded-pill">
-                                                                Needs Revision
-                                                            </span>
-                                                        }
-                                                    </td>
-                                                    <td>
-                                                        @if (sub.IsPending)
-                                                        {
-                                                            <span class="text-muted fst-italic small">Pending</span>
-                                                        }
-                                                        else
-                                                        {
-                                                            <div class="fw-bold text-success fs-6">
-                                                                @sub.MarksObtained / @sub.MaxMarks
-                                                            </div>
-                                                        }
-                                                    </td>
-                                                    <td>
-                                                        @if (!string.IsNullOrWhiteSpace(sub.InstructorFeedback))
-                                                        {
-                                                            <div class="small text-muted p-2 bg-light rounded-2 border" style="font-size: 0.78rem;">
-                                                                <i class="bi bi-chat-left-quote text-primary me-1"></i> "@sub.InstructorFeedback"
-                                                            </div>
-                                                        }
-                                                        else
-                                                        {
-                                                            <span class="text-muted small fst-italic">No feedback note yet</span>
-                                                        }
-                                                    </td>
-                                                </tr>
-                                            }
-                                        </tbody>
-                                    </table>
-                                </div>
-                            }
-                            else
-                            {
-                                <div class="text-center py-4 text-muted small">
-                                    <i class="bi bi-pencil-square fs-3 d-block mb-1 text-muted"></i>
-                                    No assignments submitted for this course yet. Go to your <a href="@Url.Action("Learn", "Courses", new { id = courseItem.CourseId })">Classroom</a> to submit practical tasks!
-                                </div>
-                            }
+                        @if (recentActivity.Any())
+                        {
+                            <div class="ep-activity-list">
+                                @foreach (var act in recentActivity)
+                                {
+                                    <div class="ep-activity-item">
+                                        <div class="ep-activity-icon">
+                                            <i class="bi @act.Icon"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <div class="ep-activity-text">@act.Title</div>
+                                            <div class="ep-activity-time">
+                                                @act.Category &bull; @act.Timestamp.ToString("MMM dd, yyyy h:mm tt")
+                                            </div>
+                                        </div>
+                                        <a href="@Url.Action("Learn", "Courses", new { id = act.CourseId })" class="text-muted small text-decoration-none">
+                                            Classroom &rarr;
+                                        </a>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-muted small text-center py-3">
+                                No activity recorded yet. Complete a lecture or quiz to record progress.
+                            </div>
+                        }
+                    </div>
+
+                </div>
+
+                <!-- SECONDARY COLUMN: Insights, Achievements & Streaks -->
+                <div>
+                    
+                    <!-- Weekly Learning Target & Streak Visualizer -->
+                    <div class="ep-streak-card">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <h3 class="fw-bold text-dark m-0" style="font-size: 0.95rem;">Weekly Target & Streak</h3>
+                            <span class="badge bg-success bg-opacity-10 text-success fw-bold px-2 py-1 rounded-pill small">Active Learner</span>
+                        </div>
+                        <div class="text-muted small">Goal: 4 study sessions / week</div>
+
+                        <div class="ep-streak-days">
+                            <div class="ep-streak-day active"><span>Mon</span></div>
+                            <div class="ep-streak-day active"><span>Tue</span></div>
+                            <div class="ep-streak-day active"><span>Wed</span></div>
+                            <div class="ep-streak-day active"><span>Thu</span></div>
+                            <div class="ep-streak-day"><span>Fri</span></div>
+                            <div class="ep-streak-day"><span>Sat</span></div>
+                            <div class="ep-streak-day"><span>Sun</span></div>
                         </div>
                     </div>
-                }
-            }
-            else
-            {
-                <div class="text-center py-5 text-muted">
-                    <p>No active courses found. Enroll in a course to start completing assignments!</p>
-                </div>
-            }
-        </div>
-    </div>
 
-    <!-- TAB 3: QUIZ HISTORY -->
-    <div class="tab-pane fade" id="tab-quizzes">
-        <div class="card border-0 shadow-sm p-4 rounded-4">
-            <h4 class="fw-bold text-dark mb-3">
-                <i class="bi bi-patch-question-fill text-info me-2"></i> Module Knowledge Check Quizzes
-            </h4>
+                    <!-- Certificates & Verified Achievements -->
+                    <div class="ep-card">
+                        <div class="ep-card-header-clean">
+                            <h3 class="ep-card-title" style="font-size: 0.95rem;">
+                                <i class="bi bi-award-fill text-warning"></i> 
+                                Verified Certifications
+                            </h3>
+                            <span class="badge bg-light text-dark border">@certificates.Count() Earned</span>
+                        </div>
 
-            @if (allQuizzes.Any())
-            {
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Course</th>
-                                <th>Module #</th>
-                                <th>Score</th>
-                                <th>Result</th>
-                                <th>Attempted On</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var q in allQuizzes)
+                        @if (certificates.Any())
+                        {
+                            foreach (var cert in certificates)
                             {
-                                <tr>
-                                    <td class="fw-bold text-dark">@q.CourseTitle</td>
-                                    <td><span class="badge bg-light text-dark border">Module @q.LessonNumber</span></td>
-                                    <td class="fw-bold @(q.IsPassed ? "text-success" : "text-danger")">
-                                        @q.ScoreFormatted
-                                    </td>
-                                    <td>
-                                        @if (q.IsPassed)
-                                        {
-                                            <span class="badge bg-success px-3 py-1 rounded-pill"><i class="bi bi-check-lg me-1"></i> Passed</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="badge bg-danger px-3 py-1 rounded-pill">Failed (&lt; 60%)</span>
-                                        }
-                                    </td>
-                                    <td class="text-muted small">@q.AttemptedAt.ToString("MMM dd, yyyy HH:mm")</td>
-                                </tr>
+                                <div class="ep-cert-card">
+                                    <div class="ep-cert-header">
+                                        <i class="bi bi-patch-check-fill text-success fs-5"></i>
+                                        <div class="ep-cert-title">@cert.Course</div>
+                                    </div>
+                                    <div class="text-muted small mb-2">Verified completion credential</div>
+                                    <a href="@Url.Action("Certificate", "Courses", new { id = cert.CourseId })" class="btn btn-sm btn-outline-dark w-100 rounded-2 fw-semibold">
+                                        View Certificate <i class="bi bi-box-arrow-up-right ms-1"></i>
+                                    </a>
+                                </div>
                             }
-                        </tbody>
-                    </table>
+                        }
+                        else
+                        {
+                            <div class="text-center py-3 text-muted small">
+                                <i class="bi bi-award text-muted fs-3 d-block mb-1"></i>
+                                <div class="fw-bold text-dark">No certificates unlocked yet</div>
+                                <p class="mb-0 mt-1">Complete all lectures, pass quizzes, and get assignment approvals to earn your verified credential.</p>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Recommended Curriculums Pathway -->
+                    @if (recommendedCourses.Any())
+                    {
+                        <div class="ep-card">
+                            <div class="ep-card-header-clean">
+                                <h3 class="ep-card-title" style="font-size: 0.95rem;">
+                                    <i class="bi bi-compass text-primary"></i> 
+                                    Suggested Pathways
+                                </h3>
+                                <a href="@Url.Action("Index", "Courses")" class="text-muted small text-decoration-none">Catalog &rarr;</a>
+                            </div>
+
+                            <div class="d-flex flex-column gap-3">
+                                @foreach (var rec in recommendedCourses.Take(2))
+                                {
+                                    <div class="p-2 border rounded-2 bg-light">
+                                        <div class="d-flex justify-content-between small text-muted mb-1">
+                                            <span>@rec.Category</span>
+                                            <span class="fw-bold text-dark">$@rec.Price.ToString("F2")</span>
+                                        </div>
+                                        <div class="fw-bold text-dark small mb-1">@rec.Title</div>
+                                        <a href="@Url.Action("Details", "Courses", new { id = rec.CourseId })" class="text-primary small fw-semibold text-decoration-none">
+                                            Explore Curriculum &rarr;
+                                        </a>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+
                 </div>
-            }
-            else
-            {
-                <div class="text-center py-5 text-muted small">
-                    <i class="bi bi-question-circle fs-1 text-muted d-block mb-2"></i>
-                    No quiz attempts recorded yet. Lesson quizzes are available inside each course classroom.
-                </div>
-            }
-        </div>
+
+            </div>
+            </div>
+        }
+
     </div>
 </div>

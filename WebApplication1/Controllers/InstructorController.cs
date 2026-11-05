@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -8,6 +10,7 @@ using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
 using Newtonsoft.Json;
+using WebApplication1.Data;
 using WebApplication1.Models;
 using WebApplication1.Repositories;
 using WebApplication1.Services;
@@ -124,6 +127,134 @@ namespace WebApplication1.Controllers
                 ViewBag.TotalSalesCount = 0;
                 ViewBag.SalesInvoices = new List<InvoiceViewModel>();
             }
+
+            // 1. Fetch student queries from LMS.StudentQueryLogs
+            var studentQueries = new List<InstructorStudentQueryItem>();
+            try
+            {
+                string querySql = @"
+                    SELECT TOP 6
+                        sql.QueryLogId,
+                        sql.CourseId,
+                        c.Title AS CourseTitle,
+                        ISNULL(u.FullName, 'Enrolled Student') AS StudentName,
+                        sql.QueryText,
+                        sql.Topic,
+                        sql.FrictionLevel,
+                        sql.CreatedAt
+                    FROM LMS.StudentQueryLogs sql
+                    JOIN LMS.Courses c ON sql.CourseId = c.CourseId
+                    LEFT JOIN LMS.Users u ON sql.StudentId = u.UserId
+                    WHERE c.InstructorId = @InstructorId
+                    ORDER BY sql.CreatedAt DESC";
+                DataTable qDt = DbHelper.ExecuteDataTable(querySql, new[] { new SqlParameter("@InstructorId", userId.Value) });
+                if (qDt != null)
+                {
+                    foreach (DataRow r in qDt.Rows)
+                    {
+                        studentQueries.Add(new InstructorStudentQueryItem
+                        {
+                            QueryLogId = Convert.ToInt32(r["QueryLogId"]),
+                            CourseId = Convert.ToInt32(r["CourseId"]),
+                            CourseTitle = r["CourseTitle"] != DBNull.Value ? r["CourseTitle"].ToString() : "Curriculum",
+                            StudentName = r["StudentName"] != DBNull.Value ? r["StudentName"].ToString() : "Student",
+                            QueryText = r["QueryText"] != DBNull.Value ? r["QueryText"].ToString() : "",
+                            Topic = r["Topic"] != DBNull.Value ? r["Topic"].ToString() : "General",
+                            FrictionLevel = r["FrictionLevel"] != DBNull.Value ? r["FrictionLevel"].ToString() : "Moderate",
+                            CreatedAt = Convert.ToDateTime(r["CreatedAt"])
+                        });
+                    }
+                }
+            }
+            catch {}
+            ViewBag.StudentQueries = studentQueries;
+
+            // 2. Course Module counts
+            var courseModuleCounts = new Dictionary<int, int>();
+            try
+            {
+                string modSql = @"
+                    SELECT CourseId, COUNT(*) AS ModCount 
+                    FROM LMS.CourseModules 
+                    GROUP BY CourseId";
+                DataTable mDt = DbHelper.ExecuteDataTable(modSql, null);
+                if (mDt != null)
+                {
+                    foreach (DataRow r in mDt.Rows)
+                    {
+                        courseModuleCounts[Convert.ToInt32(r["CourseId"])] = Convert.ToInt32(r["ModCount"]);
+                    }
+                }
+            }
+            catch {}
+            ViewBag.CourseModuleCounts = courseModuleCounts;
+
+            // 3. Friction Clusters by Topic
+            var frictionClusters = new List<InstructorFrictionClusterItem>();
+            try
+            {
+                string topicSql = @"
+                    SELECT sql.Topic, sql.FrictionLevel, COUNT(*) AS QueryCount
+                    FROM LMS.StudentQueryLogs sql
+                    JOIN LMS.Courses c ON sql.CourseId = c.CourseId
+                    WHERE c.InstructorId = @InstructorId
+                    GROUP BY sql.Topic, sql.FrictionLevel
+                    ORDER BY QueryCount DESC";
+                DataTable tDt = DbHelper.ExecuteDataTable(topicSql, new[] { new SqlParameter("@InstructorId", userId.Value) });
+                if (tDt != null)
+                {
+                    foreach (DataRow r in tDt.Rows)
+                    {
+                        frictionClusters.Add(new InstructorFrictionClusterItem
+                        {
+                            Topic = r["Topic"] != DBNull.Value ? r["Topic"].ToString() : "General",
+                            FrictionLevel = r["FrictionLevel"] != DBNull.Value ? r["FrictionLevel"].ToString() : "Moderate",
+                            QueryCount = Convert.ToInt32(r["QueryCount"])
+                        });
+                    }
+                }
+            }
+            catch {}
+            ViewBag.FrictionClusters = frictionClusters;
+
+            // 4. Enrollments & Completion Breakdown
+            int totalEnrolledCount = 0;
+            int completedEnrollmentsCount = 0;
+            var recentActivities = new List<InstructorActivityItem>();
+            try
+            {
+                string enrollSql = @"
+                    SELECT TOP 8 e.CourseId, e.ProgressPercentage, e.EnrolledAt, u.FullName AS StudentName, c.Title AS CourseTitle
+                    FROM LMS.Enrollments e
+                    JOIN LMS.Courses c ON e.CourseId = c.CourseId
+                    JOIN LMS.Users u ON e.UserId = u.UserId
+                    WHERE c.InstructorId = @InstructorId
+                    ORDER BY e.EnrolledAt DESC";
+                DataTable eDt = DbHelper.ExecuteDataTable(enrollSql, new[] { new SqlParameter("@InstructorId", userId.Value) });
+                if (eDt != null)
+                {
+                    totalEnrolledCount = eDt.Rows.Count;
+                    foreach (DataRow r in eDt.Rows)
+                    {
+                        int prog = Convert.ToInt32(r["ProgressPercentage"]);
+                        if (prog >= 100) completedEnrollmentsCount++;
+
+                        recentActivities.Add(new InstructorActivityItem
+                        {
+                            Type = prog >= 100 ? "certificate" : "enrollment",
+                            StudentName = r["StudentName"].ToString(),
+                            CourseTitle = r["CourseTitle"].ToString(),
+                            Detail = prog >= 100 ? "Completed 100% of curriculum & earned certificate" : $"Enrolled and active ({prog}% progress)",
+                            Timestamp = Convert.ToDateTime(r["EnrolledAt"]),
+                            BadgeClass = prog >= 100 ? "bg-success" : "bg-primary"
+                        });
+                    }
+                }
+            }
+            catch {}
+            ViewBag.TotalEnrolledCount = totalEnrolledCount;
+            ViewBag.CompletedEnrollmentsCount = completedEnrollmentsCount;
+            ViewBag.RecentActivities = recentActivities;
 
             return View(myCourses);
         }

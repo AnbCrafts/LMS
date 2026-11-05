@@ -4,192 +4,140 @@
     string userRole = currentUser != null ? currentUser.Role : "";
     string userName = currentUser != null ? currentUser.FullName : "";
     bool isApproved = currentUser != null && currentUser.IsApproved;
+
+    string currentController = ViewContext.RouteData.Values["controller"] != null ? ViewContext.RouteData.Values["controller"].ToString() : "";
+    string currentAction = ViewContext.RouteData.Values["action"] != null ? ViewContext.RouteData.Values["action"].ToString() : "";
+    bool isLandingPage = string.Equals(currentController, "Home", StringComparison.OrdinalIgnoreCase) && string.Equals(currentAction, "Index", StringComparison.OrdinalIgnoreCase);
 }
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@(ViewBag.Title != null ? ViewBag.Title + " | EduPulse LMS" : "EduPulse LMS Portal")</title>
+    <title>@(ViewBag.Title != null ? ViewBag.Title + " | EduPulse" : "EduPulse - Professional Learning Platform")</title>
     @Styles.Render("~/Content/css")
+    <link href="~/Content/Site.css?v=@DateTime.UtcNow.Ticks" rel="stylesheet" type="text/css" />
     @Scripts.Render("~/bundles/modernizr")
 </head>
 <body>
-    <!-- Modern Sticky Glassmorphism Header -->
-    <header class="lms-navbar">
-        <div class="container-fluid px-lg-5 px-3 d-flex justify-content-between align-items-center">
-            <!-- Brand Left with Gradient Icon -->
-            <a class="lms-brand" href="@Url.Action("Index", "Home")">
-                <span class="lms-brand-icon">
-                    <i class="bi bi-mortarboard-fill"></i>
-                </span>
-                <span>EduPulse</span>
-            </a>
-
-            <!-- Navigation Links Center -->
-            <nav class="d-none d-md-flex align-items-center gap-2">
-                <a class="lms-nav-link @(ViewContext.RouteData.Values["controller"].ToString() == "Home" ? "active" : "")" 
-                   href="@Url.Action("Index", "Home")">
-                    <i class="bi bi-house-door"></i> Home
+    @if (isLoggedIn && string.Equals(userRole, "Admin", StringComparison.OrdinalIgnoreCase))
+    {
+        @Html.Partial("_AdminNavbar")
+    }
+    else if (isLoggedIn && string.Equals(userRole, "Instructor", StringComparison.OrdinalIgnoreCase))
+    {
+        @Html.Partial("_InstructorNavbar")
+    }
+    else if (isLoggedIn && string.Equals(userRole, "Student", StringComparison.OrdinalIgnoreCase))
+    {
+        @Html.Partial("_StudentNavbar")
+    }
+    else if (isLandingPage)
+    {
+        @Html.Partial("_LandingNavbar")
+    }
+    else
+    {
+        <!-- Internal Portal Header (Clean, Professional, Free of Test Clutter) -->
+        <header class="ep-navbar">
+            <div class="container-fluid px-lg-5 px-3 d-flex justify-content-between align-items-center h-100">
+                <!-- Brand Left -->
+                <a class="ep-brand" href="@Url.Action("Index", "Home")" aria-label="EduPulse Home">
+                    <span class="ep-brand-mark">
+                        <svg width="26" height="26" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <rect width="28" height="28" rx="6" fill="#0F172A" />
+                            <path d="M7 10C7 8.89543 7.89543 8 9 8H19C20.1046 8 21 8.89543 21 10V18.5C21 19.6046 20.1046 20.5 19 20.5H9C7.89543 20.5 7 19.6046 7 18.5V10Z" stroke="white" stroke-width="1.25" stroke-opacity="0.25" />
+                            <path d="M14 8V20.5M7 16.5C9.2 15.2 11.4 15.2 14 16.5C16.6 15.2 18.8 15.2 21 16.5" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </span>
+                    <span class="ep-brand-text">EduPulse</span>
                 </a>
-                <a class="lms-nav-link @(ViewContext.RouteData.Values["controller"].ToString() == "Courses" ? "active" : "")" 
-                   href="@Url.Action("Index", "Courses")">
-                    <i class="bi bi-grid-3x3-gap"></i> Courses
-                </a>
 
-                @if (isLoggedIn && userRole == "Instructor")
-                {
-                    <a class="lms-nav-link text-primary fw-bold @(ViewContext.RouteData.Values["controller"].ToString() == "Instructor" ? "active" : "")" 
-                       href="@Url.Action("Index", "Instructor")">
-                        <i class="bi bi-person-workspace"></i> Instructor Studio & Dashboard
+                <!-- Portal Navigation Links -->
+                <nav class="d-none d-md-flex align-items-center gap-1" aria-label="Portal Navigation">
+                    <a class="ep-nav-link @(currentController == "Courses" ? "active" : "")" 
+                       href="@Url.Action("Index", "Courses")">
+                        Browse Courses
                     </a>
-                }
-                else if (isLoggedIn && userRole == "Admin")
-                {
-                    <a class="lms-nav-link text-danger fw-bold @(ViewContext.RouteData.Values["controller"].ToString() == "Admin" && ViewContext.RouteData.Values["action"].ToString() == "Index" ? "active" : "")" 
-                       href="@Url.Action("Index", "Admin")">
-                        <i class="bi bi-shield-check"></i> Admin Portal
-                    </a>
-                    <a class="lms-nav-link text-primary fw-bold @(ViewContext.RouteData.Values["controller"].ToString() == "Admin" && ViewContext.RouteData.Values["action"].ToString() == "VerifySellers" ? "active" : "")" 
-                       href="@Url.Action("VerifySellers", "Admin")">
-                        <i class="bi bi-person-check-fill"></i> Verify Sellers
-                    </a>
-                }
-                else
-                {
-                    <a class="lms-nav-link @(ViewContext.RouteData.Values["controller"].ToString() == "Dashboard" ? "active" : "")" 
-                       href="@Url.Action("Index", "Dashboard")">
-                        <i class="bi bi-speedometer2"></i> My Dashboard
-                    </a>
-                }
 
-                @if (isLoggedIn)
-                {
-                    <a class="lms-nav-link @(ViewContext.RouteData.Values["controller"].ToString() == "Payment" ? "active" : "")" 
-                       href="@Url.Action("Invoices", "Payment")">
-                        <i class="bi bi-receipt"></i> Invoices
-                    </a>
-                }
-            </nav>
-
-            <!-- User Auth Profile Section Right -->
-            <div class="d-flex align-items-center gap-2">
-                <!-- Demo Quick Persona Switcher Dropdown (Available Everywhere) -->
-                <div class="dropdown d-inline-block">
-                    <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 dropdown-toggle shadow-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Switch Demo Persona">
-                        <i class="bi bi-person-bounding-box text-primary me-1"></i> Switch Role
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3 p-2" style="min-width: 260px;">
-                        <li class="dropdown-header small text-uppercase fw-bold text-muted px-2 py-1">Quick Switch Testing Persona</li>
-                        <li>
-                            @using (Html.BeginForm("QuickLogin", "Account", FormMethod.Post, new { @class = "m-0" }))
-                            {
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="persona" value="Student" />
-                                <button type="submit" class="dropdown-item rounded-2 py-2 d-flex align-items-center gap-2">
-                                    <span class="badge bg-primary rounded-circle p-1"><i class="bi bi-mortarboard"></i></span>
-                                    <div>
-                                        <div class="fw-bold small text-dark">Student (John Doe)</div>
-                                        <div class="text-muted" style="font-size: 0.7rem;">Dashboard, Classroom & Quizzes</div>
-                                    </div>
-                                </button>
-                            }
-                        </li>
-                        <li>
-                            @using (Html.BeginForm("QuickLogin", "Account", FormMethod.Post, new { @class = "m-0" }))
-                            {
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="persona" value="Instructor" />
-                                <button type="submit" class="dropdown-item rounded-2 py-2 d-flex align-items-center gap-2">
-                                    <span class="badge bg-success rounded-circle p-1"><i class="bi bi-person-workspace"></i></span>
-                                    <div>
-                                        <div class="fw-bold small text-dark">Instructor (A. Sharma)</div>
-                                        <div class="text-muted" style="font-size: 0.7rem;">Approved Seller &bull; 90% Net Studio</div>
-                                    </div>
-                                </button>
-                            }
-                        </li>
-                        <li>
-                            @using (Html.BeginForm("QuickLogin", "Account", FormMethod.Post, new { @class = "m-0" }))
-                            {
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="persona" value="Admin" />
-                                <button type="submit" class="dropdown-item rounded-2 py-2 d-flex align-items-center gap-2">
-                                    <span class="badge bg-danger rounded-circle p-1"><i class="bi bi-shield-check"></i></span>
-                                    <div>
-                                        <div class="fw-bold small text-dark">Admin (System Admin)</div>
-                                        <div class="text-muted" style="font-size: 0.7rem;">10% Platform Cut & Approvals</div>
-                                    </div>
-                                </button>
-                            }
-                        </li>
-                        <li>
-                            @using (Html.BeginForm("QuickLogin", "Account", FormMethod.Post, new { @class = "m-0" }))
-                            {
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="persona" value="PendingInstructor" />
-                                <button type="submit" class="dropdown-item rounded-2 py-2 d-flex align-items-center gap-2">
-                                    <span class="badge bg-warning text-dark rounded-circle p-1"><i class="bi bi-hourglass-split"></i></span>
-                                    <div>
-                                        <div class="fw-bold small text-dark">Pending Instructor (Pooja Mehta)</div>
-                                        <div class="text-muted" style="font-size: 0.7rem;">Unapproved Seller Test</div>
-                                    </div>
-                                </button>
-                            }
-                        </li>
-                        <li><hr class="dropdown-divider my-1"></li>
-                        <li>
-                            <a class="dropdown-item rounded-2 py-2 d-flex align-items-center gap-2" href="@Url.Action("ApplicationStatus", "Instructor")">
-                                <span class="badge bg-secondary rounded-circle p-1"><i class="bi bi-patch-question"></i></span>
-                                <div>
-                                    <div class="fw-bold small text-dark">Lookup Application Status</div>
-                                    <div class="text-muted" style="font-size: 0.7rem;">Enter email & inspect feedback</div>
-                                </div>
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-
-                @if (isLoggedIn)
-                {
-                    string initials = "U";
-                    if (!string.IsNullOrWhiteSpace(userName))
+                    @if (isLoggedIn && userRole == "Instructor")
                     {
-                        var parts = userName.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                        initials = parts.Length >= 2 
-                            ? $"{parts[0][0]}{parts[1][0]}".ToUpper() 
-                            : parts[0].Substring(0, Math.Min(2, parts[0].Length)).ToUpper();
+                        <a class="ep-nav-link @(currentController == "Instructor" ? "active" : "")" 
+                           href="@Url.Action("Index", "Instructor")">
+                            Instructor Studio
+                        </a>
+                    }
+                    else if (isLoggedIn && userRole == "Admin")
+                    {
+                        <a class="ep-nav-link @(currentController == "Admin" && currentAction == "Index" ? "active" : "")" 
+                           href="@Url.Action("Index", "Admin")">
+                            Admin Portal
+                        </a>
+                        <a class="ep-nav-link @(currentController == "Admin" && currentAction == "VerifySellers" ? "active" : "")" 
+                           href="@Url.Action("VerifySellers", "Admin")">
+                            Verify Sellers
+                        </a>
+                    }
+                    else if (isLoggedIn)
+                    {
+                        <a class="ep-nav-link @(currentController == "Dashboard" ? "active" : "")" 
+                           href="@Url.Action("Index", "Dashboard")">
+                            My Dashboard
+                        </a>
                     }
 
-                    <a href="@(userRole == "Instructor" ? Url.Action("Profile", "Instructor") : Url.Action("Profile", "Account"))" class="lms-user-pill text-decoration-none" title="View Account Profile">
-                        <span class="lms-user-avatar">@initials</span>
-                        <span>@userName</span>
-                        @if (userRole == "Instructor" && !isApproved)
+                    @if (isLoggedIn)
+                    {
+                        <a class="ep-nav-link @(currentController == "Payment" ? "active" : "")" 
+                           href="@Url.Action("Invoices", "Payment")">
+                            Invoices
+                        </a>
+                    }
+                </nav>
+
+                <!-- Auth & Profile Section Right -->
+                <div class="d-flex align-items-center gap-2">
+                    @if (isLoggedIn)
+                    {
+                        string initials = "U";
+                        if (!string.IsNullOrWhiteSpace(userName))
                         {
-                            <span class="badge bg-warning text-dark small" title="Verification Pending">Pending</span>
+                            var parts = userName.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                            initials = parts.Length >= 2 
+                                ? $"{parts[0][0]}{parts[1][0]}".ToUpper() 
+                                : parts[0].Substring(0, Math.Min(2, parts[0].Length)).ToUpper();
                         }
-                    </a>
 
-                    using (Html.BeginForm("Logout", "Account", FormMethod.Post, new { @class = "d-inline m-0" }))
-                    {
-                        @Html.AntiForgeryToken()
-                        <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3" title="Sign Out">
-                            <i class="bi bi-box-arrow-right"></i>
-                        </button>
+                        <a href="@(userRole == "Instructor" ? Url.Action("Profile", "Instructor") : Url.Action("Profile", "Account"))" class="lms-user-pill text-decoration-none" title="View Account Profile">
+                            <span class="lms-user-avatar" style="background: #0f172a; color: #fff;">@initials</span>
+                            <span>@userName</span>
+                            @if (userRole == "Instructor" && !isApproved)
+                            {
+                                <span class="badge bg-warning text-dark small" title="Verification Pending">Pending</span>
+                            }
+                        </a>
+
+                        using (Html.BeginForm("Logout", "Account", FormMethod.Post, new { @class = "d-inline m-0" }))
+                        {
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-outline-secondary btn-sm rounded-2 px-3" title="Sign Out">
+                                Sign Out
+                            </button>
+                        }
                     }
-                }
-                else
-                {
-                    <a href="@Url.Action("Login", "Account")" class="btn btn-outline-primary btn-sm px-3 rounded-pill fw-semibold">
-                        Sign In
-                    </a>
-                    <a href="@Url.Action("Register", "Account")" class="btn btn-primary btn-sm px-3 rounded-pill fw-semibold">
-                        Get Started
-                    </a>
-                }
+                    else
+                    {
+                        <a href="@Url.Action("Login", "Account")" class="ep-btn-subtle">
+                            Sign In
+                        </a>
+                        <a href="@Url.Action("Register", "Account")" class="ep-btn-primary">
+                            Create Account
+                        </a>
+                    }
+                </div>
             </div>
-        </div>
-    </header>
+        </header>
+    }
 
     <!-- Global TempData Alerts -->
     @if (TempData["WarningMessage"] != null)

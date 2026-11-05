@@ -35,4 +35,13 @@ namespace WebApplication1.Models
         public System.Collections.Generic.List<StudentSubmission> Submissions { get; set; } = new System.Collections.Generic.List<StudentSubmission>();
         public System.Collections.Generic.List<StudentQuizAttempt> QuizAttempts { get; set; } = new System.Collections.Generic.List<StudentQuizAttempt>();
     }
+
+    public class RecentActivityItem
+    {
+        public string Title { get; set; }
+        public string Category { get; set; }
+        public DateTime Timestamp { get; set; }
+        public string Icon { get; set; }
+        public int CourseId { get; set; }
+    }
 }

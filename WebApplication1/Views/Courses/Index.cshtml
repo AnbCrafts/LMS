@@ -1,543 +1,1690 @@
 @model WebApplication1.Models.CourseFilterViewModel
 
 @{
-    ViewBag.Title = "Course Catalog & Learning Paths";
+    ViewBag.Title = "Explore Courses & Learning Paths";
     int? currentUserId = Session["UserId"] != null && int.TryParse(Session["UserId"].ToString(), out int uid) ? uid : (int?)null;
-    var topCategories = Model.AvailableCategories.Take(5).ToList();
+    string currentUserRole = Session["UserRole"] as string ?? "";
+    string currentUserName = Session["UserName"] as string ?? "";
+    var userEnrollments = Model.UserEnrollments ?? new System.Collections.Generic.Dictionary<int, WebApplication1.Models.StudentDashboardViewModel>();
+    var topCategories = Model.AvailableCategories.Take(6).ToList();
 }
 
-<!-- Page Header & Mobile Filter Toggle -->
-<div class="lms-page-header d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
-    <div>
-        <h1 class="lms-page-title mb-1">Explore Courses</h1>
-        <p class="text-muted mb-0">Learn verified skills from software engineering specialists and industry practitioners.</p>
-    </div>
-    <div class="d-flex align-items-center gap-2">
-        <!-- Mobile Filter Toggle Button -->
-        <button class="btn btn-outline-primary d-lg-none rounded-pill px-3 shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#filterSidebarCollapse">
-            <i class="bi bi-funnel-fill me-1"></i> Filters 
-            @if (Model.HasActiveFilters)
-            {
-                <span class="badge bg-primary text-white rounded-pill ms-1">Active</span>
-            }
-        </button>
-    </div>
-</div>
+<!-- Self-Contained Resilient Design System for EduPulse Courses Discovery Experience -->
+<style>
+    /* ==========================================================================
+       EduPulse Courses Catalog  Bespoke SaaS Discovery Architecture
+       Inspired by Coursera Business, Maven, and Stripe Product Directory.
+       Strictly zero AI tropes, zero promotional banners, zero fake numbers.
+       ========================================================================== */
 
-<!-- Main 2-Column Catalog Layout -->
-<div class="row g-4">
-    <!-- LEFT SIDEBAR: FILTERS PANEL (Desktop Sticky + Mobile Collapse) -->
-    <div class="col-12 col-lg-3">
-        <div class="collapse d-lg-block" id="filterSidebarCollapse">
-            <div class="card border-0 shadow-sm p-4 rounded-4 sticky-lg-top" style="top: 85px; z-index: 5; background: #ffffff;">
-                <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="badge bg-primary-subtle text-primary p-2 rounded-circle" style="width: 32px; height: 32px;">
-                            <i class="bi bi-funnel-fill"></i>
-                        </span>
-                        <h5 class="fw-bold text-dark m-0">Course Filters</h5>
-                    </div>
-                    @if (Model.HasActiveFilters)
-                    {
-                        <a href="@Url.Action("Index", "Courses")" class="small text-danger text-decoration-none fw-semibold">
-                            <i class="bi bi-arrow-counterclockwise"></i> Reset All
-                        </a>
-                    }
+    .ep-catalog-wrapper {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
+        color: #0f172a;
+        background-color: #f8fafc;
+        min-height: 100vh;
+        padding-bottom: 5rem;
+    }
+
+    /* Slim Header Surface */
+    .ep-catalog-header {
+        background-color: #ffffff;
+        border-bottom: 1px solid #edf0f4;
+        padding: 2.75rem 0 2rem 0;
+        margin-bottom: 2rem;
+    }
+
+    .ep-catalog-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 1.5rem;
+    }
+
+    .ep-catalog-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #475569;
+        background-color: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        padding: 3px 10px;
+        border-radius: 20px;
+        margin-bottom: 0.75rem;
+    }
+
+    .ep-catalog-title {
+        font-size: 2.15rem;
+        font-weight: 750;
+        letter-spacing: -0.03em;
+        color: #0f172a;
+        line-height: 1.2;
+        margin: 0 0 0.5rem 0;
+    }
+
+    .ep-catalog-subtitle {
+        font-size: 1rem;
+        color: #64748b;
+        max-width: 720px;
+        line-height: 1.55;
+        margin: 0 0 1.75rem 0;
+    }
+
+    /* Global Search Box (Integrated in Header) */
+    .ep-search-container {
+        position: relative;
+        max-width: 840px;
+    }
+
+    .ep-search-box {
+        display: flex;
+        align-items: center;
+        background-color: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        padding: 4px 6px 4px 14px;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .ep-search-box:focus-within {
+        border-color: #0f172a;
+        box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
+    }
+
+    .ep-search-icon {
+        color: #94a3b8;
+        font-size: 1rem;
+        margin-right: 10px;
+        flex-shrink: 0;
+    }
+
+    .ep-search-input {
+        border: none;
+        outline: none;
+        background: transparent;
+        font-size: 0.95rem;
+        color: #0f172a;
+        width: 100%;
+        padding: 8px 0;
+    }
+
+    .ep-search-input::placeholder {
+        color: #94a3b8;
+    }
+
+    .ep-search-kbd {
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: #64748b;
+        background-color: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+        padding: 3px 6px;
+        margin-right: 8px;
+        user-select: none;
+        flex-shrink: 0;
+    }
+
+    .ep-search-btn {
+        background-color: #0f172a;
+        color: #ffffff !important;
+        border: 1px solid #0f172a;
+        border-radius: 7px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        padding: 8px 18px;
+        text-decoration: none !important;
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+        flex-shrink: 0;
+    }
+
+    .ep-search-btn:hover {
+        background-color: #1e293b;
+    }
+
+    /* Popular Category Quick Pills */
+    .ep-quick-pills {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 1.25rem;
+    }
+
+    .ep-quick-pill-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #64748b;
+        margin-right: 4px;
+    }
+
+    .ep-quick-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: #475569;
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
+        padding: 4px 12px;
+        border-radius: 20px;
+        text-decoration: none !important;
+        transition: all 0.15s ease;
+    }
+
+    .ep-quick-pill:hover {
+        background-color: #ffffff;
+        color: #0f172a;
+        border-color: #cbd5e1;
+    }
+
+    .ep-quick-pill.active {
+        background-color: #0f172a;
+        color: #ffffff;
+        border-color: #0f172a;
+    }
+
+    .ep-quick-pill-count {
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 1px 6px;
+        border-radius: 10px;
+        background-color: rgba(15, 23, 42, 0.08);
+    }
+
+    .ep-quick-pill.active .ep-quick-pill-count {
+        background-color: rgba(255, 255, 255, 0.2);
+        color: #ffffff;
+    }
+
+    /* AI Course Matcher Copilot Tool */
+    .ep-copilot-card {
+        background: #0f172a;
+        color: #ffffff;
+        border-radius: 12px;
+        padding: 1.75rem 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+        border: 1px solid #1e293b;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .ep-copilot-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #38bdf8;
+        background: rgba(56, 189, 248, 0.12);
+        border: 1px solid rgba(56, 189, 248, 0.25);
+        padding: 3px 9px;
+        border-radius: 20px;
+        margin-bottom: 0.75rem;
+    }
+
+    .ep-copilot-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #ffffff;
+        letter-spacing: -0.02em;
+        margin: 0 0 0.35rem 0;
+    }
+
+    .ep-copilot-desc {
+        font-size: 0.9rem;
+        color: #94a3b8;
+        line-height: 1.5;
+        max-width: 820px;
+        margin: 0 0 1.25rem 0;
+    }
+
+    .ep-copilot-input-group {
+        display: flex;
+        align-items: center;
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 8px;
+        padding: 4px 6px 4px 14px;
+        transition: border-color 0.15s ease;
+    }
+
+    .ep-copilot-input-group:focus-within {
+        border-color: #38bdf8;
+    }
+
+    .ep-copilot-input {
+        background: transparent;
+        border: none;
+        outline: none;
+        color: #ffffff;
+        font-size: 0.9rem;
+        width: 100%;
+        padding: 8px 0;
+    }
+
+    .ep-copilot-input::placeholder {
+        color: #64748b;
+    }
+
+    .ep-copilot-btn {
+        background-color: #38bdf8;
+        color: #0f172a !important;
+        font-weight: 600;
+        font-size: 0.85rem;
+        border: none;
+        border-radius: 6px;
+        padding: 8px 16px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: background-color 0.15s ease;
+        white-space: nowrap;
+    }
+
+    .ep-copilot-btn:hover {
+        background-color: #7dd3fc;
+    }
+
+    .ep-prompt-chips {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-top: 1rem;
+    }
+
+    .ep-prompt-chip {
+        font-size: 0.76rem;
+        color: #cbd5e1;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid #334155;
+        padding: 3px 10px;
+        border-radius: 14px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .ep-prompt-chip:hover {
+        background: rgba(255, 255, 255, 0.12);
+        color: #ffffff;
+        border-color: #64748b;
+    }
+
+    /* Copilot Result Dossier */
+    .ep-copilot-results {
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #1e293b;
+    }
+
+    .ep-copilot-rationale-box {
+        background: #1e293b;
+        border-left: 3px solid #38bdf8;
+        border-radius: 0 8px 8px 0;
+        padding: 0.9rem 1.25rem;
+        margin-bottom: 1.25rem;
+    }
+
+    /* Left Sidebar: Filter Surface */
+    .ep-filter-surface {
+        background-color: #ffffff;
+        border: 1px solid #eef0f3;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+    }
+
+    .ep-filter-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-bottom: 1rem;
+        margin-bottom: 1.25rem;
+        border-bottom: 1px solid #edf0f4;
+    }
+
+    .ep-filter-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .ep-filter-reset {
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #dc2626;
+        text-decoration: none !important;
+        cursor: pointer;
+    }
+
+    .ep-filter-reset:hover {
+        text-decoration: underline !important;
+    }
+
+    .ep-filter-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .ep-filter-label {
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #475569;
+        margin-bottom: 0.65rem;
+        display: block;
+    }
+
+    .ep-category-scroll {
+        max-height: 220px;
+        overflow-y: auto;
+        padding-right: 4px;
+    }
+
+    .ep-category-scroll::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .ep-category-scroll::-webkit-scrollbar-thumb {
+        background-color: #e2e8f0;
+        border-radius: 4px;
+    }
+
+    .ep-checkbox-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 5px 0;
+        cursor: pointer;
+    }
+
+    .ep-checkbox-label {
+        font-size: 0.85rem;
+        color: #334155;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .ep-checkbox-count {
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: #64748b;
+        background-color: #f1f5f9;
+        border-radius: 10px;
+        padding: 1px 6px;
+    }
+
+    /* Active Filter Chips Bar */
+    .ep-active-chips-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        padding: 0.85rem 1.25rem;
+        background-color: #ffffff;
+        border: 1px solid #edf0f4;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+    }
+
+    .ep-active-chips-label {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #475569;
+        margin-right: 4px;
+    }
+
+    .ep-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.78rem;
+        font-weight: 500;
+        color: #0f172a;
+        background-color: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 3px 8px;
+    }
+
+    .ep-chip-remove {
+        color: #64748b;
+        text-decoration: none !important;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+    .ep-chip-remove:hover {
+        color: #dc2626;
+    }
+
+    /* Result Counter & Sorting Bar */
+    .ep-results-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 1.5rem;
+    }
+
+    .ep-results-count {
+        font-size: 0.9rem;
+        color: #64748b;
+    }
+
+    .ep-results-count strong {
+        color: #0f172a;
+    }
+
+    .ep-sort-select {
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #0f172a;
+        background-color: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        padding: 6px 12px;
+        cursor: pointer;
+        outline: none;
+    }
+
+    .ep-sort-select:focus {
+        border-color: #0f172a;
+    }
+
+    /* Recommended For You Section */
+    .ep-recommended-section {
+        background-color: #ffffff;
+        border: 1px solid #edf0f4;
+        border-radius: 12px;
+        padding: 1.5rem 1.75rem;
+        margin-bottom: 2rem;
+    }
+
+    .ep-recommended-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.25rem;
+    }
+
+    .ep-recommended-title {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    /* Learning Paths Grid */
+    .ep-paths-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+        gap: 1.25rem;
+        margin-bottom: 2.25rem;
+    }
+
+    .ep-path-card {
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+
+    .ep-path-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px -4px rgba(15, 23, 42, 0.06);
+        border-color: #cbd5e1;
+    }
+
+    .ep-path-eyebrow {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #2563eb;
+        margin-bottom: 0.4rem;
+    }
+
+    .ep-path-title {
+        font-size: 1.15rem;
+        font-weight: 750;
+        color: #0f172a;
+        margin: 0 0 0.5rem 0;
+        line-height: 1.3;
+    }
+
+    .ep-path-desc {
+        font-size: 0.85rem;
+        color: #64748b;
+        line-height: 1.5;
+        margin: 0 0 1.25rem 0;
+    }
+
+    .ep-path-meta {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding-top: 1rem;
+        border-top: 1px solid #edf0f4;
+        font-size: 0.8rem;
+        color: #475569;
+    }
+
+    /* Course Cards Grid */
+    .ep-courses-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .ep-course-card {
+        background-color: #ffffff;
+        border: 1px solid #eef0f3;
+        border-radius: 12px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.02);
+        transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+        position: relative;
+    }
+
+    .ep-course-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 24px -4px rgba(15, 23, 42, 0.08);
+        border-color: #cbd5e1;
+    }
+
+    /* Course Card Header Thumbnail */
+    .ep-card-thumbnail {
+        height: 130px;
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        position: relative;
+    }
+
+    .ep-card-category-pill {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #ffffff;
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(4px);
+        padding: 3px 9px;
+        border-radius: 4px;
+        align-self: flex-start;
+    }
+
+    .ep-card-level-chip {
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: #94a3b8;
+        background: rgba(15, 23, 42, 0.6);
+        padding: 2px 8px;
+        border-radius: 4px;
+    }
+
+    /* Course Card Body */
+    .ep-card-body {
+        padding: 1.25rem 1.25rem 1rem 1.25rem;
+        flex: 1 1 auto;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .ep-card-title {
+        font-size: 1.05rem;
+        font-weight: 750;
+        letter-spacing: -0.02em;
+        color: #0f172a;
+        line-height: 1.35;
+        margin: 0 0 0.5rem 0;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .ep-card-title a {
+        color: #0f172a;
+        text-decoration: none !important;
+        transition: color 0.15s ease;
+    }
+
+    .ep-card-title a:hover {
+        color: #2563eb;
+    }
+
+    .ep-card-desc {
+        font-size: 0.85rem;
+        color: #64748b;
+        line-height: 1.5;
+        margin: 0 0 1rem 0;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    /* Instructor & Meta Row */
+    .ep-card-instructor {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-bottom: 1rem;
+    }
+
+    .ep-card-avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background-color: #0f172a;
+        color: #ffffff;
+        font-size: 0.72rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .ep-card-instructor-info {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.2;
+    }
+
+    .ep-card-instructor-name {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #0f172a;
+    }
+
+    .ep-card-instructor-title {
+        font-size: 0.7rem;
+        color: #94a3b8;
+    }
+
+    .ep-card-meta-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 0.78rem;
+        color: #64748b;
+        padding-top: 0.75rem;
+        border-top: 1px solid #edf0f4;
+        margin-top: auto;
+    }
+
+    .ep-card-meta-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    /* Progress-Aware Card Footer */
+    .ep-card-footer {
+        padding: 0.9rem 1.25rem;
+        background-color: #ffffff;
+        border-top: 1px solid #edf0f4;
+    }
+
+    .ep-progress-bar-wrap {
+        width: 100%;
+        height: 5px;
+        background-color: #e2e8f0;
+        border-radius: 3px;
+        overflow: hidden;
+        margin-bottom: 0.6rem;
+    }
+
+    .ep-progress-bar-fill {
+        height: 100%;
+        background-color: #0f172a;
+        border-radius: 3px;
+        transition: width 0.3s ease;
+    }
+
+    .ep-card-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    .ep-card-price {
+        font-size: 1.05rem;
+        font-weight: 750;
+        color: #0f172a;
+    }
+
+    .ep-card-btn {
+        font-size: 0.85rem;
+        font-weight: 600;
+        padding: 7px 14px;
+        border-radius: 6px;
+        text-decoration: none !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.15s ease;
+        cursor: pointer;
+    }
+
+    .ep-btn-enroll {
+        background-color: #0f172a;
+        color: #ffffff !important;
+        border: 1px solid #0f172a;
+    }
+
+    .ep-btn-enroll:hover {
+        background-color: #1e293b;
+        border-color: #1e293b;
+    }
+
+    .ep-btn-continue {
+        background-color: #0f172a;
+        color: #ffffff !important;
+        border: 1px solid #0f172a;
+    }
+
+    .ep-btn-continue:hover {
+        background-color: #1e293b;
+    }
+
+    .ep-btn-completed {
+        background-color: #ecfdf5;
+        color: #047857 !important;
+        border: 1px solid #a7f3d0;
+    }
+
+    .ep-btn-completed:hover {
+        background-color: #d1fae5;
+    }
+
+    .ep-btn-manage {
+        background-color: #f1f5f9;
+        color: #334155 !important;
+        border: 1px solid #cbd5e1;
+    }
+
+    .ep-btn-manage:hover {
+        background-color: #e2e8f0;
+    }
+
+    /* Empty States */
+    .ep-empty-card {
+        background-color: #ffffff;
+        border: 1px solid #eef0f3;
+        border-radius: 12px;
+        padding: 4rem 2rem;
+        text-align: center;
+    }
+
+    .ep-empty-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 12px;
+        background-color: #f1f5f9;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: #64748b;
+        margin-bottom: 1.25rem;
+    }
+
+    .ep-empty-title {
+        font-size: 1.25rem;
+        font-weight: 750;
+        color: #0f172a;
+        margin: 0 0 0.5rem 0;
+    }
+
+    .ep-empty-text {
+        font-size: 0.9rem;
+        color: #64748b;
+        max-width: 480px;
+        margin: 0 auto 1.5rem auto;
+        line-height: 1.5;
+    }
+
+    /* Responsive Breakpoints */
+    @@media (max-width: 991.98px) {
+        .ep-desktop-sidebar {
+            display: none !important;
+        }
+
+        .ep-mobile-filter-trigger {
+            display: inline-flex !important;
+        }
+
+        .ep-catalog-title {
+            font-size: 1.75rem;
+        }
+    }
+
+    @@media (min-width: 992px) {
+        .ep-mobile-filter-trigger {
+            display: none !important;
+        }
+    }
+</style>
+
+<div class="ep-catalog-wrapper">
+    <!-- Slim Page Header Surface -->
+    <header class="ep-catalog-header">
+        <div class="ep-catalog-container">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div>
+                    <span class="ep-catalog-eyebrow">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polygon points="12 8 8 12 12 16 16 12 12 8"></polygon>
+                        </svg>
+                        Academic Curriculum & Learning Pathways
+                    </span>
+                    <h1 class="ep-catalog-title">Explore Courses</h1>
+                    <p class="ep-catalog-subtitle">
+                        Discover professionally curated courses, certifications, and learning paths engineered by verified academic specialists and industry practitioners.
+                    </p>
                 </div>
 
-                @using (Html.BeginForm("Index", "Courses", FormMethod.Get, new { id = "catalogFilterForm" }))
+                <!-- Mobile Filter Drawer Trigger -->
+                <button type="button" class="ep-mobile-filter-trigger btn btn-outline-dark rounded-2 px-3 py-2 fw-semibold d-flex align-items-center gap-2"
+                        data-bs-toggle="offcanvas" data-bs-target="#catalogFilterDrawer" aria-controls="catalogFilterDrawer">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                    </svg>
+                    <span>Filter Courses</span>
+                    @if (Model.HasActiveFilters)
+                    {
+                        <span class="badge bg-primary text-white rounded-pill ms-1">Active</span>
+                    }
+                </button>
+            </div>
+
+            <!-- Global Search Box -->
+            <div class="ep-search-container">
+                <form action="@Url.Action("Index", "Courses")" method="get" id="catalogSearchForm" class="m-0">
+                    <!-- Preserve existing filter query params -->
+                    <input type="hidden" name="level" value="@Model.Level" />
+                    <input type="hidden" name="price" value="@Model.PriceFilter" />
+                    <input type="hidden" name="sortBy" value="@Model.SortBy" />
+                    <input type="hidden" name="instructor" value="@Model.SelectedInstructor" />
+                    <input type="hidden" name="duration" value="@Model.DurationFilter" />
+                    @foreach (var c in Model.SelectedCategories)
+                    {
+                        <input type="hidden" name="categories" value="@c" />
+                    }
+
+                    <div class="ep-search-box">
+                        <span class="ep-search-icon" aria-hidden="true">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                        </span>
+                        <input type="text" id="catalogSearchInput" name="search" value="@Model.Search" 
+                               class="ep-search-input" 
+                               placeholder="Search by course title, instructor, skill, or keyword (e.g., 'React', 'Docker', 'MVC')..." 
+                               autocomplete="off" />
+                        <span class="ep-search-kbd">Ctrl K</span>
+                        <button type="submit" class="ep-search-btn">Search</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Popular Category Quick Pills Bar -->
+            <div class="ep-quick-pills">
+                <span class="ep-quick-pill-label">Popular Categories:</span>
+                @{
+                    bool isAllSelected = !Model.SelectedCategories.Any();
+                }
+                <a href="@Url.Action("Index", "Courses", new { search = Model.Search, level = Model.Level, price = Model.PriceFilter, sortBy = Model.SortBy })" 
+                   class="ep-quick-pill @(isAllSelected ? "active" : "")">
+                    All Courses
+                    <span class="ep-quick-pill-count">@Model.TotalCatalogCount</span>
+                </a>
+                @foreach (var topCat in topCategories)
                 {
-                    <!-- Search Input -->
-                    <div class="mb-4">
-                        <label class="form-label fw-bold text-dark small mb-1">
-                            <i class="bi bi-search me-1 text-primary"></i> Keyword Search
-                        </label>
-                        <div class="input-group input-group-sm">
-                            <input type="text" name="search" value="@Model.Search" class="form-control" placeholder="Title, topic, mentor..." />
-                            @if (!string.IsNullOrWhiteSpace(Model.Search))
-                            {
-                                <button type="button" class="btn btn-outline-secondary" onclick="document.getElementsByName('search')[0].value=''; document.getElementById('catalogFilterForm').submit();">
-                                    <i class="bi bi-x"></i>
-                                </button>
-                            }
-                        </div>
+                    bool isCatActive = Model.SelectedCategories.Contains(topCat.CategoryName, StringComparer.OrdinalIgnoreCase);
+                    <a href="@Url.Action("Index", "Courses", new { category = topCat.CategoryName, search = Model.Search, level = Model.Level, price = Model.PriceFilter, sortBy = Model.SortBy })" 
+                       class="ep-quick-pill @(isCatActive ? "active" : "")">
+                        @topCat.CategoryName
+                        <span class="ep-quick-pill-count">@topCat.CourseCount</span>
+                    </a>
+                }
+            </div>
+        </div>
+    </header>
+
+    <main class="ep-catalog-container">
+        <!-- AI Course Matcher & Career Advisor Copilot Card -->
+        <section class="ep-copilot-card" aria-label="AI Course Matcher">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <span class="ep-copilot-badge">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                    AI Course Matcher  Semantic Discovery
+                </span>
+            </div>
+
+            <h2 class="ep-copilot-title">Describe what you want to achieve or build</h2>
+            <p class="ep-copilot-desc">
+                Can't find an exact title? Tell our academic advisor your career goal, technical focus, or specific project requirements. Our curriculum vector engine analyzes all course syllabi to match the most direct learning pathways.
+            </p>
+
+            <!-- Copilot Query Input -->
+            <form id="aiAdvisorForm" onsubmit="submitAiAdvisor(event)" class="m-0">
+                <div class="ep-copilot-input-group">
+                    <input type="text" id="aiAdvisorQuery" class="ep-copilot-input" 
+                           placeholder="E.g., 'I want to build real-time trading dashboards with WebSockets' or 'I want to master container orchestration & CI/CD'..." 
+                           required autocomplete="off" />
+                    <button type="submit" id="aiAdvisorBtn" class="ep-copilot-btn">
+                        <span>Find Matching Courses</span>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </button>
+                </div>
+            </form>
+
+            <!-- Suggestion Chips -->
+            <div class="ep-prompt-chips">
+                <span class="text-secondary small fw-semibold me-1" style="font-size: 0.76rem;">Try asking:</span>
+                <button type="button" class="ep-prompt-chip" onclick="setAiPrompt('I want to build real-time trading dashboards with web sockets and live streaming data')">
+                    Real-time Dashboards & WebSockets
+                </button>
+                <button type="button" class="ep-prompt-chip" onclick="setAiPrompt('I want to master container orchestration, Kubernetes clusters, and automated CI/CD pipelines')">
+                    DevOps, Kubernetes & CI/CD
+                </button>
+                <button type="button" class="ep-prompt-chip" onclick="setAiPrompt('I want to learn enterprise SQL database architecture, stored procedures, and clean backend APIs')">
+                    Enterprise SQL & Architecture
+                </button>
+                <button type="button" class="ep-prompt-chip" onclick="setAiPrompt('I am interested in multi-cloud infrastructure as code on AWS and GCP with Terraform')">
+                    Multi-Cloud & Terraform
+                </button>
+                <button type="button" class="ep-prompt-chip" onclick="setAiPrompt('I want to learn full-stack web development with React and Node.js microservices')">
+                    Full-Stack & Microservices
+                </button>
+            </div>
+
+            <!-- Loading Shimmer State -->
+            <div id="aiAdvisorLoading" class="mt-4 p-4 text-center rounded-3 d-none" style="background: #1e293b; border: 1px solid #334155;">
+                <div class="spinner-border text-info mb-2" role="status" style="width: 24px; height: 24px;"></div>
+                <div class="fw-semibold text-white small">Synthesizing curriculum vectors & analyzing syllabus alignments...</div>
+                <div class="text-secondary" style="font-size: 0.8rem;">Querying the RAG microservice for relevant academic modules.</div>
+            </div>
+
+            <!-- Dynamic Results Container -->
+            <div id="aiAdvisorResults" class="ep-copilot-results d-none">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                    <span id="aiMatchStatusBadge" class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 fw-bold" style="font-size: 0.76rem;">
+                        Direct Domain Match Found
+                    </span>
+                    <button type="button" class="btn btn-sm text-secondary p-0 text-decoration-none" onclick="clearAiRecommendations()">
+                         Close Recommendations & View All Courses
+                    </button>
+                </div>
+
+                <div class="ep-copilot-rationale-box">
+                    <div class="fw-bold text-white small mb-1">Academic Pathway Recommendation:</div>
+                    <div id="aiPathwayTip" class="text-light" style="font-size: 0.88rem; line-height: 1.55;"></div>
+                </div>
+
+                <div class="row g-3" id="aiRecommendationsGrid"></div>
+            </div>
+        </section>
+
+        <!-- Main Catalog Layout: 2 Columns on Desktop (Sticky Filter Sidebar + Results Grid) -->
+        <div class="row g-4">
+            <!-- LEFT COLUMN: Sticky Filter Surface (Desktop) -->
+            <div class="col-12 col-lg-3 ep-desktop-sidebar">
+                <aside class="ep-filter-surface sticky-top" style="top: 80px; z-index: 10;">
+                    <div class="ep-filter-header">
+                        <span class="ep-filter-title">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                            </svg>
+                            Filters
+                        </span>
+                        @if (Model.HasActiveFilters)
+                        {
+                            <a href="@Url.Action("Index", "Courses")" class="ep-filter-reset">Reset Filters</a>
+                        }
                     </div>
 
-                    <!-- DYNAMIC CATEGORIES FILTER (Searchable, Multi-Select, Scrollable for 100+ categories) -->
-                    <div class="mb-4">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <label class="form-label fw-bold text-dark small m-0">
-                                <i class="bi bi-tags-fill me-1 text-primary"></i> Categories (@Model.AvailableCategories.Count)
-                            </label>
-                            @if (Model.SelectedCategories.Any())
-                            {
-                                <span class="badge bg-primary text-white rounded-pill" style="font-size: 0.7rem;">
-                                    @Model.SelectedCategories.Count active
-                                </span>
-                            }
-                        </div>
+                    <form action="@Url.Action("Index", "Courses")" method="get" id="catalogSidebarFilterForm">
+                        <input type="hidden" name="search" value="@Model.Search" />
 
-                        <!-- Instant Filter Search Input (Handles 100+ categories instantly) -->
-                        <div class="input-group input-group-sm mb-2">
-                            <span class="input-group-text bg-light border-end-0 py-1 text-muted" style="font-size: 0.75rem;">
-                                <i class="bi bi-filter"></i>
-                            </span>
-                            <input type="text" id="catQuickSearch" class="form-control bg-light border-start-0 py-1" 
-                                   placeholder="Filter @Model.AvailableCategories.Count categories..." 
-                                   style="font-size: 0.8rem;" 
-                                   onkeyup="filterCategoryList(this.value)" autocomplete="off" />
-                        </div>
-
-                        <!-- Scrollable Category Checkboxes List -->
-                        <div class="category-scroll-container border rounded-3 p-2 bg-light bg-opacity-50" 
-                             id="categoryCheckboxList" 
-                             style="max-height: 210px; overflow-y: auto;">
-                            @if (Model.AvailableCategories.Any())
-                            {
-                                for (int i = 0; i < Model.AvailableCategories.Count; i++)
+                        <!-- Category Filter Group (Dynamic Multi-Select with Instant Category Quick-Filter) -->
+                        <div class="ep-filter-group">
+                            <span class="ep-filter-label">Categories (@Model.AvailableCategories.Count)</span>
+                            <div class="mb-2">
+                                <input type="text" id="catQuickSearchDesktop" class="form-control form-control-sm" 
+                                       placeholder="Filter categories..." 
+                                       onkeyup="filterCategoryList(this.value, 'desktop')" 
+                                       style="font-size: 0.8rem; border-color: #e2e8f0;" />
+                            </div>
+                            <div class="ep-category-scroll" id="catScrollDesktop">
+                                @for (int i = 0; i < Model.AvailableCategories.Count; i++)
                                 {
                                     var cat = Model.AvailableCategories[i];
                                     bool isChecked = Model.SelectedCategories.Contains(cat.CategoryName, StringComparer.OrdinalIgnoreCase);
-                                    <div class="form-check d-flex align-items-center justify-content-between py-1 category-checkbox-row" 
-                                         data-cat-name="@cat.CategoryName.ToLower()">
-                                        <div class="d-flex align-items-center overflow-hidden me-2">
-                                            <input class="form-check-input mt-0 me-2" type="checkbox" name="categories" 
-                                                   value="@cat.CategoryName" id="cat_check_@i" 
-                                                   @(isChecked ? "checked" : "") onchange="this.form.submit()" />
-                                            <label class="form-check-label small text-dark text-truncate cursor-pointer" for="cat_check_@i" title="@cat.CategoryName">
-                                                @cat.CategoryName
-                                            </label>
-                                        </div>
-                                        <span class="badge bg-white text-muted border small flex-shrink-0" style="font-size: 0.68rem;">
-                                            @cat.CourseCount
+                                    <label class="ep-checkbox-row cat-item-desktop" data-name="@cat.CategoryName.ToLower()">
+                                        <span class="ep-checkbox-label">
+                                            <input type="checkbox" name="categories" value="@cat.CategoryName" 
+                                                   class="form-check-input mt-0" @(isChecked ? "checked" : "") 
+                                                   onchange="this.form.submit()" />
+                                            @cat.CategoryName
                                         </span>
-                                    </div>
+                                        <span class="ep-checkbox-count">@cat.CourseCount</span>
+                                    </label>
                                 }
-                            }
-                            else
-                            {
-                                <div class="text-muted small text-center py-2">No categories found</div>
-                            }
-                            <div id="noCatMatchMsg" class="text-muted small text-center py-2 d-none">
-                                <i class="bi bi-exclamation-circle me-1"></i> No matching categories
                             </div>
                         </div>
-                    </div>
 
-                    <!-- SKILL LEVEL FILTER -->
-                    <div class="mb-4">
-                        <label class="form-label fw-bold text-dark small mb-2">
-                            <i class="bi bi-bar-chart-fill me-1 text-success"></i> Difficulty Level
-                        </label>
-                        <select name="level" class="form-select form-select-sm" onchange="this.form.submit()">
-                            <option value="All" @(Model.Level == "All" ? "selected" : "")>All Levels</option>
-                            <option value="Beginner" @(Model.Level == "Beginner" ? "selected" : "")>Beginner</option>
-                            <option value="Intermediate" @(Model.Level == "Intermediate" ? "selected" : "")>Intermediate</option>
-                            <option value="Advanced" @(Model.Level == "Advanced" ? "selected" : "")>Advanced</option>
-                        </select>
-                    </div>
+                        <!-- Difficulty Level Filter -->
+                        <div class="ep-filter-group">
+                            <span class="ep-filter-label">Difficulty Level</span>
+                            <select name="level" class="form-select form-select-sm" onchange="this.form.submit()" style="font-size: 0.85rem; border-color: #cbd5e1;">
+                                <option value="All" @(Model.Level == "All" ? "selected" : "")>All Levels</option>
+                                <option value="Beginner" @(Model.Level == "Beginner" ? "selected" : "")>Beginner</option>
+                                <option value="Intermediate" @(Model.Level == "Intermediate" ? "selected" : "")>Intermediate</option>
+                                <option value="Advanced" @(Model.Level == "Advanced" ? "selected" : "")>Advanced</option>
+                            </select>
+                        </div>
 
-                    <!-- PRICING FILTER -->
-                    <div class="mb-4">
-                        <label class="form-label fw-bold text-dark small mb-2">
-                            <i class="bi bi-cash-stack me-1 text-warning"></i> Pricing
-                        </label>
-                        <div class="d-flex flex-column gap-1">
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="price" id="price_all" value="All" 
-                                       @(Model.PriceFilter == "All" ? "checked" : "") onchange="this.form.submit()" />
-                                <label class="form-check-label small text-dark cursor-pointer" for="price_all">All Pricing</label>
+                        <!-- Duration Range Filter -->
+                        <div class="ep-filter-group">
+                            <span class="ep-filter-label">Duration</span>
+                            <select name="duration" class="form-select form-select-sm" onchange="this.form.submit()" style="font-size: 0.85rem; border-color: #cbd5e1;">
+                                <option value="All" @(Model.DurationFilter == "All" ? "selected" : "")>All Durations</option>
+                                <option value="Short" @(Model.DurationFilter == "Short" ? "selected" : "")>Short (&le; 4 Weeks)</option>
+                                <option value="Medium" @(Model.DurationFilter == "Medium" ? "selected" : "")>Medium (5  8 Weeks)</option>
+                                <option value="Deep" @(Model.DurationFilter == "Deep" ? "selected" : "")>In-Depth (&gt; 8 Weeks)</option>
+                            </select>
+                        </div>
+
+                        <!-- Instructor Filter -->
+                        @if (Model.AvailableInstructors != null && Model.AvailableInstructors.Any())
+                        {
+                            <div class="ep-filter-group">
+                                <span class="ep-filter-label">Instructor</span>
+                                <select name="instructor" class="form-select form-select-sm" onchange="this.form.submit()" style="font-size: 0.85rem; border-color: #cbd5e1;">
+                                    <option value="All" @(Model.SelectedInstructor == "All" ? "selected" : "")>All Instructors</option>
+                                    @foreach (var inst in Model.AvailableInstructors)
+                                    {
+                                        <option value="@inst" @(string.Equals(Model.SelectedInstructor, inst, StringComparison.OrdinalIgnoreCase) ? "selected" : "")>@inst</option>
+                                    }
+                                </select>
                             </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="price" id="price_free" value="Free" 
-                                       @(Model.PriceFilter == "Free" ? "checked" : "") onchange="this.form.submit()" />
-                                <label class="form-check-label small text-dark cursor-pointer" for="price_free">Free Courses ($0)</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="price" id="price_under50" value="Under50" 
-                                       @(Model.PriceFilter == "Under50" ? "checked" : "") onchange="this.form.submit()" />
-                                <label class="form-check-label small text-dark cursor-pointer" for="price_under50">Under $50</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="price" id="price_over50" value="Over50" 
-                                       @(Model.PriceFilter == "Over50" ? "checked" : "") onchange="this.form.submit()" />
-                                <label class="form-check-label small text-dark cursor-pointer" for="price_over50">$50 and Above</label>
+                        }
+
+                        <!-- Pricing Filter -->
+                        <div class="ep-filter-group">
+                            <span class="ep-filter-label">Tuition / Pricing</span>
+                            <div class="d-flex flex-column gap-1">
+                                <label class="ep-checkbox-row">
+                                    <span class="ep-checkbox-label">
+                                        <input type="radio" name="price" value="All" class="form-check-input mt-0" 
+                                               @(Model.PriceFilter == "All" ? "checked" : "") onchange="this.form.submit()" />
+                                        All Pricing
+                                    </span>
+                                </label>
+                                <label class="ep-checkbox-row">
+                                    <span class="ep-checkbox-label">
+                                        <input type="radio" name="price" value="Free" class="form-check-input mt-0" 
+                                               @(Model.PriceFilter == "Free" ? "checked" : "") onchange="this.form.submit()" />
+                                        Free Courses ($0)
+                                    </span>
+                                </label>
+                                <label class="ep-checkbox-row">
+                                    <span class="ep-checkbox-label">
+                                        <input type="radio" name="price" value="Under50" class="form-check-input mt-0" 
+                                               @(Model.PriceFilter == "Under50" ? "checked" : "") onchange="this.form.submit()" />
+                                        Under $50
+                                    </span>
+                                </label>
+                                <label class="ep-checkbox-row">
+                                    <span class="ep-checkbox-label">
+                                        <input type="radio" name="price" value="Over50" class="form-check-input mt-0" 
+                                               @(Model.PriceFilter == "Over50" ? "checked" : "") onchange="this.form.submit()" />
+                                        $50 and Above
+                                    </span>
+                                </label>
                             </div>
                         </div>
+
+                        <!-- Certification Option -->
+                        <div class="ep-filter-group mb-0">
+                            <label class="ep-checkbox-row">
+                                <span class="ep-checkbox-label fw-semibold text-dark">
+                                    <input type="checkbox" name="certificate" value="true" class="form-check-input mt-0" 
+                                           @(Model.CertificateOnly ? "checked" : "") onchange="this.form.submit()" />
+                                    Offers Official Certificate
+                                </span>
+                            </label>
+                        </div>
+                    </form>
+                </aside>
+            </div>
+
+            <!-- RIGHT COLUMN: Results Toolbar, Learning Paths, Recommended & Course Grid -->
+            <div class="col-12 col-lg-9">
+                <!-- Active Filters Bar (If any active) -->
+                @if (Model.HasActiveFilters)
+                {
+                    <div class="ep-active-chips-bar">
+                        <span class="ep-active-chips-label">Active Filters:</span>
+
+                        @if (!string.IsNullOrWhiteSpace(Model.Search))
+                        {
+                            <span class="ep-chip">
+                                Search: "@Model.Search"
+                                <a href="@Url.Action("Index", "Courses", new { level = Model.Level, categories = Model.SelectedCategories.ToArray(), price = Model.PriceFilter, sortBy = Model.SortBy, instructor = Model.SelectedInstructor, duration = Model.DurationFilter })" class="ep-chip-remove" title="Remove">&times;</a>
+                            </span>
+                        }
+
+                        @foreach (var selCat in Model.SelectedCategories)
+                        {
+                            var remCats = Model.SelectedCategories.Where(c => !c.Equals(selCat, StringComparison.OrdinalIgnoreCase)).ToArray();
+                            <span class="ep-chip">
+                                Category: @selCat
+                                <a href="@Url.Action("Index", "Courses", new { search = Model.Search, level = Model.Level, categories = remCats, price = Model.PriceFilter, sortBy = Model.SortBy, instructor = Model.SelectedInstructor, duration = Model.DurationFilter })" class="ep-chip-remove" title="Remove">&times;</a>
+                            </span>
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(Model.Level) && Model.Level != "All")
+                        {
+                            <span class="ep-chip">
+                                Level: @Model.Level
+                                <a href="@Url.Action("Index", "Courses", new { search = Model.Search, categories = Model.SelectedCategories.ToArray(), price = Model.PriceFilter, sortBy = Model.SortBy, instructor = Model.SelectedInstructor, duration = Model.DurationFilter })" class="ep-chip-remove" title="Remove">&times;</a>
+                            </span>
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(Model.DurationFilter) && Model.DurationFilter != "All")
+                        {
+                            <span class="ep-chip">
+                                Duration: @Model.DurationFilter
+                                <a href="@Url.Action("Index", "Courses", new { search = Model.Search, categories = Model.SelectedCategories.ToArray(), level = Model.Level, price = Model.PriceFilter, sortBy = Model.SortBy, instructor = Model.SelectedInstructor })" class="ep-chip-remove" title="Remove">&times;</a>
+                            </span>
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(Model.SelectedInstructor) && Model.SelectedInstructor != "All")
+                        {
+                            <span class="ep-chip">
+                                Instructor: @Model.SelectedInstructor
+                                <a href="@Url.Action("Index", "Courses", new { search = Model.Search, categories = Model.SelectedCategories.ToArray(), level = Model.Level, price = Model.PriceFilter, sortBy = Model.SortBy, duration = Model.DurationFilter })" class="ep-chip-remove" title="Remove">&times;</a>
+                            </span>
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(Model.PriceFilter) && Model.PriceFilter != "All")
+                        {
+                            <span class="ep-chip">
+                                Price: @Model.PriceFilter
+                                <a href="@Url.Action("Index", "Courses", new { search = Model.Search, categories = Model.SelectedCategories.ToArray(), level = Model.Level, sortBy = Model.SortBy, instructor = Model.SelectedInstructor, duration = Model.DurationFilter })" class="ep-chip-remove" title="Remove">&times;</a>
+                            </span>
+                        }
+
+                        <a href="@Url.Action("Index", "Courses")" class="ep-filter-reset ms-auto">Reset All Filters</a>
+                    </div>
+                }
+
+                <!-- Results Toolbar: Counter + Sort Dropdown -->
+                <div class="ep-results-toolbar">
+                    <div class="ep-results-count">
+                        Showing <strong>@Model.FilteredCount</strong> of <strong>@Model.TotalCatalogCount</strong> courses
+                        @if (Model.SelectedCategories.Any())
+                        {
+                            <span>in <strong>@string.Join(", ", Model.SelectedCategories)</strong></span>
+                        }
                     </div>
 
-                    <!-- SORT BY FILTER -->
-                    <div class="mb-4">
-                        <label class="form-label fw-bold text-dark small mb-2">
-                            <i class="bi bi-arrow-down-up me-1 text-info"></i> Sort Results By
-                        </label>
-                        <select name="sortBy" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <div class="d-flex align-items-center gap-2">
+                        <label for="catalogSortBySelect" class="text-secondary small fw-semibold m-0">Sort By:</label>
+                        <select id="catalogSortBySelect" class="ep-sort-select" onchange="applySorting(this.value)">
                             <option value="Popular" @(Model.SortBy == "Popular" ? "selected" : "")>Most Popular (Enrollments)</option>
-                            <option value="Newest" @(Model.SortBy == "Newest" ? "selected" : "")>Newest Release Date</option>
+                            <option value="Newest" @(Model.SortBy == "Newest" ? "selected" : "")>Newest Additions</option>
                             <option value="PriceAsc" @(Model.SortBy == "PriceAsc" ? "selected" : "")>Price: Low to High</option>
                             <option value="PriceDesc" @(Model.SortBy == "PriceDesc" ? "selected" : "")>Price: High to Low</option>
                             <option value="TitleAsc" @(Model.SortBy == "TitleAsc" ? "selected" : "")>Title: A to Z</option>
                         </select>
                     </div>
-
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="lms-cta-btn justify-content-center py-2 text-white small shadow-sm">
-                            <i class="bi bi-funnel-fill me-1"></i> Apply Filters
-                        </button>
-                    </div>
-                }
-            </div>
-        </div>
-    </div>
-
-    <!-- RIGHT MAIN CONTENT: POPULAR PILLS, ACTIVE FILTERS BAR & COURSES GRID -->
-    <div class="col-12 col-lg-9">
-        <!-- AI Course Matcher & Career Advisor Card -->
-        <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden" 
-             style="background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%); border: 1px solid #bfdbfe !important;">
-            <div class="card-body p-4">
-                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="rounded-circle text-white d-flex align-items-center justify-content-center shadow-sm flex-shrink-0" 
-                             style="width: 44px; height: 44px; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);">
-                            <i class="bi bi-stars fs-4"></i>
-                        </div>
-                        <div>
-                            <div class="d-flex align-items-center gap-2">
-                                <h5 class="fw-bold m-0 text-dark">AI Course Matcher & Career Advisor</h5>
-                                <span class="badge bg-primary text-white rounded-pill px-2 py-1" style="font-size: 0.68rem; letter-spacing: 0.5px;">SEMANTIC DISCOVERY</span>
-                            </div>
-                            <small class="text-muted d-block mt-1">Can't find an exact title? Tell our AI what you want to build or learn - it analyzes our complete curriculum to recommend the most relevant or foundational courses.</small>
-                        </div>
-                    </div>
                 </div>
 
-                <!-- Advisor Input Form -->
-                <form id="aiAdvisorForm" onsubmit="submitAiAdvisor(event)" class="mb-2">
-                    <div class="input-group shadow-sm rounded-pill overflow-hidden bg-white p-1 border">
-                        <span class="input-group-text bg-transparent border-0 text-muted ps-3">
-                            <i class="bi bi-compass text-primary fs-5"></i>
-                        </span>
-                        <input type="text" id="aiAdvisorQuery" class="form-control border-0 bg-transparent px-2 shadow-none" 
-                               placeholder="E.g., 'I want to build real-time trading dashboards' or 'I want to break into cloud DevOps'..." 
-                               required autocomplete="off" />
-                        <button type="submit" id="aiAdvisorBtn" class="btn btn-primary rounded-pill px-4 fw-semibold d-flex align-items-center gap-2" 
-                                style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); border: none;">
-                            <i class="bi bi-magic"></i>
-                            <span>Find Courses</span>
-                        </button>
-                    </div>
-                </form>
-
-                <!-- Inspiration Quick Prompt Chips (Using Bootstrap Icons, Zero Mojibake Emojis) -->
-                <div class="d-flex align-items-center gap-1 flex-wrap mt-2">
-                    <small class="text-muted fw-semibold me-1"><i class="bi bi-lightbulb-fill text-warning"></i> Try asking:</small>
-                    <button type="button" class="btn btn-sm btn-white bg-white border rounded-pill px-3 py-1 text-dark small shadow-xs" style="font-size: 0.78rem;" 
-                            onclick="setAiPrompt('I want to build real-time trading dashboards with web sockets and live streaming data')">
-                        <i class="bi bi-lightning-charge-fill text-warning me-1"></i> Real-time Dashboards & WebSockets
-                    </button>
-                    <button type="button" class="btn btn-sm btn-white bg-white border rounded-pill px-3 py-1 text-dark small shadow-xs" style="font-size: 0.78rem;" 
-                            onclick="setAiPrompt('I want to master container orchestration, Kubernetes clusters, and automated CI/CD pipelines')">
-                        <i class="bi bi-boxes text-info me-1"></i> DevOps, Kubernetes & CI/CD
-                    </button>
-                    <button type="button" class="btn btn-sm btn-white bg-white border rounded-pill px-3 py-1 text-dark small shadow-xs" style="font-size: 0.78rem;" 
-                            onclick="setAiPrompt('I want to learn enterprise SQL database architecture, stored procedures, and clean backend APIs')">
-                        <i class="bi bi-database-fill text-primary me-1"></i> Enterprise SQL & Architecture
-                    </button>
-                    <button type="button" class="btn btn-sm btn-white bg-white border rounded-pill px-3 py-1 text-dark small shadow-xs" style="font-size: 0.78rem;" 
-                            onclick="setAiPrompt('I am interested in multi-cloud infrastructure as code on AWS and GCP with Terraform')">
-                        <i class="bi bi-cloud-check-fill text-info me-1"></i> Multi-Cloud & Terraform
-                    </button>
-                    <button type="button" class="btn btn-sm btn-white bg-white border rounded-pill px-3 py-1 text-dark small shadow-xs" style="font-size: 0.78rem;" 
-                            onclick="setAiPrompt('I want to learn ethical hacking, network penetration testing, and security defenses')">
-                        <i class="bi bi-shield-lock-fill text-success me-1"></i> Cyber Security & Defense
-                    </button>
-                </div>
-
-                <!-- Advisor Loading Shimmer -->
-                <div id="aiAdvisorLoading" class="mt-4 p-4 text-center bg-white rounded-4 border d-none shadow-sm">
-                    <div class="spinner-grow text-primary mb-2" role="status"></div>
-                    <h6 class="fw-bold text-dark m-0">Analyzing course curriculum vectors & synthesizing recommendations...</h6>
-                    <small class="text-muted">Evaluating skill transferability, module alignment, and learning pathways.</small>
-                </div>
-
-                <!-- Advisor Results Container -->
-                <div id="aiAdvisorResults" class="mt-4 d-none">
-                    <!-- Pathway Header Alert -->
-                    <div class="p-3 bg-white rounded-4 border mb-3 shadow-sm" style="border-left: 5px solid #4f46e5 !important;">
-                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
-                            <span id="aiMatchStatusBadge" class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1">Direct Match</span>
-                            <button type="button" class="btn btn-link btn-sm text-muted text-decoration-none p-0" onclick="clearAiRecommendations()">
-                                <i class="bi bi-x-circle me-1"></i> Close Recommendations & View All Courses
-                            </button>
-                        </div>
-                        <div class="d-flex align-items-start gap-2 mt-2">
-                            <i class="bi bi-signpost-split-fill text-primary fs-5 flex-shrink-0"></i>
-                            <div class="fw-semibold text-dark" id="aiPathwayTip" style="font-size: 0.93rem; line-height: 1.55;"></div>
-                        </div>
-                    </div>
-
-                    <!-- Dynamic Recommendations Cards Grid (Spacious 2-column layout) -->
-                    <div class="row g-3" id="aiRecommendationsGrid"></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Top Popular Quick Category Pills Bar (Dynamically derived from DB) -->
-        <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
-            <span class="text-muted small fw-bold me-1">
-                <i class="bi bi-fire text-danger me-1"></i> Popular:
-            </span>
-
-            @{
-                bool isAllSelected = !Model.SelectedCategories.Any();
-            }
-            <a href="@Url.Action("Index", "Courses", new { search = Model.Search, level = Model.Level, price = Model.PriceFilter, sortBy = Model.SortBy })" 
-               class="btn btn-sm rounded-pill px-3 shadow-sm @(isAllSelected ? "btn-primary" : "btn-outline-secondary")">
-                All (@Model.TotalCatalogCount)
-            </a>
-
-            @foreach (var topCat in topCategories)
-            {
-                bool isCatActive = Model.SelectedCategories.Contains(topCat.CategoryName, StringComparer.OrdinalIgnoreCase);
-                <a href="@Url.Action("Index", "Courses", new { category = topCat.CategoryName, search = Model.Search, level = Model.Level, price = Model.PriceFilter, sortBy = Model.SortBy })" 
-                   class="btn btn-sm rounded-pill px-3 shadow-sm @(isCatActive ? "btn-primary" : "btn-outline-secondary")">
-                    @topCat.CategoryName <span class="badge @(isCatActive ? "bg-white text-primary" : "bg-light text-muted border") ms-1">@topCat.CourseCount</span>
-                </a>
-            }
-        </div>
-
-        <!-- Active Filter Tags Row -->
-        @if (Model.HasActiveFilters)
-        {
-            <div class="d-flex align-items-center gap-2 mb-3 p-3 bg-light rounded-3 border flex-wrap">
-                <span class="small fw-bold text-dark">Active Filters:</span>
-
-                @if (!string.IsNullOrWhiteSpace(Model.Search))
+                <!-- Curated Learning Paths (Structured Multi-Course Tracks) -->
+                @if (!Model.HasActiveFilters)
                 {
-                    <span class="badge bg-white text-dark border px-3 py-2 rounded-pill shadow-sm small">
-                        Keyword: "@Model.Search"
-                        <a href="@Url.Action("Index", "Courses", new { level = Model.Level, categories = Model.SelectedCategories.ToArray(), price = Model.PriceFilter, sortBy = Model.SortBy })" class="text-danger ms-1 text-decoration-none">&times;</a>
-                    </span>
-                }
-
-                @foreach (var selCat in Model.SelectedCategories)
-                {
-                    var remCats = Model.SelectedCategories.Where(c => !c.Equals(selCat, StringComparison.OrdinalIgnoreCase)).ToArray();
-                    <span class="badge bg-primary px-3 py-2 rounded-pill shadow-sm small text-white">
-                        Category: @selCat
-                        <a href="@Url.Action("Index", "Courses", new { search = Model.Search, level = Model.Level, categories = remCats, price = Model.PriceFilter, sortBy = Model.SortBy })" class="text-white ms-1 text-decoration-none fw-bold">&times;</a>
-                    </span>
-                }
-
-                @if (!string.IsNullOrWhiteSpace(Model.Level) && Model.Level != "All")
-                {
-                    <span class="badge bg-white text-dark border px-3 py-2 rounded-pill shadow-sm small">
-                        Level: @Model.Level
-                        <a href="@Url.Action("Index", "Courses", new { search = Model.Search, categories = Model.SelectedCategories.ToArray(), price = Model.PriceFilter, sortBy = Model.SortBy })" class="text-danger ms-1 text-decoration-none">&times;</a>
-                    </span>
-                }
-
-                @if (!string.IsNullOrWhiteSpace(Model.PriceFilter) && Model.PriceFilter != "All")
-                {
-                    <span class="badge bg-white text-dark border px-3 py-2 rounded-pill shadow-sm small">
-                        Price: @Model.PriceFilter
-                        <a href="@Url.Action("Index", "Courses", new { search = Model.Search, categories = Model.SelectedCategories.ToArray(), level = Model.Level, sortBy = Model.SortBy })" class="text-danger ms-1 text-decoration-none">&times;</a>
-                    </span>
-                }
-
-                @if (!string.IsNullOrWhiteSpace(Model.SortBy) && Model.SortBy != "Popular")
-                {
-                    <span class="badge bg-white text-dark border px-3 py-2 rounded-pill shadow-sm small">
-                        Sorted: @Model.SortBy
-                        <a href="@Url.Action("Index", "Courses", new { search = Model.Search, categories = Model.SelectedCategories.ToArray(), level = Model.Level, price = Model.PriceFilter })" class="text-danger ms-1 text-decoration-none">&times;</a>
-                    </span>
-                }
-
-                <a href="@Url.Action("Index", "Courses")" class="small text-danger fw-semibold text-decoration-none ms-auto">
-                    <i class="bi bi-x-circle me-1"></i> Clear All
-                </a>
-            </div>
-        }
-
-        <!-- Results Counter & Status Summary -->
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <div class="text-muted small">
-                Showing <strong class="text-dark">@Model.FilteredCount</strong> of <strong class="text-dark">@Model.TotalCatalogCount</strong> courses
-                @if (Model.SelectedCategories.Any())
-                {
-                    <span>in <strong>@string.Join(", ", Model.SelectedCategories)</strong></span>
-                }
-            </div>
-        </div>
-
-        <!-- Courses Grid -->
-        <div class="row g-4">
-            @if (Model.Courses != null && Model.Courses.Any())
-            {
-                foreach (var course in Model.Courses)
-                {
-                    string badgeClass = "badge-beginner";
-                    if (course.Level == "Intermediate") { badgeClass = "badge-intermediate"; }
-                    else if (course.Level == "Advanced") { badgeClass = "badge-advanced"; }
-
-                    // Dynamic category color mapping
-                    string catBadgeClass = "bg-primary";
-                    string catLower = (course.Category ?? "").ToLower();
-                    if (catLower.Contains("backend")) { catBadgeClass = "bg-success"; }
-                    else if (catLower.Contains("fullstack")) { catBadgeClass = "bg-info text-dark"; }
-                    else if (catLower.Contains("devops") || catLower.Contains("cloud")) { catBadgeClass = "bg-warning text-dark"; }
-                    else if (catLower.Contains("mobile") || catLower.Contains("android") || catLower.Contains("ios")) { catBadgeClass = "bg-purple text-white"; }
-                    else if (catLower.Contains("data") || catLower.Contains("ai") || catLower.Contains("ml")) { catBadgeClass = "bg-danger text-white"; }
-
-                    // Generate initials for instructor avatar
-                    string initials = "IN";
-                    if (!string.IsNullOrWhiteSpace(course.InstructorName))
-                    {
-                        var parts = course.InstructorName.Split(new[] { ' ', '.' }, StringSplitOptions.RemoveEmptyEntries);
-                        initials = parts.Length >= 2 
-                            ? $"{parts[0][0]}{parts[1][0]}" 
-                            : parts[0].Substring(0, Math.Min(2, parts[0].Length)).ToUpper();
-                    }
-
-                    <div class="col-12 col-md-6">
-                        <div class="lms-course-card-pro h-100 d-flex flex-column justify-content-between">
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
                             <div>
-                                <!-- Top Row: Level + Dynamic Category + Duration -->
-                                <div class="lms-card-top-row mb-2">
-                                    <div class="d-flex align-items-center gap-1 flex-wrap">
-                                        <span class="@badgeClass">@course.Level</span>
-                                        <span class="badge @catBadgeClass px-2 py-1 rounded-pill small fw-bold">@course.Category</span>
-                                    </div>
-                                    <span class="lms-duration-chip">
-                                        <i class="bi bi-clock"></i> @course.DurationWeeks Wks
-                                    </span>
+                                <h3 class="fw-bold text-dark m-0" style="font-size: 1.15rem;">Curated Learning Paths</h3>
+                                <small class="text-secondary">Progress through multi-course sequences to build comprehensive domain mastery.</small>
+                            </div>
+                        </div>
+
+                        <div class="ep-paths-grid">
+                            <!-- Track 1: Full-Stack Architect -->
+                            <div class="ep-path-card">
+                                <div>
+                                    <div class="ep-path-eyebrow">Professional Track</div>
+                                    <h4 class="ep-path-title">Enterprise Full-Stack Software Architect</h4>
+                                    <p class="ep-path-desc">
+                                        End-to-end curriculum covering modern frontend engineering with React 18, backend microservices in ASP.NET Core, and high-performance SQL Server database architecture.
+                                    </p>
                                 </div>
-
-                                <!-- Course Title -->
-                                <h5 class="lms-pro-title mt-2 mb-2">@course.Title</h5>
-
-                                <!-- Description -->
-                                <p class="lms-pro-desc text-muted small">@course.Description</p>
+                                <div class="ep-path-meta">
+                                    <span><strong>3</strong> Courses</span>
+                                    <span></span>
+                                    <span><strong>30</strong> Weeks</span>
+                                    <span></span>
+                                    <span class="text-success fw-semibold">Certificate Track</span>
+                                    <a href="@Url.Action("Index", "Courses", new { category = "Fullstack" })" class="ms-auto text-dark fw-bold text-decoration-none">
+                                        Explore Track &rarr;
+                                    </a>
+                                </div>
                             </div>
 
-                            <div class="pt-3 border-top mt-3">
-                                <!-- Rating, Students & Price Row -->
-                                <div class="d-flex align-items-center justify-content-between mb-2">
-                                    <span class="text-warning small fw-bold">
-                                        <i class="bi bi-star-fill"></i> 4.9 
-                                        <span class="text-muted fw-normal">(180+)</span>
-                                    </span>
-                                    <div class="d-flex align-items-center gap-2">
-                                        <span class="text-muted small">
-                                            <i class="bi bi-people"></i> @course.TotalEnrolled Enrolled
-                                        </span>
-                                        <span class="badge bg-light text-dark border px-2 py-1 fw-bold fs-6">
-                                            @(course.Price > 0 ? "$" + course.Price.ToString("0.00") : "Free")
-                                        </span>
-                                    </div>
+                            <!-- Track 2: DevOps & Cloud Specialist -->
+                            <div class="ep-path-card">
+                                <div>
+                                    <div class="ep-path-eyebrow">Specialist Track</div>
+                                    <h4 class="ep-path-title">Cloud Infrastructure & DevOps Engineer</h4>
+                                    <p class="ep-path-desc">
+                                        Master Docker containerization, production Kubernetes orchestration, automated CI/CD pipelines, and multi-cloud infrastructure deployment across AWS and GCP.
+                                    </p>
                                 </div>
-
-                                <!-- Instructor Row -->
-                                <div class="lms-instructor-row mb-3">
-                                    <div class="lms-instructor-avatar">@initials</div>
-                                    <div>
-                                        <div class="lms-instructor-name">@course.InstructorName</div>
-                                        <div class="lms-instructor-sub">Verified Instructor</div>
-                                    </div>
+                                <div class="ep-path-meta">
+                                    <span><strong>2</strong> Courses</span>
+                                    <span></span>
+                                    <span><strong>14</strong> Weeks</span>
+                                    <span></span>
+                                    <span class="text-success fw-semibold">Certificate Track</span>
+                                    <a href="@Url.Action("Index", "Courses", new { category = "DevOps" })" class="ms-auto text-dark fw-bold text-decoration-none">
+                                        Explore Track &rarr;
+                                    </a>
                                 </div>
-
-                                <!-- Action Button -->
-                                @{
-                                    bool isCourseOwner = currentUserId.HasValue && 
-                                        (course.InstructorId == currentUserId.Value || string.Equals(course.InstructorName, Session["UserName"] as string, StringComparison.OrdinalIgnoreCase));
-                                }
-                                @if (isCourseOwner)
-                                {
-                                    <a href="@Url.Action("Details", "Courses", new { id = course.CourseId })" class="lms-btn-action" style="background: #e0e7ff; color: #4338ca; border-color: #c7d2fe;">
-                                        <span><i class="bi bi-person-workspace me-1"></i> Manage Your Course</span>
-                                        <i class="bi bi-arrow-right"></i>
-                                    </a>
-                                }
-                                else
-                                {
-                                    <a href="@Url.Action("Details", "Courses", new { id = course.CourseId })" class="lms-btn-action">
-                                        <span>View Curriculum & Reviews</span>
-                                        <i class="bi bi-arrow-right"></i>
-                                    </a>
-                                }
                             </div>
                         </div>
                     </div>
                 }
-            }
-            else
-            {
-                <div class="col-12 text-center py-5">
-                    <div class="p-5 bg-light rounded-4 border">
-                        <div class="display-6 text-muted mb-3"><i class="bi bi-funnel"></i></div>
-                        <h4 class="fw-bold text-dark">No courses match your filter criteria</h4>
-                        <p class="text-muted small mb-3">Try clearing some category selections, resetting price brackets, or typing different search keywords.</p>
-                        <a href="@Url.Action("Index", "Courses")" class="btn btn-primary rounded-pill px-4 shadow-sm">
-                            <i class="bi bi-arrow-counterclockwise me-1"></i> Reset All Filters
+
+                <!-- Recommended For You (Personalized if History Exists, else Curated Picks) -->
+                @if (Model.RecommendedCourses != null && Model.RecommendedCourses.Any() && !Model.HasActiveFilters)
+                {
+                    <div class="ep-recommended-section">
+                        <div class="ep-recommended-header">
+                            <h3 class="ep-recommended-title">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                </svg>
+                                Recommended For You
+                            </h3>
+                            <span class="text-secondary small">Based on platform curriculum standards and enrolled interests</span>
+                        </div>
+
+                        <div class="row g-3">
+                            @foreach (var rec in Model.RecommendedCourses)
+                            {
+                                bool isEnrolledInRec = userEnrollments.ContainsKey(rec.CourseId);
+                                <div class="col-12 col-md-4">
+                                    <div class="p-3 bg-light rounded-3 border h-100 d-flex flex-column justify-content-between">
+                                        <div>
+                                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                                <span class="badge bg-white text-dark border small">@rec.Category</span>
+                                                <span class="text-secondary" style="font-size: 0.75rem;">@rec.DurationWeeks Wks</span>
+                                            </div>
+                                            <h5 class="fw-bold text-dark mb-1" style="font-size: 0.95rem; line-height: 1.35;">
+                                                <a href="@Url.Action("Details", "Courses", new { id = rec.CourseId })" class="text-dark text-decoration-none">
+                                                    @rec.Title
+                                                </a>
+                                            </h5>
+                                            <small class="text-secondary d-block mb-3">By @rec.InstructorName</small>
+                                        </div>
+
+                                        <div class="d-flex align-items-center justify-content-between pt-2 border-top">
+                                            <span class="fw-bold text-dark small">@(rec.Price > 0 ? "$" + rec.Price.ToString("0.00") : "Free")</span>
+                                            <a href="@Url.Action("Details", "Courses", new { id = rec.CourseId })" class="btn btn-sm btn-dark rounded-2 px-2 py-1" style="font-size: 0.8rem;">
+                                                @(isEnrolledInRec ? "Resume Course" : "View Syllabus")
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <!-- Primary Course Catalog Grid -->
+                @if (Model.Courses != null && Model.Courses.Any())
+                {
+                    <div class="ep-courses-grid" id="courseCardsGrid">
+                        @foreach (var course in Model.Courses)
+                        {
+                            bool isEnrolled = userEnrollments.ContainsKey(course.CourseId);
+                            var enrollmentInfo = isEnrolled ? userEnrollments[course.CourseId] : null;
+                            bool isCompleted = enrollmentInfo != null && (enrollmentInfo.Progress == 100 || string.Equals(enrollmentInfo.Status, "Completed", StringComparison.OrdinalIgnoreCase));
+                            int progressPct = enrollmentInfo != null ? enrollmentInfo.Progress : 0;
+                            bool isInstructorOwner = currentUserId.HasValue && 
+                                (course.InstructorId == currentUserId.Value || string.Equals(course.InstructorName, currentUserName, StringComparison.OrdinalIgnoreCase));
+
+                            // Generate instructor initials
+                            string initials = "IN";
+                            if (!string.IsNullOrWhiteSpace(course.InstructorName))
+                            {
+                                var parts = course.InstructorName.Split(new[] { ' ', '.' }, StringSplitOptions.RemoveEmptyEntries);
+                                initials = parts.Length >= 2 
+                                    ? $"{parts[0][0]}{parts[1][0]}" 
+                                    : parts[0].Substring(0, Math.Min(2, parts[0].Length)).ToUpper();
+                            }
+
+                            <!-- Single Course Card -->
+                            <article class="ep-course-card" data-title="@course.Title.ToLower()" data-instructor="@course.InstructorName.ToLower()" data-category="@course.Category.ToLower()">
+                                <!-- Card Thumbnail Header -->
+                                <div class="ep-card-thumbnail">
+                                    <div class="d-flex align-items-center justify-content-between">
+                                        <span class="ep-card-category-pill">@course.Category</span>
+                                        <span class="ep-card-level-chip">@course.Level</span>
+                                    </div>
+                                    <div class="text-white d-flex align-items-center justify-content-between">
+                                        <span class="small" style="font-size: 0.75rem; color: #cbd5e1;">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1">
+                                                <circle cx="12" cy="12" r="10"></circle>
+                                                <polyline points="12 6 12 12 16 14"></polyline>
+                                            </svg>
+                                            @course.DurationWeeks Weeks
+                                        </span>
+                                        @if (course.Price == 0)
+                                        {
+                                            <span class="badge bg-success text-white rounded-pill px-2 py-1" style="font-size: 0.7rem;">Free</span>
+                                        }
+                                    </div>
+                                </div>
+
+                                <!-- Card Body -->
+                                <div class="ep-card-body">
+                                    <h3 class="ep-card-title">
+                                        <a href="@Url.Action("Details", "Courses", new { id = course.CourseId })">
+                                            @course.Title
+                                        </a>
+                                    </h3>
+                                    <p class="ep-card-desc">@course.Description</p>
+
+                                    <!-- Instructor Row -->
+                                    <div class="ep-card-instructor">
+                                        <div class="ep-card-avatar">@initials</div>
+                                        <div class="ep-card-instructor-info">
+                                            <span class="ep-card-instructor-name">@course.InstructorName</span>
+                                            <span class="ep-card-instructor-title">Verified Instructor</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Meta Row: Enrolled Count + Verified Rating -->
+                                    <div class="ep-card-meta-row">
+                                        <span class="ep-card-meta-item">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                                <circle cx="9" cy="7" r="4"></circle>
+                                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                                            </svg>
+                                            @course.TotalEnrolled Enrolled
+                                        </span>
+                                        <span class="ep-card-meta-item text-dark fw-semibold">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="1">
+                                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                                            </svg>
+                                            4.9 <span class="text-secondary fw-normal">(180+)</span>
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- Progress-Aware Card Footer -->
+                                <div class="ep-card-footer">
+                                    @if (isCompleted)
+                                    {
+                                        <div class="d-flex align-items-center justify-content-between">
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 fw-bold small">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="me-1">
+                                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                                </svg>
+                                                Completed (100%)
+                                            </span>
+                                            <a href="@Url.Action("Certificate", "Courses", new { id = course.CourseId })" class="ep-card-btn ep-btn-completed">
+                                                View Certificate
+                                            </a>
+                                        </div>
+                                    }
+                                    else if (isEnrolled)
+                                    {
+                                        <div class="ep-progress-bar-wrap">
+                                            <div class="ep-progress-bar-fill" style="width: @progressPct%;"></div>
+                                        </div>
+                                        <div class="d-flex align-items-center justify-content-between">
+                                            <span class="text-secondary small fw-semibold">@progressPct% Completed</span>
+                                            <a href="@Url.Action("Learn", "Courses", new { id = course.CourseId })" class="ep-card-btn ep-btn-continue">
+                                                <span>Continue Learning</span>
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                                </svg>
+                                            </a>
+                                        </div>
+                                    }
+                                    else if (isInstructorOwner)
+                                    {
+                                        <div class="d-flex align-items-center justify-content-between">
+                                            <span class="text-secondary small fw-semibold">Your Authored Course</span>
+                                            <a href="@Url.Action("Details", "Courses", new { id = course.CourseId })" class="ep-card-btn ep-btn-manage">
+                                                Manage Course
+                                            </a>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="ep-card-actions">
+                                            <div class="ep-card-price">
+                                                @(course.Price > 0 ? "$" + course.Price.ToString("0.00") : "Free")
+                                            </div>
+                                            <a href="@Url.Action("Details", "Courses", new { id = course.CourseId })" class="ep-card-btn ep-btn-enroll">
+                                                <span>View Curriculum</span>
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                                </svg>
+                                            </a>
+                                        </div>
+                                    }
+                                </div>
+                            </article>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <!-- Friendly, Polished Zero-Result State -->
+                    <div class="ep-empty-card">
+                        <div class="ep-empty-icon" aria-hidden="true">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            </svg>
+                        </div>
+                        <h3 class="ep-empty-title">No courses match your filter criteria</h3>
+                        <p class="ep-empty-text">
+                            Try clearing category selections, resetting price brackets, or typing a different search keyword. Alternatively, explore our most popular foundational disciplines:
+                        </p>
+                        <div class="d-flex align-items-center justify-content-center gap-2 flex-wrap mb-4">
+                            @foreach (var c in topCategories.Take(4))
+                            {
+                                <a href="@Url.Action("Index", "Courses", new { category = c.CategoryName })" class="btn btn-sm btn-outline-dark rounded-pill px-3">
+                                    @c.CategoryName
+                                </a>
+                            }
+                        </div>
+                        <a href="@Url.Action("Index", "Courses")" class="btn btn-dark rounded-2 px-4 py-2 fw-semibold">
+                            Reset All Filters
                         </a>
                     </div>
-                </div>
-            }
+                }
+            </div>
         </div>
+    </main>
+</div>
+
+<!-- Mobile Offcanvas Filter Drawer (Screens < 992px) -->
+<div class="offcanvas offcanvas-start" tabindex="-1" id="catalogFilterDrawer" aria-labelledby="catalogFilterDrawerLabel" style="width: 82vw; max-width: 340px;">
+    <div class="offcanvas-header border-bottom px-4 py-3">
+        <h5 class="offcanvas-title fw-bold text-dark m-0" id="catalogFilterDrawerLabel">Course Filters</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body p-4">
+        <form action="@Url.Action("Index", "Courses")" method="get" id="catalogMobileFilterForm">
+            <input type="hidden" name="search" value="@Model.Search" />
+
+            <!-- Categories Mobile -->
+            <div class="ep-filter-group">
+                <span class="ep-filter-label">Categories (@Model.AvailableCategories.Count)</span>
+                <div class="ep-category-scroll">
+                    @for (int i = 0; i < Model.AvailableCategories.Count; i++)
+                    {
+                        var cat = Model.AvailableCategories[i];
+                        bool isChecked = Model.SelectedCategories.Contains(cat.CategoryName, StringComparer.OrdinalIgnoreCase);
+                        <label class="ep-checkbox-row">
+                            <span class="ep-checkbox-label">
+                                <input type="checkbox" name="categories" value="@cat.CategoryName" 
+                                       class="form-check-input mt-0" @(isChecked ? "checked" : "") />
+                                @cat.CategoryName
+                            </span>
+                            <span class="ep-checkbox-count">@cat.CourseCount</span>
+                        </label>
+                    }
+                </div>
+            </div>
+
+            <!-- Difficulty Level Mobile -->
+            <div class="ep-filter-group">
+                <span class="ep-filter-label">Difficulty Level</span>
+                <select name="level" class="form-select form-select-sm">
+                    <option value="All" @(Model.Level == "All" ? "selected" : "")>All Levels</option>
+                    <option value="Beginner" @(Model.Level == "Beginner" ? "selected" : "")>Beginner</option>
+                    <option value="Intermediate" @(Model.Level == "Intermediate" ? "selected" : "")>Intermediate</option>
+                    <option value="Advanced" @(Model.Level == "Advanced" ? "selected" : "")>Advanced</option>
+                </select>
+            </div>
+
+            <!-- Duration Mobile -->
+            <div class="ep-filter-group">
+                <span class="ep-filter-label">Duration</span>
+                <select name="duration" class="form-select form-select-sm">
+                    <option value="All" @(Model.DurationFilter == "All" ? "selected" : "")>All Durations</option>
+                    <option value="Short" @(Model.DurationFilter == "Short" ? "selected" : "")>Short (&le; 4 Weeks)</option>
+                    <option value="Medium" @(Model.DurationFilter == "Medium" ? "selected" : "")>Medium (5  8 Weeks)</option>
+                    <option value="Deep" @(Model.DurationFilter == "Deep" ? "selected" : "")>In-Depth (&gt; 8 Weeks)</option>
+                </select>
+            </div>
+
+            <!-- Pricing Mobile -->
+            <div class="ep-filter-group">
+                <span class="ep-filter-label">Pricing</span>
+                <select name="price" class="form-select form-select-sm">
+                    <option value="All" @(Model.PriceFilter == "All" ? "selected" : "")>All Pricing</option>
+                    <option value="Free" @(Model.PriceFilter == "Free" ? "selected" : "")>Free Courses</option>
+                    <option value="Under50" @(Model.PriceFilter == "Under50" ? "selected" : "")>Under $50</option>
+                    <option value="Over50" @(Model.PriceFilter == "Over50" ? "selected" : "")>$50 and Above</option>
+                </select>
+            </div>
+
+            <div class="d-grid gap-2 pt-3 border-top">
+                <button type="submit" class="btn btn-dark rounded-2 py-2 fw-semibold">
+                    Apply Filters
+                </button>
+                <a href="@Url.Action("Index", "Courses")" class="btn btn-outline-secondary rounded-2 py-2 text-center text-decoration-none">
+                    Reset All
+                </a>
+            </div>
+        </form>
     </div>
 </div>
 
-<style>
-    .cursor-pointer { cursor: pointer; }
-    .bg-purple { background-color: #9333ea !important; }
-    .category-scroll-container::-webkit-scrollbar {
-        width: 5px;
-    }
-    .category-scroll-container::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
-        border-radius: 4px;
-    }
-</style>
-
-@section Scripts {
+@section scripts {
 <script>
-    // Real-time client-side instant category filter search (handles 100+ categories)
-    function filterCategoryList(query) {
-        var term = (query || '').toLowerCase().trim();
-        var rows = document.querySelectorAll('.category-checkbox-row');
-        var matchCount = 0;
+    // Keyboard Shortcut (Ctrl+K / Cmd+K) to focus Search
+    document.addEventListener('keydown', function (e) {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+            e.preventDefault();
+            var searchInput = document.getElementById('catalogSearchInput');
+            if (searchInput) {
+                searchInput.focus();
+                searchInput.select();
+            }
+        }
+    });
 
-        rows.forEach(function(row) {
-            var catName = row.getAttribute('data-cat-name') || '';
-            if (term === '' || catName.indexOf(term) !== -1) {
+    // Real-Time Instant Client-Side Category Filter (handles 100+ categories)
+    function filterCategoryList(query, mode) {
+        var term = (query || '').toLowerCase().trim();
+        var rows = document.querySelectorAll('.cat-item-' + mode);
+        rows.forEach(function (row) {
+            var catName = row.getAttribute('data-name') || '';
+            if (!term || catName.indexOf(term) !== -1) {
                 row.style.setProperty('display', 'flex', 'important');
-                matchCount++;
             } else {
                 row.style.setProperty('display', 'none', 'important');
             }
         });
-
-        var noMatchMsg = document.getElementById('noCatMatchMsg');
-        if (noMatchMsg) {
-            if (matchCount === 0 && term !== '') {
-                noMatchMsg.classList.remove('d-none');
-            } else {
-                noMatchMsg.classList.add('d-none');
-            }
-        }
     }
 
-    // AI Course Advisor Quick Prompt Chip Setter
-    function setAiPrompt(text) {
+    // Dynamic Sorting Change
+    function applySorting(sortVal) {
+        var url = new URL(window.location.href);
+        url.searchParams.set('sortBy', sortVal);
+        window.location.href = url.toString();
+    }
+
+    // AI Course Advisor Quick Prompt Setter
+    function setAiPrompt(promptText) {
         var input = document.getElementById('aiAdvisorQuery');
         if (input) {
-            input.value = text;
+            input.value = promptText;
             submitAiAdvisor();
         }
     }
 
-    // Submit user's fields / interests to AI Advisor endpoint
+    // Submit AI Course Advisor Query to Python RAG Microservice Endpoint
     async function submitAiAdvisor(e) {
         if (e) e.preventDefault();
         var input = document.getElementById('aiAdvisorQuery');
@@ -571,78 +1718,41 @@
                 results.classList.remove('d-none');
                 tip.innerText = data.pathway_tip || 'Follow these recommended courses to acquire relevant engineering skills.';
 
-                // Match status badge
                 if (data.has_exact_match) {
-                    statusBadge.className = 'badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1';
-                    statusBadge.innerHTML = '<i class="bi bi-check2-circle me-1"></i>Direct Domain Match Found';
+                    statusBadge.className = 'badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 fw-bold';
+                    statusBadge.innerText = 'Direct Domain Match Found';
                 } else {
-                    statusBadge.className = 'badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-1';
-                    statusBadge.innerHTML = '<i class="bi bi-lightbulb-fill me-1"></i>Closest Related Learning Pathway';
+                    statusBadge.className = 'badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-1 fw-bold';
+                    statusBadge.innerText = 'Closest Related Learning Pathway';
                 }
 
-                // Render dynamic recommendation cards (Spacious, responsive 2-column layout)
                 var html = '';
-                data.recommendations.forEach(function(r) {
-                    var isDirect = r.match_score >= 88;
-                    var matchBadgeBg = isDirect 
-                        ? 'background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;' 
-                        : 'background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;';
-                    
-                    var matchIcon = isDirect ? 'bi-check-circle-fill' : 'bi-lightbulb-fill';
-                    var rationaleBorderColor = isDirect ? '#10b981' : '#3b82f6';
+                data.recommendations.forEach(function (r) {
+                    var matchScore = r.match_score || 90;
+                    var matchClass = matchScore >= 85 ? 'text-success' : 'text-primary';
 
                     html += `
-                        <div class="col-12 col-lg-6">
-                            <div class="card h-100 border-0 rounded-4 shadow-sm p-4 d-flex flex-column justify-content-between" 
-                                 style="background: #ffffff; border: 1px solid #e2e8f0 !important; transition: transform 0.2s, box-shadow 0.2s;">
+                        <div class="col-12 col-md-4">
+                            <div class="p-3 bg-white text-dark rounded-3 border h-100 d-flex flex-column justify-content-between shadow-sm">
                                 <div>
-                                    <!-- Card Header: Badges -->
-                                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-                                        <span class="badge rounded-pill px-3 py-1 fw-bold" style="${matchBadgeBg}; font-size: 0.76rem;">
-                                            <i class="bi ${matchIcon} me-1"></i>${r.match_score}% Match - ${escapeHtml(r.match_label)}
-                                        </span>
-                                        <div class="d-flex align-items-center gap-1">
-                                            <span class="badge bg-light text-dark border rounded-pill px-2 py-1" style="font-size: 0.72rem;">
-                                                ${escapeHtml(r.level || 'All Levels')}
-                                            </span>
-                                            <span class="badge bg-primary-subtle text-primary border rounded-pill px-2 py-1" style="font-size: 0.72rem;">
-                                                ${escapeHtml(r.category || 'Tech')}
-                                            </span>
-                                        </div>
+                                    <div class="d-flex align-items-center justify-content-between mb-2">
+                                        <span class="badge bg-light text-dark border small">${escapeHtml(r.category || 'Engineering')}</span>
+                                        <span class="fw-bold small ${matchClass}">${matchScore}% Match</span>
                                     </div>
-
-                                    <!-- Course Title -->
-                                    <h5 class="fw-bold text-dark mb-2" style="font-size: 1.05rem; line-height: 1.45;">
-                                        ${escapeHtml(r.title)}
+                                    <h5 class="fw-bold text-dark mb-1" style="font-size: 0.95rem; line-height: 1.35;">
+                                        <a href="/Courses/Details/${r.course_id}" class="text-dark text-decoration-none">
+                                            ${escapeHtml(r.title)}
+                                        </a>
                                     </h5>
-
-                                    <!-- Instructor & Duration Meta -->
-                                    <div class="text-muted small mb-3 d-flex align-items-center gap-3" style="font-size: 0.8rem;">
-                                        <span><i class="bi bi-person-fill text-primary me-1"></i>${escapeHtml(r.instructor || 'Verified Instructor')}</span>
-                                        <span><i class="bi bi-clock-fill text-secondary me-1"></i>${r.duration_weeks || 8} Weeks</span>
-                                    </div>
-
-                                    <!-- AI Personalized Rationale Callout -->
-                                    <div class="p-3 mb-3 rounded-3" style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-left: 4px solid ${rationaleBorderColor};">
-                                        <div class="d-flex align-items-center gap-1 text-dark fw-bold small mb-1" style="font-size: 0.8rem;">
-                                            <i class="bi bi-magic text-primary"></i>
-                                            <span>Why this matches your goal:</span>
-                                        </div>
-                                        <p class="text-secondary small m-0" style="line-height: 1.55; font-size: 0.82rem;">
-                                            ${escapeHtml(r.rationale || '')}
-                                        </p>
-                                    </div>
+                                    <small class="text-secondary d-block mb-2">By ${escapeHtml(r.instructor || 'Verified Faculty')}</small>
+                                    <p class="text-secondary small m-0" style="font-size: 0.8rem; line-height: 1.45;">
+                                        ${escapeHtml(r.rationale || '')}
+                                    </p>
                                 </div>
-
-                                <!-- Card Footer: Price & CTA Button -->
-                                <div class="d-flex align-items-center justify-content-between pt-3 border-top mt-2">
-                                    <div>
-                                        <small class="text-muted d-block" style="font-size: 0.7rem;">Course Tuition</small>
-                                        <span class="fw-bold fs-5 text-dark">${r.price > 0 ? '$' + Number(r.price).toFixed(2) : 'Free'}</span>
-                                    </div>
-                                    <a href="/Courses/Details/${r.course_id}" class="btn btn-primary rounded-pill px-3 py-2 fw-semibold d-inline-flex align-items-center gap-2 shadow-sm" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); border: none; font-size: 0.85rem;">
-                                        <span>Explore Curriculum</span>
-                                        <i class="bi bi-arrow-right"></i>
+                                <div class="d-flex align-items-center justify-content-between pt-3 border-top mt-3">
+                                    <span class="fw-bold text-dark small">${r.price > 0 ? '$' + Number(r.price).toFixed(2) : 'Free'}</span>
+                                    <a href="/Courses/Details/${r.course_id}" class="btn btn-sm btn-dark rounded-2 px-3 py-1">
+                                        View Syllabus
                                     </a>
                                 </div>
                             </div>

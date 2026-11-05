@@ -159,6 +159,11 @@
     <Compile Include="Models\InvoiceViewModel.cs" />
     <Compile Include="Models\QuizQuestion.cs" />
     <Compile Include="Models\Review.cs" />
+    <Compile Include="Models\LandingPageViewModel.cs" />
+    <Compile Include="Models\StudentNavbarViewModel.cs" />
+    <Compile Include="Models\InstructorNavbarViewModel.cs" />
+    <Compile Include="Models\InstructorDashboardViewModel.cs" />
+    <Compile Include="Models\AdminViewModels.cs" />
     <Compile Include="Controllers\PaymentController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
@@ -202,6 +207,8 @@
     <Content Include="Scripts\jquery.validate.unobtrusive.js" />
     <Content Include="Scripts\jquery.validate.unobtrusive.min.js" />
     <Content Include="Scripts\modernizr-2.8.3.js" />
+    <Content Include="Scripts\pdfjs\pdf.min.js" />
+    <Content Include="Scripts\pdfjs\pdf.worker.min.js" />
     <Content Include="Web.config" />
     <Content Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
@@ -214,6 +221,11 @@
     <Content Include="Views\Shared\Error.cshtml" />
     <Content Include="Views\Shared\_Layout.cshtml" />
     <Content Include="Views\Shared\_ChatWidget.cshtml" />
+    <Content Include="Views\Shared\_InstructorNavbar.cshtml" />
+    <Content Include="Views\Shared\_StudentNavbar.cshtml" />
+    <Content Include="Views\Shared\_LandingNavbar.cshtml" />
+    <Content Include="Views\Shared\_AdminNavbar.cshtml" />
+    <Content Include="Scripts\motion.min.js" />
     <Content Include="Views\Home\About.cshtml" />
     <Content Include="Views\Home\Contact.cshtml" />
     <Content Include="Views\Home\Index.cshtml" />
@@ -259,6 +271,35 @@
     <None Include="Rag_Service\ingest_study_materials.py" />
     <None Include="Rag_Service\test_quiz_gen.py" />
     <None Include="Rag_Service\test_upload_study_material.py" />
+    <None Include="01_create_base_database.sql" />
+    <None Include="02_instructor_architecture.sql" />
+    <None Include="03_student_grading_architecture.sql" />
+    <None Include="04_prevent_duplicate_submissions.sql" />
+    <None Include="05_admin_seller_verification.sql" />
+    <None Include="06_rich_demo_seed_data.sql" />
+    <None Include="complete_database_setup.sql" />
+    <None Include="create_all_procedures.sql" />
+    <None Include="setup_database.sql" />
+    <None Include="AI service.md" />
+    <None Include="EDGE_CASES_AND_CHATBOT_BEHAVIOR.md" />
+    <None Include="Rag_Service\course_recommender.py" />
+    <None Include="Rag_Service\hybrid_search.py" />
+    <None Include="Rag_Service\instructor_tools.py" />
+    <None Include="Rag_Service\resilience.py" />
+    <None Include="Rag_Service\security_guardrails.py" />
+    <None Include="Rag_Service\test_ai_advisor_feature.py" />
+    <None Include="Rag_Service\test_all_edge_cases.py" />
+    <None Include="Rag_Service\test_filters.py" />
+    <None Include="Rag_Service\test_instructor_ai_quiz.py" />
+    <None Include="Rag_Service\test_instructor_end_to_end.py" />
+    <None Include="Rag_Service\test_instructor_tools.py" />
+    <None Include="Rag_Service\test_list_models.py" />
+    <None Include="Rag_Service\test_recommender.py" />
+    <None Include="Rag_Service\test_resilience_and_caching.py" />
+    <None Include="Rag_Service\test_secondary_model.py" />
+    <None Include="Rag_Service\test_student_file_submission.py" />
+    <None Include="Rag_Service\sample_docs\cs101_lecture1_web_architecture.txt" />
+    <None Include="Rag_Service\sample_docs\cs101_midterm_solution_keys_confidential.txt" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Content\bootstrap.rtl.min.css.map" />

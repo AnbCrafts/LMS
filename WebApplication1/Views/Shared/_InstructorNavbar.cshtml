@@ -1,0 +1,1384 @@
+@using WebApplication1.Models
+@{
+    var currentUser = Session["CurrentUser"] as WebApplication1.Models.User;
+    int? currentCourseId = null;
+    if (ViewBag.CurrentCourseId != null)
+    {
+        currentCourseId = (int)ViewBag.CurrentCourseId;
+    }
+    else if (Request.QueryString["courseId"] != null && int.TryParse(Request.QueryString["courseId"], out int qCid))
+    {
+        currentCourseId = qCid;
+    }
+    else if (ViewContext.RouteData.Values["id"] != null && int.TryParse(ViewContext.RouteData.Values["id"].ToString(), out int rId))
+    {
+        currentCourseId = rId;
+    }
+
+    var vm = InstructorNavbarViewModel.LoadForUser(currentUser, currentCourseId);
+
+    string currentController = ViewContext.RouteData.Values["controller"] != null ? ViewContext.RouteData.Values["controller"].ToString() : "";
+    string currentAction = ViewContext.RouteData.Values["action"] != null ? ViewContext.RouteData.Values["action"].ToString() : "";
+    string currentTab = Request.QueryString["tab"] ?? "";
+
+    bool isDashboard = string.Equals(currentController, "Instructor", StringComparison.OrdinalIgnoreCase) && string.Equals(currentAction, "Index", StringComparison.OrdinalIgnoreCase) && string.IsNullOrEmpty(currentTab);
+    bool isMyCourses = (string.Equals(currentController, "Instructor", StringComparison.OrdinalIgnoreCase) && (string.Equals(currentAction, "Modules", StringComparison.OrdinalIgnoreCase) || string.Equals(currentAction, "Create", StringComparison.OrdinalIgnoreCase) || string.Equals(currentAction, "Edit", StringComparison.OrdinalIgnoreCase))) || string.Equals(currentTab, "courses", StringComparison.OrdinalIgnoreCase);
+    bool isStudents = string.Equals(currentTab, "students", StringComparison.OrdinalIgnoreCase);
+    bool isAnalytics = string.Equals(currentTab, "analytics", StringComparison.OrdinalIgnoreCase) || string.Equals(currentTab, "earnings", StringComparison.OrdinalIgnoreCase);
+    bool isAssessments = string.Equals(currentController, "Instructor", StringComparison.OrdinalIgnoreCase) && (string.Equals(currentAction, "Submissions", StringComparison.OrdinalIgnoreCase) || string.Equals(currentAction, "ManageQuiz", StringComparison.OrdinalIgnoreCase));
+    bool isResources = string.Equals(currentTab, "resources", StringComparison.OrdinalIgnoreCase);
+}
+
+<!-- Self-Contained Resilient Design System for EduPulse Instructor Workspace Header -->
+<style>
+    /* ==========================================================================
+       EduPulse Instructor Workspace Header (Studio Architecture)
+       Inspired by YouTube Studio, Stripe Dashboard, and Linear.
+       Focused strictly on content creation, student management, and analytics.
+       ========================================================================== */
+
+    .in-header-wrapper {
+        position: sticky;
+        overflow-x: clip;
+        top: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        background-color: #ffffff;
+        border-bottom: 1px solid #e2e8f0;
+        z-index: 1040;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+        transition: box-shadow 0.2s ease;
+    }
+
+    .in-header-wrapper.in-scrolled {
+        box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
+    }
+
+    .in-container {
+        height: 60px;
+        max-width: 100%;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 1.25rem;
+        gap: 0.65rem;
+    }
+
+    /* Left Section: Brand & Primary Management Navigation */
+    .in-left {
+        display: flex;
+        align-items: center;
+        gap: 1.15rem;
+        flex-shrink: 0;
+    }
+
+    .in-brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.55rem;
+        text-decoration: none;
+        color: #0f172a;
+        font-weight: 700;
+        font-size: 1.05rem;
+        letter-spacing: -0.02em;
+        transition: opacity 0.15s ease;
+    }
+
+    .in-brand:hover {
+        opacity: 0.88;
+        color: #0f172a;
+        text-decoration: none;
+    }
+
+    .in-brand-mark {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        background: #0f172a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);
+        color: #ffffff;
+    }
+
+    .in-studio-badge {
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #2563eb;
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-radius: 4px;
+        padding: 0.15rem 0.45rem;
+        margin-left: 0.1rem;
+    }
+
+    .in-nav {
+        display: flex;
+        align-items: center;
+        gap: 0.2rem;
+    }
+
+    .in-nav-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.38rem 0.52rem;
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: #475569;
+        text-decoration: none;
+        border-radius: 6px;
+        transition: color 0.15s ease, background-color 0.15s ease;
+        white-space: nowrap;
+        position: relative;
+    }
+
+    .in-nav-link:hover {
+        color: #0f172a;
+        background-color: #f1f5f9;
+        text-decoration: none;
+    }
+
+    .in-nav-link.active {
+        color: #0f172a;
+        background-color: #f1f5f9;
+        font-weight: 600;
+        position: relative;
+        box-shadow: none !important;
+    }
+
+    .in-nav-link.active::after {
+        content: '';
+        position: absolute;
+        bottom: -9px;
+        left: 8px;
+        right: 8px;
+        height: 2px;
+        background-color: #0f172a;
+        border-radius: 2px;
+    }
+
+    /* Center Section: Course Switcher & Global Workspace Search */
+    .in-center {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        flex: 0 1 240px;
+        max-width: 260px;
+        min-width: 120px;
+        position: relative;
+    }
+
+    /* Course Switcher */
+    .in-course-switcher {
+        position: relative;
+        flex-shrink: 0;
+    }
+
+    .in-switcher-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        height: 35px;
+        padding: 0 0.55rem;
+        font-size: 0.775rem;
+        font-weight: 600;
+        color: #1e293b;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 7px;
+        cursor: pointer;
+        transition: background-color 0.15s ease, border-color 0.15s ease;
+        max-width: 125px;
+    }
+
+    .in-switcher-btn:hover {
+        background: #f1f5f9;
+        border-color: #cbd5e1;
+    }
+
+    .in-switcher-dropdown {
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 0;
+        width: 310px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        box-shadow: 0 12px 28px -4px rgba(15, 23, 42, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+        padding: 0.65rem;
+        display: none;
+        z-index: 1060;
+    }
+
+    .in-switcher-dropdown.show {
+        display: block;
+    }
+
+    .in-switcher-heading {
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #94a3b8;
+        padding: 0.35rem 0.5rem 0.25rem;
+    }
+
+    .in-switcher-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.5rem 0.65rem;
+        border-radius: 6px;
+        text-decoration: none;
+        color: #1e293b;
+        font-size: 0.8rem;
+        transition: background 0.15s ease;
+        margin-bottom: 2px;
+    }
+
+    .in-switcher-item:hover {
+        background: #f8fafc;
+        color: #0f172a;
+        text-decoration: none;
+    }
+
+    .in-switcher-item.active {
+        background: #eff6ff;
+        color: #1d4ed8;
+        font-weight: 600;
+    }
+
+    /* Global Workspace Search */
+    .in-search-box {
+        position: relative;
+        flex: 1 1 auto;
+    }
+
+    .in-search-input {
+        width: 100%;
+        height: 35px;
+        padding: 0 3.2rem 0 2rem;
+        font-size: 0.8rem;
+        color: #0f172a;
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 7px;
+        outline: none;
+        transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .in-search-input::placeholder {
+        color: #94a3b8;
+    }
+
+    .in-search-input:focus {
+        background-color: #ffffff;
+        border-color: #0f172a;
+        box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
+    }
+
+    .in-search-icon {
+        position: absolute;
+        left: 0.75rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8;
+        pointer-events: none;
+        display: flex;
+        align-items: center;
+    }
+
+    .in-search-kbd {
+        position: absolute;
+        right: 0.5rem;
+        top: 50%;
+        transform: translateY(-50%);
+        padding: 0.15rem 0.35rem;
+        font-size: 0.68rem;
+        font-family: inherit;
+        font-weight: 600;
+        color: #64748b;
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+        box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+        pointer-events: none;
+    }
+
+    .in-search-dropdown {
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 0;
+        width: 440px;
+        max-width: min(440px, calc(100vw - 32px));
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        box-shadow: 0 12px 28px -4px rgba(15, 23, 42, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+        padding: 0.75rem;
+        display: none;
+        z-index: 1060;
+    }
+
+    .in-search-dropdown.show {
+        display: block;
+    }
+
+    .in-search-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.5rem 0.65rem;
+        border-radius: 6px;
+        text-decoration: none;
+        color: #1e293b;
+        font-size: 0.82rem;
+        transition: background 0.15s ease;
+    }
+
+    .in-search-item:hover {
+        background: #f8fafc;
+        text-decoration: none;
+        color: #0f172a;
+    }
+
+    /* Right Section: Create Action, Productivity Summary, Notifications, Profile, Logout */
+    .in-right {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-shrink: 0;
+    }
+
+    /* Prominent + Create Button */
+    .in-create-container {
+        position: relative;
+    }
+
+    .in-create-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        height: 35px;
+        padding: 0 0.75rem;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #ffffff;
+        background-color: #0f172a;
+        border: 1px solid #0f172a;
+        border-radius: 7px;
+        cursor: pointer;
+        transition: background-color 0.15s ease;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+    }
+
+    .in-create-btn:hover {
+        background-color: #1e293b;
+        border-color: #1e293b;
+    }
+
+    .in-create-dropdown {
+        position: absolute;
+        top: calc(100% + 8px);
+        right: 0;
+        width: 250px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        box-shadow: 0 12px 28px -4px rgba(15, 23, 42, 0.12), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+        padding: 0.5rem;
+        display: none;
+        z-index: 1060;
+    }
+
+    .in-create-dropdown.show {
+        display: block;
+    }
+
+    .in-create-item {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        padding: 0.55rem 0.75rem;
+        border-radius: 6px;
+        text-decoration: none;
+        color: #1e293b;
+        font-size: 0.82rem;
+        font-weight: 500;
+        transition: background 0.15s ease;
+    }
+
+    .in-create-item:hover {
+        background: #f8fafc;
+        color: #0f172a;
+        text-decoration: none;
+    }
+
+    /* Icon Buttons (Notifications, Search) */
+    .in-icon-btn {
+        position: relative;
+        width: 35px;
+        height: 35px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        color: #475569;
+        cursor: pointer;
+        transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .in-icon-btn:hover {
+        background-color: #f1f5f9;
+        color: #0f172a;
+        border-color: #e2e8f0;
+    }
+
+    .in-badge-counter {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        min-width: 17px;
+        height: 17px;
+        padding: 0 4px;
+        font-size: 0.65rem;
+        font-weight: 700;
+        color: #ffffff;
+        background-color: #dc2626;
+        border-radius: 999px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+        border: 1.5px solid #ffffff;
+    }
+
+    /* Notifications Panel */
+    .in-notif-container {
+        position: relative;
+    }
+
+    .in-notif-panel {
+        position: absolute;
+        top: calc(100% + 8px);
+        right: 0;
+        width: 360px;
+        max-width: calc(100vw - 32px);
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        box-shadow: 0 16px 36px -4px rgba(15, 23, 42, 0.14), 0 8px 12px -6px rgba(15, 23, 42, 0.04);
+        display: none;
+        z-index: 1060;
+        overflow: hidden;
+    }
+
+    .in-notif-panel.show {
+        display: block;
+    }
+
+    .in-notif-header {
+        padding: 0.85rem 1rem;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .in-notif-title {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    .in-notif-item {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        gap: 0.65rem;
+        text-decoration: none;
+        color: #1e293b;
+        transition: background 0.15s ease;
+    }
+
+    .in-notif-item:hover {
+        background: #f8fafc;
+        color: #0f172a;
+        text-decoration: none;
+    }
+
+    /* Instructor Profile Menu */
+    .in-profile-container {
+        position: relative;
+    }
+
+    .in-profile-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        padding: 0.25rem 0.55rem;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .in-profile-btn:hover {
+        background-color: #f1f5f9;
+        border-color: #cbd5e1;
+    }
+
+    .in-avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: #0f172a;
+        color: #ffffff;
+        font-size: 0.75rem;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        letter-spacing: -0.02em;
+    }
+
+    .in-profile-name {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #0f172a;
+        white-space: nowrap;
+    }
+
+    .in-profile-dropdown {
+        position: absolute;
+        top: calc(100% + 8px);
+        right: 0;
+        width: 260px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        box-shadow: 0 16px 36px -4px rgba(15, 23, 42, 0.14), 0 8px 12px -6px rgba(15, 23, 42, 0.04);
+        padding: 0.5rem;
+        display: none;
+        z-index: 1060;
+    }
+
+    .in-profile-dropdown.show {
+        display: block;
+    }
+
+    .in-profile-header {
+        padding: 0.65rem 0.85rem;
+        border-bottom: 1px solid #f1f5f9;
+        margin-bottom: 0.35rem;
+    }
+
+    .in-profile-item {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        padding: 0.55rem 0.85rem;
+        border-radius: 6px;
+        text-decoration: none;
+        color: #334155;
+        font-size: 0.82rem;
+        font-weight: 500;
+        transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .in-profile-item:hover {
+        background: #f8fafc;
+        color: #0f172a;
+        text-decoration: none;
+    }
+
+    .in-divider {
+        height: 1px;
+        background: #f1f5f9;
+        margin: 0.35rem 0;
+    }
+
+    .in-signout-btn {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        padding: 0.55rem 0.85rem;
+        border-radius: 6px;
+        border: none;
+        background: transparent;
+        color: #dc2626;
+        font-size: 0.82rem;
+        font-weight: 500;
+        text-align: left;
+        cursor: pointer;
+        transition: background 0.15s ease;
+    }
+
+    .in-signout-btn:hover {
+        background: #fef2f2;
+    }
+
+    /* Direct Navbar Logout Button */
+    .in-direct-logout-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        height: 35px;
+        padding: 0 0.65rem;
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: #dc2626;
+        background-color: #fef2f2;
+        border: 1px solid #fee2e2;
+        border-radius: 7px;
+        cursor: pointer;
+        transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+        white-space: nowrap;
+    }
+
+    .in-direct-logout-btn:hover {
+        background-color: #fee2e2;
+        border-color: #fca5a5;
+        color: #b91c1c;
+    }
+
+    /* Mobile Hamburger */
+    .in-hamburger {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        width: 38px;
+        height: 38px;
+        background: transparent;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        color: #0f172a;
+        cursor: pointer;
+    }
+
+    /* Mobile Offcanvas Drawer */
+    .in-drawer-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(4px);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s ease, visibility 0.2s ease;
+        z-index: 1070;
+    }
+
+    .in-drawer-backdrop.open {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .in-drawer {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: 300px;
+        max-width: 85vw;
+        background: #ffffff;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        transform: translateX(-100%);
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        z-index: 1080;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .in-drawer.open {
+        transform: translateX(0);
+    }
+
+    .in-drawer-header {
+        padding: 1.15rem 1.25rem;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .in-drawer-body {
+        padding: 1rem;
+        overflow-y: auto;
+        flex: 1 1 auto;
+    }
+
+    .in-drawer-link {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        padding: 0.75rem 0.85rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #334155;
+        border-radius: 8px;
+        text-decoration: none;
+        margin-bottom: 2px;
+        transition: background 0.15s ease;
+    }
+
+    .in-drawer-link:hover, .in-drawer-link.active {
+        background: #f1f5f9;
+        color: #0f172a;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    /* Responsive Queries */
+    @@media (max-width: 1366px) {
+        .in-nav-link {
+            padding: 0.32rem 0.42rem;
+            font-size: 0.78rem;
+        }
+        .in-center {
+            max-width: 220px;
+        }
+    }
+
+    @@media (max-width: 1200px) {
+        .in-search-dropdown {
+            left: auto;
+            right: 0;
+        }
+        .in-nav-link {
+            padding: 0.3rem 0.4rem;
+            font-size: 0.76rem;
+        }
+    }
+
+    @@media (max-width: 1080px) {
+        .in-nav {
+            display: none;
+        }
+        .in-hamburger {
+            display: inline-flex;
+        }
+    }
+
+    @@media (max-width: 992px) {
+        .in-direct-logout-btn span {
+            display: none;
+        }
+        .in-direct-logout-btn {
+            padding: 0 0.5rem;
+            width: 35px;
+            justify-content: center;
+        }
+    }
+
+    @@media (max-width: 860px) {
+        .in-course-switcher {
+            display: none;
+        }
+        .in-profile-name {
+            display: none;
+        }
+    }
+
+    @@media (max-width: 640px) {
+        .in-search-box {
+            display: none;
+        }
+        .in-create-btn span {
+            display: none;
+        }
+        .in-direct-logout-btn {
+            display: none;
+        }
+    }
+</style>
+
+<!-- Top Sticky Instructor Workspace Header -->
+<header class="in-header-wrapper" id="epInstructorHeader">
+    <div class="in-container">
+        <!-- Left: Logo & Primary Management Navigation -->
+        <div class="in-left">
+            <a href="@Url.Action("Index", "Instructor")" class="in-brand" aria-label="EduPulse Instructor Studio">
+                <span class="in-brand-mark">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                        <polyline points="2 17 12 22 22 17"></polyline>
+                        <polyline points="2 12 12 17 22 12"></polyline>
+                    </svg>
+                </span>
+                <span>EduPulse</span>
+                <span class="in-studio-badge">Studio</span>
+            </a>
+
+            <!-- Primary Workspace Navigation Links -->
+            <nav class="in-nav" aria-label="Instructor Workspace Navigation">
+                <a href="@Url.Action("Index", "Instructor")" class="in-nav-link @(isDashboard ? "active" : "")">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    <span>Dashboard</span>
+                </a>
+
+                <a href="@Url.Action("Index", "Instructor", new { tab = "courses" })" class="in-nav-link @(isMyCourses ? "active" : "")">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                    </svg>
+                    <span>My Courses</span>
+                </a>
+
+                <a href="@Url.Action("Index", "Instructor", new { tab = "students" })" class="in-nav-link @(isStudents ? "active" : "")">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    <span>Students</span>
+                </a>
+
+                <a href="@Url.Action("Index", "Instructor", new { tab = "analytics" })" class="in-nav-link @(isAnalytics ? "active" : "")">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="20" x2="18" y2="10"></line>
+                        <line x1="12" y1="20" x2="12" y2="4"></line>
+                        <line x1="6" y1="20" x2="6" y2="14"></line>
+                    </svg>
+                    <span>Analytics</span>
+                </a>
+
+                <a href="@Url.Action("Submissions", "Instructor")" class="in-nav-link @(isAssessments ? "active" : "")">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 11 12 14 22 4"></polyline>
+                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                    </svg>
+                    <span>Assessments</span>
+                    @if (vm.PendingSubmissionsCount > 0)
+                    {
+                        <span class="badge bg-warning text-dark font-monospace rounded-pill ms-1" style="font-size: 0.65rem; padding: 0.15rem 0.4rem;">
+                            @vm.PendingSubmissionsCount
+                        </span>
+                    }
+                </a>
+
+                <a href="@Url.Action("Index", "Instructor", new { tab = "resources" })" class="in-nav-link @(isResources ? "active" : "")">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    <span>Resources</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Center: Course Switcher & Global Workspace Search -->
+        <div class="in-center">
+            <!-- Active Course Switcher -->
+            @if (vm.Courses.Any())
+            {
+                <div class="in-course-switcher">
+                    <button class="in-switcher-btn" id="epCourseSwitcherToggle" aria-haspopup="true" aria-expanded="false" title="Switch course context">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="flex-shrink-0">
+                            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                            <polyline points="2 17 12 22 22 17"></polyline>
+                            <polyline points="2 12 12 17 22 12"></polyline>
+                        </svg>
+                        <span class="text-truncate">
+                            @(vm.HasCurrentCourse ? vm.CurrentCourseTitle : $"All Courses ({vm.Courses.Count})")
+                        </span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="flex-shrink-0">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+
+                    <div class="in-switcher-dropdown" id="epCourseSwitcherDropdown">
+                        <div class="in-switcher-heading">Your Active Curriculums</div>
+                        @foreach (var c in vm.Courses)
+                        {
+                            bool isCurrent = vm.CurrentCourseId.HasValue && vm.CurrentCourseId.Value == c.CourseId;
+                            <div class="in-switcher-item @(isCurrent ? "active" : "")">
+                                <a href="@Url.Action("Modules", "Instructor", new { courseId = c.CourseId })" class="text-decoration-none text-dark d-flex align-items-center gap-2 text-truncate flex-grow-1">
+                                    <div class="text-truncate">
+                                        <div class="fw-semibold text-truncate" style="font-size: 0.8rem;">@c.Title</div>
+                                        <div class="text-secondary" style="font-size: 0.7rem;">@c.Category &bull; @c.ModuleCount Modules &bull; @c.EnrolledCount Enrolled</div>
+                                    </div>
+                                </a>
+                                <a href="@Url.Action("Submissions", "Instructor", new { courseId = c.CourseId })" class="btn btn-sm btn-outline-secondary rounded-2 px-2 py-0 font-monospace ms-2" style="font-size: 0.65rem;" title="View Submissions">
+                                    Dossiers
+                                </a>
+                            </div>
+                        }
+
+                        <div class="in-divider"></div>
+                        <a href="@Url.Action("Create", "Instructor")" class="in-switcher-item text-primary fw-semibold justify-content-center">
+                            + Create New Course
+                        </a>
+                    </div>
+                </div>
+            }
+
+            <!-- Global Workspace Search -->
+            <div class="in-search-box">
+                <span class="in-search-icon">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </span>
+                <input type="text" id="epInstructorSearchInput" class="in-search-input" placeholder="Search courses, students, tasks..." autocomplete="off" />
+                <span class="in-search-kbd">Ctrl K</span>
+
+                <!-- Instant Autocomplete Categorized Dropdown -->
+                <div class="in-search-dropdown" id="epInstructorSearchDropdown">
+                    <div class="d-flex align-items-center justify-content-between px-2 pt-1 pb-1">
+                        <span class="in-switcher-heading p-0 m-0">Workspace Catalog</span>
+                        <span class="text-secondary small font-monospace" style="font-size: 0.68rem;" id="epSearchHint">Type to filter</span>
+                    </div>
+
+                    <div id="epSearchItemList" style="max-height: 340px; overflow-y: auto;">
+                        @foreach (var item in vm.SearchItems)
+                        {
+                            <a href="@item.TargetUrl" class="in-search-item" data-title="@item.Title.ToLower()" data-category="@item.Category.ToLower()" data-sub="@item.Subtitle.ToLower()">
+                                <div class="d-flex align-items-center gap-2 text-truncate">
+                                    <span class="badge bg-light text-secondary border font-monospace" style="font-size: 0.65rem; width: 68px; text-align: center;">
+                                        @item.Category
+                                    </span>
+                                    <div class="text-truncate">
+                                        <div class="fw-semibold text-truncate">@item.Title</div>
+                                        <div class="text-secondary" style="font-size: 0.7rem;">@Html.Raw(item.Subtitle)</div>
+                                    </div>
+                                </div>
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" class="flex-shrink-0 ms-2">
+                                    <polyline points="9 18 15 12 9 6"></polyline>
+                                </svg>
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right: Create Action, Notifications, Profile, Logout -->
+        <div class="in-right">
+            <!-- Prominent + Create Button -->
+            <div class="in-create-container">
+                <button class="in-create-btn" id="epCreateMenuToggle" aria-haspopup="true" aria-expanded="false">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <span>Create</span>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </button>
+
+                <div class="in-create-dropdown" id="epCreateDropdown">
+                    <div class="in-switcher-heading">Creation Workflows</div>
+                    <a href="@Url.Action("Create", "Instructor")" class="in-create-item">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2">
+                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                        </svg>
+                        <span>Create Course</span>
+                    </a>
+
+                    <a href="@Url.Action("Modules", "Instructor")" class="in-create-item">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2">
+                            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                            <polyline points="2 17 12 22 22 17"></polyline>
+                            <polyline points="2 12 12 17 22 12"></polyline>
+                        </svg>
+                        <span>Create Module &amp; Lecture</span>
+                    </a>
+
+                    <a href="@Url.Action("ManageQuiz", "Instructor")" class="in-create-item">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2">
+                            <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+                            <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+                        </svg>
+                        <span>Create Quiz Assessment</span>
+                    </a>
+
+                    <a href="@Url.Action("Submissions", "Instructor")" class="in-create-item">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2">
+                            <polyline points="9 11 12 14 22 4"></polyline>
+                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                        </svg>
+                        <span>Grade Student Submissions</span>
+                    </a>
+
+                    <div class="in-divider"></div>
+
+                    <a href="@Url.Action("ManageQuiz", "Instructor")" class="in-create-item text-primary">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="2" y="3" width="20" height="14" rx="2"></rect>
+                            <line x1="8" y1="21" x2="16" y2="21"></line>
+                        </svg>
+                        <span>Generate Quiz (AI Assistant)</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Notifications Center -->
+            <div class="in-notif-container">
+                <button class="in-icon-btn" id="epInstructorNotifToggle" aria-haspopup="true" aria-expanded="false" title="Notifications Center">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
+                    @if (vm.UnreadNotificationsCount > 0)
+                    {
+                        <span class="in-badge-counter">@vm.UnreadNotificationsCount</span>
+                    }
+                </button>
+
+                <div class="in-notif-panel" id="epInstructorNotifPanel">
+                    <div class="in-notif-header">
+                        <span class="in-notif-title">Instructional Notifications</span>
+                        <span class="badge bg-light text-secondary border font-monospace" style="font-size: 0.68rem;">
+                            @vm.Notifications.Count Total
+                        </span>
+                    </div>
+
+                    <div style="max-height: 320px; overflow-y: auto;">
+                        @if (vm.Notifications.Any())
+                        {
+                            foreach (var n in vm.Notifications)
+                            {
+                                <a href="@n.TargetUrl" class="in-notif-item">
+                                    <div class="pt-1">
+                                        @if (n.IsUrgent)
+                                        {
+                                            <span style="color: #f59e0b; font-size: 0.9rem;">&#9679;</span>
+                                        }
+                                        else
+                                        {
+                                            <span style="color: #10b981; font-size: 0.9rem;">&#10003;</span>
+                                        }
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="fw-semibold text-dark small">@n.Title</div>
+                                        <div class="text-secondary small" style="font-size: 0.75rem;">@n.Message</div>
+                                        <div class="text-muted font-monospace mt-1" style="font-size: 0.68rem;">@n.TimestampFormatted</div>
+                                    </div>
+                                </a>
+                            }
+                        }
+                        else
+                        {
+                            <div class="p-3 text-center text-secondary small">
+                                No new notifications at this time.
+                            </div>
+                        }
+                    </div>
+
+                    <div class="p-2 border-top bg-light text-center">
+                        <a href="@Url.Action("Submissions", "Instructor")" class="text-dark small fw-semibold text-decoration-none">
+                            View All Submissions &rarr;
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Instructor Profile Menu (Far Right) -->
+            <div class="in-profile-container">
+                <button class="in-profile-btn" id="epInstructorProfileToggle" aria-haspopup="true" aria-expanded="false" title="Instructor Profile: @vm.FullName">
+                    <span class="in-avatar">@vm.AvatarInitials</span>
+                    <span class="in-profile-name">Profile</span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </button>
+
+                <div class="in-profile-dropdown" id="epInstructorProfileDropdown">
+                    <div class="in-profile-header">
+                        <div class="fw-bold text-dark small">@vm.FullName</div>
+                        <div class="text-secondary" style="font-size: 0.725rem;">@vm.Email</div>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill font-monospace mt-1" style="font-size: 0.65rem;">
+                            Approved Instructor
+                        </span>
+                    </div>
+
+                    <a href="@Url.Action("Profile", "Instructor")" class="in-profile-item">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        <span>Instructor Profile &amp; Pedigree</span>
+                    </a>
+
+                    <a href="@Url.Action("Index", "Instructor")" class="in-profile-item">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="7" height="7"></rect>
+                            <rect x="3" y="14" width="7" height="7"></rect>
+                        </svg>
+                        <span>Instructor Studio Dashboard</span>
+                    </a>
+
+                    <a href="@Url.Action("Index", "Courses")" class="in-profile-item">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polygon points="10 8 16 12 10 16 10 8"></polygon>
+                        </svg>
+                        <span>Course Catalog (Student View)</span>
+                    </a>
+
+                    <a href="@Url.Action("Index", "Instructor", new { tab = "earnings" })" class="in-profile-item">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="1" x2="12" y2="23"></line>
+                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                        </svg>
+                        <span>Earnings &amp; Net Revenue</span>
+                    </a>
+
+                    <a href="@Url.Action("Profile", "Account")" class="in-profile-item">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                        </svg>
+                        <span>Account Credentials</span>
+                    </a>
+
+                    <div class="in-divider"></div>
+
+                    <form action="@Url.Action("Logout", "Account")" method="post" class="m-0">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="in-signout-btn">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                                <polyline points="16 17 21 12 16 7"></polyline>
+                                <line x1="21" y1="12" x2="9" y2="12"></line>
+                            </svg>
+                            <span>Sign Out</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Direct Navbar Logout Button -->
+            <form action="@Url.Action("Logout", "Account")" method="post" class="m-0 d-inline-flex align-items-center">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="in-direct-logout-btn" title="Sign out of EduPulse">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    <span>Logout</span>
+                </button>
+            </form>
+
+            <!-- Mobile Hamburger Toggle -->
+            <button class="in-hamburger" id="epInstructorDrawerOpen" aria-label="Open Workspace Menu">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+    </div>
+</header>
+
+<!-- Mobile Offcanvas Drawer -->
+<div class="in-drawer-backdrop" id="epInstructorDrawerBackdrop"></div>
+<div class="in-drawer" id="epInstructorDrawer" role="dialog" aria-modal="true" aria-label="Instructor Studio Menu">
+    <div class="in-drawer-header">
+        <div class="d-flex align-items-center gap-2">
+            <span class="in-avatar">@vm.AvatarInitials</span>
+            <div>
+                <div class="fw-bold text-dark small">@vm.FullName</div>
+                <div class="text-secondary" style="font-size: 0.7rem;">Instructor Workspace</div>
+            </div>
+        </div>
+        <button class="btn-close" id="epInstructorDrawerClose" aria-label="Close"></button>
+    </div>
+
+    <div class="in-drawer-body">
+        <a href="@Url.Action("Index", "Instructor")" class="in-drawer-link @(isDashboard ? "active" : "")">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+            <span>Dashboard</span>
+        </a>
+
+        <a href="@Url.Action("Index", "Instructor", new { tab = "courses" })" class="in-drawer-link @(isMyCourses ? "active" : "")">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+            <span>My Courses</span>
+        </a>
+
+        <a href="@Url.Action("Index", "Instructor", new { tab = "students" })" class="in-drawer-link @(isStudents ? "active" : "")">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            <span>Students</span>
+        </a>
+
+        <a href="@Url.Action("Index", "Instructor", new { tab = "analytics" })" class="in-drawer-link @(isAnalytics ? "active" : "")">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+            <span>Analytics</span>
+        </a>
+
+        <a href="@Url.Action("Submissions", "Instructor")" class="in-drawer-link @(isAssessments ? "active" : "")">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg>
+            <span>Assessments</span>
+            @if (vm.PendingSubmissionsCount > 0)
+            {
+                <span class="badge bg-warning text-dark font-monospace rounded-pill ms-auto" style="font-size: 0.65rem;">
+                    @vm.PendingSubmissionsCount
+                </span>
+            }
+        </a>
+
+        <a href="@Url.Action("Index", "Instructor", new { tab = "resources" })" class="in-drawer-link @(isResources ? "active" : "")">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+            <span>Resources</span>
+        </a>
+
+        <div class="in-divider my-3"></div>
+
+        <div class="px-2 mb-2 text-secondary small fw-bold text-uppercase" style="font-size: 0.68rem;">Quick Actions</div>
+        <a href="@Url.Action("Create", "Instructor")" class="in-drawer-link text-primary fw-semibold">
+            + Create New Course
+        </a>
+        <a href="@Url.Action("Modules", "Instructor")" class="in-drawer-link">
+            Manage Modules
+        </a>
+        <a href="@Url.Action("ManageQuiz", "Instructor")" class="in-drawer-link">
+            AI Quiz Generator
+        </a>
+
+        <div class="in-divider my-3"></div>
+
+        <form action="@Url.Action("Logout", "Account")" method="post" class="m-0">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="in-signout-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                <span>Sign Out</span>
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Embedded Interactive Scripts for Instructor Workspace Header -->
+<script>
+    (function () {
+        var header = document.getElementById('epInstructorHeader');
+        if (header) {
+            window.addEventListener('scroll', function () {
+                if (window.scrollY > 10) header.classList.add('in-scrolled');
+                else header.classList.remove('in-scrolled');
+            }, { passive: true });
+        }
+
+        // Dropdown toggles helper
+        function setupDropdown(btnId, panelId) {
+            var btn = document.getElementById(btnId);
+            var panel = document.getElementById(panelId);
+            if (!btn || !panel) return;
+
+            btn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                // Close other open panels
+                document.querySelectorAll('.in-switcher-dropdown, .in-create-dropdown, .in-notif-panel, .in-profile-dropdown, .in-search-dropdown').forEach(function (d) {
+                    if (d !== panel) d.classList.remove('show');
+                });
+                panel.classList.toggle('show');
+            });
+        }
+
+        setupDropdown('epCourseSwitcherToggle', 'epCourseSwitcherDropdown');
+        setupDropdown('epCreateMenuToggle', 'epCreateDropdown');
+        setupDropdown('epInstructorNotifToggle', 'epInstructorNotifPanel');
+        setupDropdown('epInstructorProfileToggle', 'epInstructorProfileDropdown');
+
+        // Close on outside click
+        document.addEventListener('click', function (e) {
+            document.querySelectorAll('.in-switcher-dropdown, .in-create-dropdown, .in-notif-panel, .in-profile-dropdown, .in-search-dropdown').forEach(function (d) {
+                if (!d.contains(e.target)) d.classList.remove('show');
+            });
+        });
+
+        // Search Autocomplete functionality
+        var searchInput = document.getElementById('epInstructorSearchInput');
+        var searchDropdown = document.getElementById('epInstructorSearchDropdown');
+        var searchHint = document.getElementById('epSearchHint');
+
+        if (searchInput && searchDropdown) {
+            searchInput.addEventListener('focus', function () {
+                searchDropdown.classList.add('show');
+            });
+
+            searchInput.addEventListener('input', function () {
+                var query = (searchInput.value || '').trim().toLowerCase();
+                searchDropdown.classList.add('show');
+                if (searchHint) {
+                    searchHint.textContent = query ? "Results for '" + query + "'" : "Type to filter";
+                }
+
+                var items = searchDropdown.querySelectorAll('.in-search-item');
+                items.forEach(function (item) {
+                    var title = item.getAttribute('data-title') || '';
+                    var cat = item.getAttribute('data-category') || '';
+                    var sub = item.getAttribute('data-sub') || '';
+                    if (!query || title.indexOf(query) !== -1 || cat.indexOf(query) !== -1 || sub.indexOf(query) !== -1) {
+                        item.style.setProperty('display', 'flex', 'important');
+                    } else {
+                        item.style.setProperty('display', 'none', 'important');
+                    }
+                });
+            });
+
+            document.addEventListener('keydown', function (e) {
+                if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+                    e.preventDefault();
+                    searchInput.focus();
+                    searchInput.select();
+                    searchDropdown.classList.add('show');
+                }
+                if (e.key === 'Escape') {
+                    searchDropdown.classList.remove('show');
+                    document.querySelectorAll('.in-switcher-dropdown, .in-create-dropdown, .in-notif-panel, .in-profile-dropdown').forEach(function (d) {
+                        d.classList.remove('show');
+                    });
+                }
+            });
+        }
+
+        // Mobile drawer handlers
+        var drawerOpenBtn = document.getElementById('epInstructorDrawerOpen');
+        var drawerCloseBtn = document.getElementById('epInstructorDrawerClose');
+        var drawer = document.getElementById('epInstructorDrawer');
+        var backdrop = document.getElementById('epInstructorDrawerBackdrop');
+
+        function openDrawer() {
+            if (drawer && backdrop) {
+                drawer.classList.add('open');
+                backdrop.classList.add('open');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeDrawer() {
+            if (drawer && backdrop) {
+                drawer.classList.remove('open');
+                backdrop.classList.remove('open');
+                document.body.style.overflow = '';
+            }
+        }
+
+        if (drawerOpenBtn) drawerOpenBtn.addEventListener('click', openDrawer);
+        if (drawerCloseBtn) drawerCloseBtn.addEventListener('click', closeDrawer);
+        if (backdrop) backdrop.addEventListener('click', closeDrawer);
+    })();
+</script>

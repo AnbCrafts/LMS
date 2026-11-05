@@ -54,4 +54,14 @@ namespace WebApplication1.Models
         public string Url { get; set; }
         public long FileSizeKb { get; set; }
     }
+
+    public class CourseAnnouncementItem
+    {
+        public string Title { get; set; }
+        public string Message { get; set; }
+        public string DateFormatted { get; set; }
+        public string AuthorName { get; set; }
+        public string Tag { get; set; }
+        public string TagClass { get; set; }
+    }
 }

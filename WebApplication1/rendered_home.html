@@ -1,0 +1,2296 @@
+﻿
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Learning Ecosystem &amp; Professional Platform | EduPulse</title>
+    <link href="/Content/bootstrap.css" rel="stylesheet"/>
+<link href="/Content/site.css" rel="stylesheet"/>
+
+    <link href="/Content/Site.css?v=639294672422925376" rel="stylesheet" type="text/css" />
+    <script src="/Scripts/modernizr-2.8.3.js"></script>
+
+</head>
+<body>
+
+
+
+
+<!-- Self-Contained Resilient Design System for EduPulse Landing Header -->
+<style>
+    /* Sticky Top Header Container */
+    .ep-header-wrapper {
+        position: sticky;
+        top: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        background-color: rgba(255, 255, 255, 0.98);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid #eef0f3;
+        z-index: 1040;
+        transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .ep-header-wrapper.ep-scrolled {
+        box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 1px 2px -1px rgba(15, 23, 42, 0.03);
+        border-bottom-color: #e2e8f0;
+    }
+
+    .ep-header-inner {
+        max-width: 1400px;
+        height: 64px;
+        margin: 0 auto;
+        padding: 0 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    /* Left Group: Brand Anchor + Navigation */
+    .ep-brand-group {
+        display: flex;
+        align-items: center;
+    }
+
+    .ep-brand-anchor {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none !important;
+        cursor: pointer;
+    }
+
+    .ep-brand-symbol {
+        width: 32px;
+        height: 32px;
+        background-color: #0f172a;
+        border-radius: 7px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ffffff;
+        flex-shrink: 0;
+    }
+
+    .ep-brand-name {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
+        font-size: 1.15rem;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        color: #0f172a !important;
+        margin: 0;
+        line-height: 1;
+    }
+
+    .ep-desktop-nav {
+        display: flex;
+        align-items: center;
+        gap: 1.75rem;
+        margin-left: 2.25rem;
+        padding-left: 1.75rem;
+        border-left: 1px solid #f1f5f9;
+    }
+
+    .ep-nav-item {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #475569 !important;
+        text-decoration: none !important;
+        padding: 6px 10px;
+        border-radius: 6px;
+        transition: color 0.15s ease, background-color 0.15s ease;
+        white-space: nowrap;
+    }
+
+    .ep-nav-item:hover {
+        color: #0f172a !important;
+        background-color: #f8fafc;
+    }
+
+    .ep-nav-item.active {
+        color: #0f172a !important;
+        font-weight: 600;
+        background-color: #f1f5f9;
+    }
+
+    /* Center Spacer */
+    .ep-center-spacer {
+        flex: 1 1 auto;
+    }
+
+    /* Right Auth Actions */
+    .ep-desktop-auth {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .ep-btn-signin {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #475569 !important;
+        background: transparent;
+        border: none;
+        padding: 7px 14px;
+        border-radius: 6px;
+        text-decoration: none !important;
+        transition: all 0.15s ease;
+        display: inline-flex;
+        align-items: center;
+        white-space: nowrap;
+        cursor: pointer;
+    }
+
+    .ep-btn-signin:hover {
+        color: #0f172a !important;
+        background-color: #f1f5f9;
+    }
+
+    .ep-btn-create {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #ffffff !important;
+        background-color: #0f172a !important;
+        border: 1px solid #0f172a;
+        padding: 7px 16px;
+        border-radius: 6px;
+        text-decoration: none !important;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+        transition: all 0.15s ease;
+        display: inline-flex;
+        align-items: center;
+        white-space: nowrap;
+        cursor: pointer;
+    }
+
+    .ep-btn-create:hover {
+        background-color: #1e293b !important;
+        border-color: #1e293b;
+        color: #ffffff !important;
+    }
+
+    /* Mobile Hamburger Trigger */
+    .ep-mobile-trigger {
+        display: none;
+        background: transparent;
+        border: 1px solid #e2e8f0;
+        padding: 7px 9px;
+        border-radius: 6px;
+        cursor: pointer;
+        flex-direction: column;
+        justify-content: center;
+        gap: 4px;
+        transition: background-color 0.15s ease;
+    }
+
+    .ep-mobile-trigger:hover {
+        background-color: #f1f5f9;
+    }
+
+    .ep-hamburger-bar {
+        width: 18px;
+        height: 1.5px;
+        background-color: #0f172a;
+        border-radius: 1px;
+    }
+
+    /* Mobile Drawer Styles */
+    .ep-drawer-link {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
+        font-size: 0.95rem;
+        font-weight: 500;
+        color: #334155 !important;
+        text-decoration: none !important;
+        padding: 10px 14px;
+        border-radius: 8px;
+        display: block;
+        min-height: 44px;
+        line-height: 24px;
+        transition: background-color 0.15s ease, color 0.15s ease;
+    }
+
+    .ep-drawer-link:hover,
+    .ep-drawer-link.active {
+        background-color: #f1f5f9;
+        color: #0f172a !important;
+        font-weight: 600;
+    }
+
+    /* Breakpoint Rules */
+    @media (max-width: 991.98px) {
+        .ep-desktop-nav,
+        .ep-desktop-auth {
+            display: none !important;
+        }
+
+        .ep-mobile-trigger {
+            display: inline-flex !important;
+        }
+
+        .ep-header-inner {
+            padding: 0 1rem;
+        }
+    }
+</style>
+
+<!-- Sticky Top Navbar Container -->
+<header id="epLandingNavbar" class="ep-header-wrapper">
+    <div class="ep-header-inner">
+        
+        <!-- Left Section: Brand Anchor + Primary Discovery Links -->
+        <div class="ep-brand-group">
+            <!-- Brand Anchor: Logo + Wordmark -->
+            <a class="ep-brand-anchor" href="/" aria-label="EduPulse Home">
+                <span class="ep-brand-symbol" aria-hidden="true">
+                    <!-- Clean Architectural Insignia: Academic Podium & Open Knowledge Geometry -->
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 3L2 8L12 13L22 8L12 3Z" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M5 10.5V16C5 17.5 8 19.5 12 19.5C16 19.5 19 17.5 19 16V10.5" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M22 8V14" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </span>
+                <span class="ep-brand-name">EduPulse</span>
+            </a>
+
+            <!-- Beside the Logo: Static Discovery & Trust Navigation Links (Desktop) -->
+            <nav class="ep-desktop-nav" aria-label="Main Navigation">
+                <a class="ep-nav-item " 
+                   href="/Courses">
+                    Browse Courses
+                </a>
+                <a class="ep-nav-item" 
+                   href="/Account/Register">
+                    Become an Instructor
+                </a>
+                <a class="ep-nav-item " 
+                   href="/Home/About">
+                    About
+                </a>
+                <a class="ep-nav-item " 
+                   href="/Home/Contact">
+                    Contact
+                </a>
+            </nav>
+        </div>
+
+        <!-- Center Area: Purposefully Open and Uncluttered for Premium Visual Breathing Room -->
+        <div class="ep-center-spacer"></div>
+
+        <!-- Right Section: Dynamic Authentication Actions (Desktop) -->
+        <div class="ep-desktop-auth">
+                <a href="/Account/Login" class="ep-btn-signin">
+                    Sign In
+                </a>
+                <a href="/Account/Register" class="ep-btn-create">
+                    Create Account
+                </a>
+        </div>
+
+        <!-- Mobile / Tablet Hamburger Button Trigger (Replaces Desktop Navigation on < 992px) -->
+        <button class="ep-mobile-trigger" 
+                type="button" 
+                data-bs-toggle="offcanvas" 
+                data-bs-target="#landingMobileDrawer" 
+                aria-controls="landingMobileDrawer" 
+                aria-label="Toggle navigation drawer">
+            <span class="ep-hamburger-bar"></span>
+            <span class="ep-hamburger-bar"></span>
+            <span class="ep-hamburger-bar"></span>
+        </button>
+    </div>
+</header>
+
+<!-- Mobile Slide-Over Drawer (80% Viewport Width with Overlay Backdrop) -->
+<div class="offcanvas offcanvas-end" 
+     tabindex="-1" 
+     id="landingMobileDrawer" 
+     aria-labelledby="landingMobileDrawerLabel"
+     style="width: 82vw; max-width: 320px; border-left: 1px solid #e2e8f0; background-color: #ffffff;">
+    
+    <!-- Drawer Header -->
+    <div class="offcanvas-header border-bottom px-4 py-3 d-flex align-items-center justify-content-between">
+        <a class="ep-brand-anchor" href="/" id="landingMobileDrawerLabel" aria-label="EduPulse Home">
+            <span class="ep-brand-symbol" style="width: 28px; height: 28px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 3L2 8L12 13L22 8L12 3Z" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M5 10.5V16C5 17.5 8 19.5 12 19.5C16 19.5 19 17.5 19 16V10.5" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </span>
+            <span class="ep-brand-name" style="font-size: 1.05rem;">EduPulse</span>
+        </a>
+        <button type="button" class="btn-close shadow-none" data-bs-dismiss="offcanvas" aria-label="Close menu"></button>
+    </div>
+
+    <!-- Drawer Body: Vertically Spaced Navigation Links + Pinned Bottom Actions -->
+    <div class="offcanvas-body d-flex flex-column p-4">
+        
+        <!-- Navigation Links Group -->
+        <nav class="d-flex flex-column gap-1" aria-label="Mobile Navigation">
+            <a class="ep-drawer-link " 
+               href="/Courses">
+                Browse Courses
+            </a>
+            <a class="ep-drawer-link" 
+               href="/Account/Register">
+                Become an Instructor
+            </a>
+            <a class="ep-drawer-link " 
+               href="/Home/About">
+                About
+            </a>
+            <a class="ep-drawer-link " 
+               href="/Home/Contact">
+                Contact
+            </a>
+        </nav>
+
+        <!-- Dynamic Authentication Actions Pinned Near Bottom -->
+        <div class="mt-auto pt-4 border-top">
+                <a href="/Account/Login" class="ep-btn-signin w-100 py-2 text-center mb-2 d-block border" style="border-color: #e2e8f0 !important;">
+                    Sign In
+                </a>
+                <a href="/Account/Register" class="ep-btn-create w-100 py-2 text-center d-block text-white">
+                    Create Account
+                </a>
+        </div>
+    </div>
+</div>
+
+<!-- Light Elevation on Scroll Script -->
+<script>
+    (function () {
+        var header = document.getElementById('epLandingNavbar');
+        if (!header) return;
+        var onScroll = function () {
+            if (window.scrollY > 8) {
+                header.classList.add('ep-scrolled');
+            } else {
+                header.classList.remove('ep-scrolled');
+            }
+        };
+        window.addEventListener('scroll', onScroll, { passive: true });
+        onScroll();
+    })();
+</script>
+
+    <!-- Global TempData Alerts -->
+
+    <!-- Main View Content -->
+    <main class="lms-main-wrapper">
+        
+
+
+<!-- Self-Contained Resilient Styling for EduPulse Landing Page Storytelling Experience -->
+<style>
+    /* ==========================================================================
+       EduPulse Landing Page â€” Bespoke Design System (Linear / Stripe / Maven)
+       Strictly zero AI tropes, no generic pastel boxes, no fake numbers.
+       ========================================================================== */
+
+    .ep-page {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
+        color: #0f172a;
+        background-color: #ffffff;
+        overflow-x: hidden;
+    }
+
+    /* Section Spacing & Layout Rhythm */
+    .ep-section {
+        padding: 5.5rem 0;
+        position: relative;
+    }
+
+    .ep-section-alt {
+        background-color: #f8fafc;
+        border-top: 1px solid #edf0f4;
+        border-bottom: 1px solid #edf0f4;
+    }
+
+    .ep-container {
+        max-width: 1320px;
+        margin: 0 auto;
+        padding: 0 1.5rem;
+    }
+
+    /* Section Typography */
+    .ep-section-header {
+        max-width: 760px;
+        margin: 0 auto 3.5rem auto;
+        text-align: center;
+    }
+
+    .ep-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #475569;
+        background-color: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        padding: 4px 12px;
+        border-radius: 20px;
+        margin-bottom: 1rem;
+    }
+
+    .ep-section-title {
+        font-size: 2.25rem;
+        font-weight: 750;
+        letter-spacing: -0.03em;
+        line-height: 1.25;
+        color: #0f172a;
+        margin-bottom: 0.85rem;
+    }
+
+    .ep-section-subtitle {
+        font-size: 1.05rem;
+        color: #475569;
+        line-height: 1.6;
+        margin: 0;
+    }
+
+    /* Buttons */
+    .ep-btn-lg-primary {
+        background-color: #0f172a;
+        color: #ffffff !important;
+        font-size: 0.95rem;
+        font-weight: 600;
+        padding: 0.85rem 1.75rem;
+        border-radius: 8px;
+        border: 1px solid #0f172a;
+        text-decoration: none !important;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+        transition: all 0.15s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
+    }
+
+    .ep-btn-lg-primary:hover {
+        background-color: #1e293b;
+        border-color: #1e293b;
+        color: #ffffff !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+    }
+
+    .ep-btn-lg-secondary {
+        background-color: #ffffff;
+        color: #1e293b !important;
+        font-size: 0.95rem;
+        font-weight: 600;
+        padding: 0.85rem 1.75rem;
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+        text-decoration: none !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+        transition: all 0.15s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
+    }
+
+    .ep-btn-lg-secondary:hover {
+        background-color: #f8fafc;
+        border-color: #94a3b8;
+        color: #0f172a !important;
+        transform: translateY(-1px);
+    }
+
+    /* ==========================================================================
+       1. HERO SECTION
+       ========================================================================== */
+    .ep-hero {
+        padding: 5rem 0 6rem 0;
+        background: radial-gradient(circle at top right, #f8fafc 0%, #ffffff 70%);
+        border-bottom: 1px solid #edf0f4;
+    }
+
+    .ep-hero-grid {
+        display: grid;
+        grid-template-columns: 1.15fr 1fr;
+        align-items: center;
+        gap: 4rem;
+    }
+
+    .ep-hero-title {
+        font-size: 3.25rem;
+        font-weight: 800;
+        letter-spacing: -0.035em;
+        line-height: 1.15;
+        color: #0f172a;
+        margin-bottom: 1.5rem;
+    }
+
+    .ep-hero-highlight {
+        color: #1e293b;
+        border-bottom: 3px solid #cbd5e1;
+    }
+
+    .ep-hero-desc {
+        font-size: 1.2rem;
+        color: #475569;
+        line-height: 1.65;
+        margin-bottom: 2.25rem;
+        max-width: 580px;
+    }
+
+    .ep-hero-actions {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 2.5rem;
+    }
+
+    .ep-hero-trust-row {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    .ep-hero-trust-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #475569;
+    }
+
+    .ep-hero-trust-item i {
+        color: #0f172a;
+        font-size: 1rem;
+    }
+
+    /* Platform Preview Illustration / Mockup */
+    .ep-platform-preview {
+        background-color: #0f172a;
+        border-radius: 14px;
+        box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25), 0 0 0 1px #1e293b;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .ep-preview-topbar {
+        background-color: #1e293b;
+        padding: 10px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .ep-preview-dots {
+        display: flex;
+        gap: 6px;
+    }
+
+    .ep-preview-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #475569;
+    }
+
+    .ep-preview-badge {
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: #94a3b8;
+        font-family: monospace;
+    }
+
+    .ep-preview-body {
+        padding: 1.5rem;
+        background-color: #0b1120;
+    }
+
+    .ep-preview-player {
+        background-color: #020617;
+        border: 1px solid #1e293b;
+        border-radius: 8px;
+        padding: 2.5rem 1.5rem;
+        text-align: center;
+        margin-bottom: 1.25rem;
+    }
+
+    .ep-preview-player-title {
+        color: #f8fafc;
+        font-size: 1.05rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .ep-preview-meta {
+        display: flex;
+        gap: 1.25rem;
+        justify-content: center;
+        font-size: 0.75rem;
+        color: #64748b;
+    }
+
+    .ep-preview-modules {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .ep-preview-module-card {
+        background-color: #1e293b;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 6px;
+        padding: 10px 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .ep-preview-mod-name {
+        color: #cbd5e1;
+        font-size: 0.78rem;
+        font-weight: 500;
+    }
+
+    .ep-preview-mod-status {
+        font-size: 0.7rem;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-weight: 600;
+    }
+
+    .ep-status-done {
+        background-color: rgba(16, 185, 129, 0.15);
+        color: #34d399;
+    }
+
+    .ep-status-prog {
+        background-color: rgba(59, 130, 246, 0.15);
+        color: #60a5fa;
+    }
+
+    /* ==========================================================================
+       2. FEATURED LEARNING CATEGORIES (Auto-expanding Grid)
+       ========================================================================== */
+    .ep-categories-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .ep-category-card {
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1.75rem;
+        text-decoration: none !important;
+        display: flex;
+        flex-direction: column;
+        transition: all 0.18s ease;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    }
+
+    .ep-category-card:hover {
+        transform: translateY(-3px);
+        border-color: #94a3b8;
+        box-shadow: 0 10px 20px -3px rgba(15, 23, 42, 0.06);
+    }
+
+    .ep-category-icon-box {
+        width: 44px;
+        height: 44px;
+        background-color: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #0f172a;
+        font-size: 1.25rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .ep-category-name {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.015em;
+    }
+
+    .ep-category-desc {
+        font-size: 0.875rem;
+        color: #475569;
+        line-height: 1.55;
+        margin-bottom: 1.25rem;
+        flex-grow: 1;
+    }
+
+    .ep-category-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-top: 1rem;
+        border-top: 1px solid #f1f5f9;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #64748b;
+    }
+
+    .ep-category-card:hover .ep-category-footer {
+        color: #0f172a;
+    }
+
+    /* ==========================================================================
+       3. FEATURED COURSES (Streaming-Platform Clean Cards)
+       ========================================================================== */
+    .ep-courses-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.5rem;
+    }
+
+    .ep-course-card {
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+    }
+
+    .ep-course-card:hover {
+        transform: translateY(-4px);
+        border-color: #94a3b8;
+        box-shadow: 0 12px 24px -4px rgba(15, 23, 42, 0.08);
+    }
+
+    .ep-course-thumbnail-frame {
+        height: 160px;
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        position: relative;
+    }
+
+    .ep-course-level-badge {
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 4px 10px;
+        border-radius: 4px;
+        width: fit-content;
+        background-color: rgba(255, 255, 255, 0.12);
+        color: #ffffff;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .ep-course-weeks {
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #94a3b8;
+    }
+
+    .ep-course-body {
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+    }
+
+    .ep-course-discipline {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #475569;
+        margin-bottom: 0.4rem;
+    }
+
+    .ep-course-card-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #0f172a;
+        line-height: 1.4;
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.015em;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .ep-course-instructor {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.85rem;
+        color: #64748b;
+        margin-bottom: 0.85rem;
+    }
+
+    .ep-course-desc-snippet {
+        font-size: 0.85rem;
+        color: #475569;
+        line-height: 1.5;
+        margin-bottom: 1.25rem;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        flex-grow: 1;
+    }
+
+    .ep-course-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-top: 1rem;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    .ep-course-price {
+        font-size: 1.15rem;
+        font-weight: 750;
+        color: #0f172a;
+    }
+
+    .ep-course-action-link {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #0f172a !important;
+        text-decoration: none !important;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .ep-course-action-link:hover {
+        color: #334155 !important;
+        text-decoration: underline !important;
+    }
+
+    /* ==========================================================================
+       4. WHY EDUPULSE (4 Major Advantages)
+       ========================================================================== */
+    .ep-why-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 2rem;
+    }
+
+    .ep-why-card {
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 2rem 1.75rem;
+    }
+
+    .ep-why-icon {
+        width: 48px;
+        height: 48px;
+        background-color: #0f172a;
+        color: #ffffff;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.35rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .ep-why-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 0.65rem;
+        letter-spacing: -0.015em;
+    }
+
+    .ep-why-text {
+        font-size: 0.875rem;
+        color: #475569;
+        line-height: 1.6;
+        margin: 0;
+    }
+
+    /* ==========================================================================
+       5. THE LEARNING JOURNEY (6 Sequential Steps)
+       ========================================================================== */
+    .ep-journey-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+    }
+
+    .ep-journey-step {
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 2rem;
+        position: relative;
+    }
+
+    .ep-step-number {
+        font-family: monospace;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #64748b;
+        background-color: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        padding: 3px 8px;
+        border-radius: 4px;
+        display: inline-block;
+        margin-bottom: 1.25rem;
+    }
+
+    .ep-step-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.015em;
+    }
+
+    .ep-step-desc {
+        font-size: 0.875rem;
+        color: #475569;
+        line-height: 1.6;
+        margin: 0;
+    }
+
+    /* ==========================================================================
+       6. INSTRUCTOR GROWTH SECTION (Educator Acquisition)
+       ========================================================================== */
+    .ep-instructor-section {
+        background-color: #0f172a;
+        color: #ffffff;
+        padding: 6rem 0;
+    }
+
+    .ep-instructor-grid {
+        display: grid;
+        grid-template-columns: 1fr 1.15fr;
+        gap: 4.5rem;
+        align-items: center;
+    }
+
+    .ep-instructor-eyebrow {
+        background-color: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: #94a3b8;
+    }
+
+    .ep-instructor-title {
+        font-size: 2.75rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        line-height: 1.2;
+        color: #ffffff;
+        margin-bottom: 1.25rem;
+    }
+
+    .ep-instructor-desc {
+        font-size: 1.1rem;
+        color: #cbd5e1;
+        line-height: 1.65;
+        margin-bottom: 2rem;
+    }
+
+    .ep-instructor-benefits {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .ep-benefit-item {
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+
+    .ep-benefit-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        background-color: #1e293b;
+        color: #38bdf8;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 1rem;
+    }
+
+    .ep-benefit-title {
+        font-size: 0.95rem;
+        font-weight: 650;
+        color: #f8fafc;
+        margin-bottom: 0.25rem;
+    }
+
+    .ep-benefit-desc {
+        font-size: 0.85rem;
+        color: #94a3b8;
+        line-height: 1.5;
+        margin: 0;
+    }
+
+    /* Studio Cockpit Mockup */
+    .ep-studio-mockup {
+        background-color: #1e293b;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 14px;
+        padding: 2rem;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+
+    .ep-mockup-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        margin-bottom: 1.5rem;
+    }
+
+    .ep-mockup-title {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #f8fafc;
+        margin: 0;
+    }
+
+    .ep-mockup-badge {
+        font-size: 0.75rem;
+        background-color: rgba(16, 185, 129, 0.15);
+        color: #34d399;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-weight: 600;
+    }
+
+    .ep-mockup-stat-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .ep-mockup-stat-card {
+        background-color: #0f172a;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
+        padding: 1.25rem;
+    }
+
+    .ep-mockup-stat-label {
+        font-size: 0.75rem;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.35rem;
+    }
+
+    .ep-mockup-stat-val {
+        font-size: 1.5rem;
+        font-weight: 750;
+        color: #f8fafc;
+    }
+
+    .ep-mockup-heatmap {
+        background-color: #0f172a;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
+        padding: 1.25rem;
+    }
+
+    .ep-heatmap-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        font-size: 0.8rem;
+    }
+
+    .ep-heatmap-row:last-child {
+        border-bottom: none;
+    }
+
+    /* ==========================================================================
+       7. PLATFORM STATISTICS (100% Real Live Database Metrics)
+       ========================================================================== */
+    .ep-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 1.5rem;
+    }
+
+    .ep-stat-box {
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 2rem 1.5rem;
+        text-align: center;
+    }
+
+    .ep-stat-number {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #0f172a;
+        letter-spacing: -0.03em;
+        line-height: 1;
+        margin-bottom: 0.65rem;
+    }
+
+    .ep-stat-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #475569;
+        line-height: 1.4;
+    }
+
+    /* ==========================================================================
+       8. TESTIMONIALS (Dynamic & Gracefully Hidden if Empty)
+       ========================================================================== */
+    .ep-testimonials-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 1.75rem;
+    }
+
+    .ep-testimonial-card {
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .ep-testimonial-stars {
+        color: #f59e0b;
+        font-size: 0.85rem;
+        margin-bottom: 1rem;
+        display: flex;
+        gap: 3px;
+    }
+
+    .ep-testimonial-text {
+        font-size: 0.95rem;
+        color: #334155;
+        line-height: 1.6;
+        font-style: italic;
+        margin-bottom: 1.5rem;
+        flex-grow: 1;
+    }
+
+    .ep-testimonial-author {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding-top: 1.25rem;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    .ep-author-avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background-color: #0f172a;
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .ep-author-name {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+
+    .ep-author-course {
+        font-size: 0.78rem;
+        color: #64748b;
+    }
+
+    /* ==========================================================================
+       9. COURSE PREVIEW SHOWCASE (Actual Platform Experience Gallery)
+       ========================================================================== */
+    .ep-showcase-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 2rem;
+    }
+
+    .ep-showcase-item {
+        background-color: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 2.25rem;
+        transition: all 0.2s ease;
+    }
+
+    .ep-showcase-item:hover {
+        border-color: #94a3b8;
+        box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.05);
+    }
+
+    .ep-showcase-icon {
+        font-size: 1.75rem;
+        color: #0f172a;
+        margin-bottom: 1.25rem;
+    }
+
+    .ep-showcase-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 0.65rem;
+        letter-spacing: -0.015em;
+    }
+
+    .ep-showcase-desc {
+        font-size: 0.9rem;
+        color: #475569;
+        line-height: 1.6;
+        margin-bottom: 1.5rem;
+    }
+
+    .ep-showcase-preview-box {
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1.25rem;
+        font-size: 0.8rem;
+        color: #475569;
+    }
+
+    /* ==========================================================================
+       10. FINAL CALL TO ACTION (Conversion Section)
+       ========================================================================== */
+    .ep-cta-section {
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        border-top: 1px solid #edf0f4;
+        padding: 6rem 0;
+        text-align: center;
+    }
+
+    .ep-cta-card {
+        max-width: 840px;
+        margin: 0 auto;
+    }
+
+    .ep-cta-title {
+        font-size: 2.75rem;
+        font-weight: 800;
+        letter-spacing: -0.035em;
+        line-height: 1.2;
+        color: #0f172a;
+        margin-bottom: 1.25rem;
+    }
+
+    .ep-cta-desc {
+        font-size: 1.15rem;
+        color: #475569;
+        line-height: 1.6;
+        max-width: 600px;
+        margin: 0 auto 2.5rem auto;
+    }
+
+    .ep-cta-actions {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.5rem;
+    }
+
+    .ep-cta-guarantee {
+        font-size: 0.8rem;
+        color: #64748b;
+    }
+
+    /* ==========================================================================
+       11. COMPREHENSIVE ENTERPRISE FOOTER
+       ========================================================================== */
+    .ep-footer {
+        background-color: #0f172a;
+        color: #94a3b8;
+        padding: 4.5rem 0 2.5rem 0;
+        border-top: 1px solid #1e293b;
+        font-size: 0.875rem;
+    }
+
+    .ep-footer-grid {
+        display: grid;
+        grid-template-columns: 1.75fr 1fr 1fr 1fr 1fr;
+        gap: 3rem;
+        margin-bottom: 4rem;
+    }
+
+    .ep-footer-col-title {
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #f8fafc;
+        margin-bottom: 1.25rem;
+    }
+
+    .ep-footer-links {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .ep-footer-link {
+        color: #94a3b8 !important;
+        text-decoration: none !important;
+        transition: color 0.15s ease;
+    }
+
+    .ep-footer-link:hover {
+        color: #ffffff !important;
+    }
+
+    .ep-footer-bottom {
+        padding-top: 2rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+        font-size: 0.8rem;
+    }
+
+    .ep-status-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #34d399;
+        font-weight: 500;
+    }
+
+    .ep-status-bulb {
+        width: 8px;
+        height: 8px;
+        background-color: #10b981;
+        border-radius: 50%;
+        box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+    }
+
+    /* ==========================================================================
+       RESPONSIVENESS (Mobile-First Transition Rules)
+       ========================================================================== */
+    @media (max-width: 1200px) {
+        .ep-courses-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        .ep-why-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        .ep-footer-grid {
+            grid-template-columns: 1.5fr repeat(3, 1fr);
+        }
+    }
+
+    @media (max-width: 991.98px) {
+        .ep-hero-grid,
+        .ep-instructor-grid {
+            grid-template-columns: 1fr;
+            gap: 3rem;
+        }
+
+        .ep-hero {
+            padding: 3.5rem 0 4.5rem 0;
+        }
+
+        .ep-hero-title {
+            font-size: 2.5rem;
+        }
+
+        .ep-journey-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .ep-stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .ep-showcase-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .ep-footer-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+    }
+
+    @media (max-width: 767.98px) {
+        .ep-section {
+            padding: 3.5rem 0;
+        }
+
+        .ep-hero-title,
+        .ep-cta-title,
+        .ep-instructor-title {
+            font-size: 2.1rem;
+        }
+
+        .ep-section-title {
+            font-size: 1.85rem;
+        }
+
+        .ep-courses-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .ep-why-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .ep-stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .ep-hero-actions,
+        .ep-cta-actions {
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .ep-btn-lg-primary,
+        .ep-btn-lg-secondary {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .ep-hero-trust-row {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .ep-footer-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="ep-page">
+
+    <!-- ====================================================================
+         1. HERO SECTION (Initial Viewport Focus & Platform Narrative)
+         ==================================================================== -->
+    <section class="ep-hero">
+        <div class="ep-container">
+            <div class="ep-hero-grid">
+                
+                <!-- Left Narrative Column -->
+                <div>
+                    <div class="ep-eyebrow">
+                        <i class="bi bi-shield-check"></i> Enterprise Educational Ecosystem
+                    </div>
+                    <h1 class="ep-hero-title">
+                        A modern learning ecosystem built for <br />
+                        <span class="ep-hero-highlight">rigorous skills & growth.</span>
+                    </h1>
+                    <p class="ep-hero-desc">
+                        Where ambitious engineers master production-grade technical proficiencies, accredited educators build sustainable teaching businesses, and organizations scale workforce competency.
+                    </p>
+                    <div class="ep-hero-actions">
+                            <a href="/Account/Register" class="ep-btn-lg-primary">
+                                Create Free Account <i class="bi bi-arrow-right"></i>
+                            </a>
+                            <a href="/Courses" class="ep-btn-lg-secondary">
+                                Explore All Courses
+                            </a>
+                    </div>
+                    <div class="ep-hero-trust-row">
+                        <div class="ep-hero-trust-item">
+                            <i class="bi bi-patch-check"></i> 100% Accredited Instructors
+                        </div>
+                        <div class="ep-hero-trust-item">
+                            <i class="bi bi-file-earmark-code"></i> Real-World Project Rubrics
+                        </div>
+                        <div class="ep-hero-trust-item">
+                            <i class="bi bi-award"></i> Verifiable Digital Credentials
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Platform Preview Column (Bespoke Dashboard Architecture) -->
+                <div class="d-none d-lg-block">
+                    <div class="ep-platform-preview">
+                        <div class="ep-preview-topbar">
+                            <div class="ep-preview-dots">
+                                <span class="ep-preview-dot"></span>
+                                <span class="ep-preview-dot"></span>
+                                <span class="ep-preview-dot"></span>
+                            </div>
+                            <span class="ep-preview-badge">edupulse.cloud/learn/c402</span>
+                        </div>
+                        <div class="ep-preview-body">
+                            <div class="ep-preview-player">
+                                <div class="text-white-50 small mb-2"><i class="bi bi-play-circle-fill fs-3 text-white"></i></div>
+                                <div class="ep-preview-player-title">Distributed Architectures & Asynchronous Microservices</div>
+                                <div class="ep-preview-meta">
+                                    <span><i class="bi bi-clock me-1"></i> Lecture 04: Event-Driven State</span>
+                                    <span><i class="bi bi-file-pdf me-1"></i> Synchronized Study Deck</span>
+                                </div>
+                            </div>
+                            <div class="ep-preview-modules">
+                                <div class="ep-preview-module-card">
+                                    <div>
+                                        <div class="ep-preview-mod-name">Mod 1: Core Domain Models</div>
+                                        <div class="text-muted" style="font-size: 0.68rem;">3 Lectures &bull; Passed</div>
+                                    </div>
+                                    <span class="ep-preview-mod-status ep-status-done">Completed</span>
+                                </div>
+                                <div class="ep-preview-module-card">
+                                    <div>
+                                        <div class="ep-preview-mod-name">Mod 2: Message Brokers</div>
+                                        <div class="text-muted" style="font-size: 0.68rem;">4 Lectures &bull; In Progress</div>
+                                    </div>
+                                    <span class="ep-preview-mod-status ep-status-prog">75% Complete</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ====================================================================
+         2. FEATURED LEARNING CATEGORIES (Dynamic & Auto-Expanding)
+         ==================================================================== -->
+    <section class="ep-section ep-section-alt">
+        <div class="ep-container">
+            <div class="ep-section-header">
+                <div class="ep-eyebrow">Curated Disciplines</div>
+                <h2 class="ep-section-title">Explore Specialized Knowledge Domains</h2>
+                <p class="ep-section-subtitle">
+                    Select a discipline to inspect sequential learning paths, module breakdowns, and accredited mentors.
+                </p>
+            </div>
+
+            <div class="ep-categories-grid">
+                        <a href="/Courses?category=Fullstack" class="ep-category-card">
+                            <div class="ep-category-icon-box">
+                                <i class="bi bi-layers"></i>
+                            </div>
+                            <div class="ep-category-name">Fullstack</div>
+                            <div class="ep-category-desc">End-to-end software engineering, modern architecture &amp; production deployment.</div>
+                            <div class="ep-category-footer">
+                                <span>2 Available Curriculums</span>
+                                <span>Inspect Path <i class="bi bi-arrow-right ms-1"></i></span>
+                            </div>
+                        </a>
+                        <a href="/Courses?category=Backend" class="ep-category-card">
+                            <div class="ep-category-icon-box">
+                                <i class="bi bi-server"></i>
+                            </div>
+                            <div class="ep-category-name">Backend</div>
+                            <div class="ep-category-desc">Scalable REST APIs, distributed microservices, C# .NET &amp; data engines.</div>
+                            <div class="ep-category-footer">
+                                <span>1 Available Curriculum</span>
+                                <span>Inspect Path <i class="bi bi-arrow-right ms-1"></i></span>
+                            </div>
+                        </a>
+                        <a href="/Courses?category=Cloud%20Architecture" class="ep-category-card">
+                            <div class="ep-category-icon-box">
+                                <i class="bi bi-cloud-check"></i>
+                            </div>
+                            <div class="ep-category-name">Cloud Architecture</div>
+                            <div class="ep-category-desc">Cloud infrastructure patterns, serverless paradigms &amp; high-availability designs.</div>
+                            <div class="ep-category-footer">
+                                <span>1 Available Curriculum</span>
+                                <span>Inspect Path <i class="bi bi-arrow-right ms-1"></i></span>
+                            </div>
+                        </a>
+                        <a href="/Courses?category=DevOps" class="ep-category-card">
+                            <div class="ep-category-icon-box">
+                                <i class="bi bi-cpu"></i>
+                            </div>
+                            <div class="ep-category-name">DevOps</div>
+                            <div class="ep-category-desc">Continuous delivery pipelines, containerization, Docker &amp; orchestration.</div>
+                            <div class="ep-category-footer">
+                                <span>1 Available Curriculum</span>
+                                <span>Inspect Path <i class="bi bi-arrow-right ms-1"></i></span>
+                            </div>
+                        </a>
+                        <a href="/Courses?category=Frontend" class="ep-category-card">
+                            <div class="ep-category-icon-box">
+                                <i class="bi bi-laptop"></i>
+                            </div>
+                            <div class="ep-category-name">Frontend</div>
+                            <div class="ep-category-desc">Modern React, TypeScript, state systems &amp; performant user interfaces.</div>
+                            <div class="ep-category-footer">
+                                <span>1 Available Curriculum</span>
+                                <span>Inspect Path <i class="bi bi-arrow-right ms-1"></i></span>
+                            </div>
+                        </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ====================================================================
+         3. FEATURED COURSES SECTION (Streaming-Platform Clean Layout)
+         ==================================================================== -->
+    <section class="ep-section">
+        <div class="ep-container">
+            <div class="ep-section-header">
+                <div class="ep-eyebrow">Core Curriculums</div>
+                <h2 class="ep-section-title">Highest-Priority Learning Pathways</h2>
+                <p class="ep-section-subtitle">
+                    Deep-dive technical courses curated for tangible career impact and practical execution.
+                </p>
+            </div>
+
+            <div class="ep-courses-grid">
+                        <div class="ep-course-card">
+                            <div class="ep-course-thumbnail-frame">
+                                <span class="ep-course-level-badge">Advanced</span>
+                                <div class="ep-course-weeks">
+                                    <i class="bi bi-calendar3 me-1"></i> 8 Weeks Duration
+                                </div>
+                            </div>
+                            <div class="ep-course-body">
+                                <div class="ep-course-discipline">Cloud Architecture</div>
+                                <h3 class="ep-course-card-title" title="Multi-Cloud Architecture on AWS and GCP">Multi-Cloud Architecture on AWS and GCP</h3>
+                                <div class="ep-course-instructor">
+                                    <i class="bi bi-person-badge"></i>
+                                    <span>Dr. Vikram Sen</span>
+                                    <i class="bi bi-patch-check-fill text-primary" style="font-size: 0.8rem;" title="Accredited Instructor"></i>
+                                </div>
+                                <p class="ep-course-desc-snippet">Design scalable multi-region microservices on AWS and GCP with Terraform.</p>
+                                <div class="ep-course-footer">
+                                    <span class="ep-course-price">$89.99</span>
+                                    <a href="/Courses/Details/6" class="ep-course-action-link">
+                                        View Curriculum <i class="bi bi-chevron-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ep-course-card">
+                            <div class="ep-course-thumbnail-frame">
+                                <span class="ep-course-level-badge">Intermediate</span>
+                                <div class="ep-course-weeks">
+                                    <i class="bi bi-calendar3 me-1"></i> 10 Weeks Duration
+                                </div>
+                            </div>
+                            <div class="ep-course-body">
+                                <div class="ep-course-discipline">Backend</div>
+                                <h3 class="ep-course-card-title" title="Enterprise ASP.NET MVC &amp; SQL Server Architecture">Enterprise ASP.NET MVC &amp; SQL Server Architecture</h3>
+                                <div class="ep-course-instructor">
+                                    <i class="bi bi-person-badge"></i>
+                                    <span>A. Sharma</span>
+                                    <i class="bi bi-patch-check-fill text-primary" style="font-size: 0.8rem;" title="Accredited Instructor"></i>
+                                </div>
+                                <p class="ep-course-desc-snippet">Master monolithic and layered enterprise architecture using ASP.NET MVC 5, ADO.NET, Repository Patterns, stored procedures, authentication filters, and clean code principles.</p>
+                                <div class="ep-course-footer">
+                                    <span class="ep-course-price">$69.99</span>
+                                    <a href="/Courses/Details/2" class="ep-course-action-link">
+                                        View Curriculum <i class="bi bi-chevron-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ep-course-card">
+                            <div class="ep-course-thumbnail-frame">
+                                <span class="ep-course-level-badge">Beginner</span>
+                                <div class="ep-course-weeks">
+                                    <i class="bi bi-calendar3 me-1"></i> 8 Weeks Duration
+                                </div>
+                            </div>
+                            <div class="ep-course-body">
+                                <div class="ep-course-discipline">Frontend</div>
+                                <h3 class="ep-course-card-title" title="Modern React 18 &amp; TypeScript Masterclass">Modern React 18 &amp; TypeScript Masterclass</h3>
+                                <div class="ep-course-instructor">
+                                    <i class="bi bi-person-badge"></i>
+                                    <span>A. Sharma</span>
+                                    <i class="bi bi-patch-check-fill text-primary" style="font-size: 0.8rem;" title="Accredited Instructor"></i>
+                                </div>
+                                <p class="ep-course-desc-snippet">Learn to build high-performance, accessible, and enterprise-scale single page applications with React 18, TypeScript, custom hooks, Redux Toolkit, and Vite.</p>
+                                <div class="ep-course-footer">
+                                    <span class="ep-course-price">$49.99</span>
+                                    <a href="/Courses/Details/1" class="ep-course-action-link">
+                                        View Curriculum <i class="bi bi-chevron-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ep-course-card">
+                            <div class="ep-course-thumbnail-frame">
+                                <span class="ep-course-level-badge">Intermediate</span>
+                                <div class="ep-course-weeks">
+                                    <i class="bi bi-calendar3 me-1"></i> 18 Weeks Duration
+                                </div>
+                            </div>
+                            <div class="ep-course-body">
+                                <div class="ep-course-discipline">Fullstack</div>
+                                <h3 class="ep-course-card-title" title="Full Stack Web Development">Full Stack Web Development</h3>
+                                <div class="ep-course-instructor">
+                                    <i class="bi bi-person-badge"></i>
+                                    <span>Neha Kapoor</span>
+                                    <i class="bi bi-patch-check-fill text-primary" style="font-size: 0.8rem;" title="Accredited Instructor"></i>
+                                </div>
+                                <p class="ep-course-desc-snippet">This is a full stack Development course with 5 minor projects and 3 major project</p>
+                                <div class="ep-course-footer">
+                                    <span class="ep-course-price">$99.99</span>
+                                    <a href="/Courses/Details/5" class="ep-course-action-link">
+                                        View Curriculum <i class="bi bi-chevron-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+            </div>
+
+            <div class="text-center mt-5">
+                <a href="/Courses" class="ep-btn-lg-secondary">
+                    View Complete Catalog of Courses <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ====================================================================
+         4. WHY EDUPULSE (4 Major Advantages)
+         ==================================================================== -->
+    <section class="ep-section ep-section-alt">
+        <div class="ep-container">
+            <div class="ep-section-header">
+                <div class="ep-eyebrow">The EduPulse Standard</div>
+                <h2 class="ep-section-title">Engineered for Deep Academic Retention</h2>
+                <p class="ep-section-subtitle">
+                    How our pedagogical infrastructure differs from superficial course libraries and video marketplaces.
+                </p>
+            </div>
+
+            <div class="ep-why-grid">
+                <div class="ep-why-card">
+                    <div class="ep-why-icon">
+                        <i class="bi bi-signpost-split"></i>
+                    </div>
+                    <h3 class="ep-why-title">Structured Learning Paths</h3>
+                    <p class="ep-why-text">
+                        Sequential, prerequisite-checked modules that guide learners step-by-step toward comprehensive conceptual and architectural mastery.
+                    </p>
+                </div>
+
+                <div class="ep-why-card">
+                    <div class="ep-why-icon">
+                        <i class="bi bi-person-check"></i>
+                    </div>
+                    <h3 class="ep-why-title">Accredited Mentors</h3>
+                    <p class="ep-why-text">
+                        Every educator undergoes stringent dossier inspection, credential review, and syllabus validation before authoring content.
+                    </p>
+                </div>
+
+                <div class="ep-why-card">
+                    <div class="ep-why-icon">
+                        <i class="bi bi-clipboard2-check"></i>
+                    </div>
+                    <h3 class="ep-why-title">Practical Assessments</h3>
+                    <p class="ep-why-text">
+                        Learn by building. Submit real project code and written syntheses evaluated against standardized academic grading rubrics.
+                    </p>
+                </div>
+
+                <div class="ep-why-card">
+                    <div class="ep-why-icon">
+                        <i class="bi bi-shield-lock"></i>
+                    </div>
+                    <h3 class="ep-why-title">Verifiable Credentials</h3>
+                    <p class="ep-why-text">
+                        Earn authentic completion certificates featuring unique verification IDs, grade summaries, and instructor digital signatures.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ====================================================================
+         5. THE LEARNING JOURNEY (6 Sequential Steps)
+         ==================================================================== -->
+    <section class="ep-section">
+        <div class="ep-container">
+            <div class="ep-section-header">
+                <div class="ep-eyebrow">Step-By-Step Progression</div>
+                <h2 class="ep-section-title">Your Path from Discovery to Certification</h2>
+                <p class="ep-section-subtitle">
+                    A clear, transparent roadmap ensuring consistent accountability at every stage of the curriculum.
+                </p>
+            </div>
+
+            <div class="ep-journey-grid">
+                <div class="ep-journey-step">
+                    <span class="ep-step-number">PHASE 01</span>
+                    <h3 class="ep-step-title">Discover Curriculums</h3>
+                    <p class="ep-step-desc">
+                        Explore categorized engineering pathways, review detailed lecture syllabi, and match skills with career objectives.
+                    </p>
+                </div>
+
+                <div class="ep-journey-step">
+                    <span class="ep-step-number">PHASE 02</span>
+                    <h3 class="ep-step-title">Seamless Enrollment</h3>
+                    <p class="ep-step-desc">
+                        Enroll with automated tax invoice generation, instant dashboard access, and permanent curriculum entitlement.
+                    </p>
+                </div>
+
+                <div class="ep-journey-step">
+                    <span class="ep-step-number">PHASE 03</span>
+                    <h3 class="ep-step-title">Interactive Study</h3>
+                    <p class="ep-step-desc">
+                        Engage with high-definition lecture video alongside synchronized slide decks and structured reference reading.
+                    </p>
+                </div>
+
+                <div class="ep-journey-step">
+                    <span class="ep-step-number">PHASE 04</span>
+                    <h3 class="ep-step-title">Build & Submit Projects</h3>
+                    <p class="ep-step-desc">
+                        Upload assignment code repositories and technical write-ups evaluated directly against instructor grading criteria.
+                    </p>
+                </div>
+
+                <div class="ep-journey-step">
+                    <span class="ep-step-number">PHASE 05</span>
+                    <h3 class="ep-step-title">Validate Knowledge</h3>
+                    <p class="ep-step-desc">
+                        Complete comprehensive module quizzes with immediate feedback, rationale explanations, and progress tracking.
+                    </p>
+                </div>
+
+                <div class="ep-journey-step">
+                    <span class="ep-step-number">PHASE 06</span>
+                    <h3 class="ep-step-title">Earn Credential</h3>
+                    <p class="ep-step-desc">
+                        Receive an official Certificate of Completion backed by digital instructor signature and verifiable credential hash.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ====================================================================
+         6. INSTRUCTOR GROWTH SECTION (Educator Acquisition)
+         ==================================================================== -->
+    <section class="ep-instructor-section">
+        <div class="ep-container">
+            <div class="ep-instructor-grid">
+                
+                <!-- Left Educator Copy -->
+                <div>
+                    <div class="ep-eyebrow ep-instructor-eyebrow">
+                        <i class="bi bi-briefcase"></i> Creator Economy for Educators
+                    </div>
+                    <h2 class="ep-instructor-title">
+                        Build Your Teaching Authority with EduPulse
+                    </h2>
+                    <p class="ep-instructor-desc">
+                        Transform your industry expertise into a high-credibility educational venture. We provide the enterprise curriculum tools, hosting, and grading workbench â€” you keep 90% of the revenue.
+                    </p>
+
+                    <div class="ep-instructor-benefits">
+                        <div class="ep-benefit-item">
+                            <div class="ep-benefit-icon"><i class="bi bi-pie-chart"></i></div>
+                            <div>
+                                <div class="ep-benefit-title">90% Net Revenue Retention</div>
+                                <p class="ep-benefit-desc">Transparent 10% platform fee model with automated sales invoicing and transparent payouts.</p>
+                            </div>
+                        </div>
+
+                        <div class="ep-benefit-item">
+                            <div class="ep-benefit-icon"><i class="bi bi-cloud-arrow-up"></i></div>
+                            <div>
+                                <div class="ep-benefit-title">Comprehensive Curriculum Studio</div>
+                                <p class="ep-benefit-desc">Upload large-scale lecture slide decks (up to 100 MB), video lessons, and custom project rubrics.</p>
+                            </div>
+                        </div>
+
+                        <div class="ep-benefit-item">
+                            <div class="ep-benefit-icon"><i class="bi bi-speedometer2"></i></div>
+                            <div>
+                                <div class="ep-benefit-title">Student Friction & Confusion Heatmap</div>
+                                <p class="ep-benefit-desc">Actionable pedagogical insights identifying exactly which modules learners find challenging.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <a href="/Account/Register" class="ep-btn-lg-primary" style="background-color: #ffffff; color: #0f172a !important; border-color: #ffffff;">
+                        Apply to Teach on EduPulse <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+
+                <!-- Right Studio Cockpit Mockup -->
+                <div>
+                    <div class="ep-studio-mockup">
+                        <div class="ep-mockup-header">
+                            <div>
+                                <div class="ep-mockup-title">Instructor Studio Analytics</div>
+                                <div class="text-muted" style="font-size: 0.75rem;">Verified Seller Cockpit</div>
+                            </div>
+                            <span class="ep-mockup-badge">90% Payout Active</span>
+                        </div>
+
+                        <div class="ep-mockup-stat-grid">
+                            <div class="ep-mockup-stat-card">
+                                <div class="ep-mockup-stat-label">Net Take-Home</div>
+                                <div class="ep-mockup-stat-val text-success">$9,450.00</div>
+                            </div>
+                            <div class="ep-mockup-stat-card">
+                                <div class="ep-mockup-stat-label">Platform Fee (10%)</div>
+                                <div class="ep-mockup-stat-val">$1,050.00</div>
+                            </div>
+                        </div>
+
+                        <div class="ep-mockup-heatmap">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="small fw-bold text-white">Curriculum Friction Heatmap</span>
+                                <span class="badge bg-secondary" style="font-size: 0.65rem;">Live Telemetry</span>
+                            </div>
+                            <div class="ep-heatmap-row">
+                                <span class="text-slate-300">Mod 1: Dependency Injection</span>
+                                <span class="text-success small"><i class="bi bi-check-circle me-1"></i> Low Friction</span>
+                            </div>
+                            <div class="ep-heatmap-row">
+                                <span class="text-slate-300">Mod 2: Microservice Sagas</span>
+                                <span class="text-warning small"><i class="bi bi-exclamation-circle me-1"></i> Moderate Inquiries</span>
+                            </div>
+                            <div class="ep-heatmap-row">
+                                <span class="text-slate-300">Mod 3: Distributed Transactions</span>
+                                <span class="text-info small"><i class="bi bi-info-circle me-1"></i> High Comprehension</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ====================================================================
+         7. PLATFORM STATISTICS (100% Real Live Database Metrics)
+         ==================================================================== -->
+    <section class="ep-section">
+        <div class="ep-container">
+            <div class="ep-section-header">
+                <div class="ep-eyebrow">Real-Time Telemetry</div>
+                <h2 class="ep-section-title">Verified Platform Milestones</h2>
+                <p class="ep-section-subtitle">
+                    Live database statistics reflecting genuine enrollments, active courses, and academic completions.
+                </p>
+            </div>
+
+            <div class="ep-stats-grid">
+                <div class="ep-stat-box">
+                    <div class="ep-stat-number">4</div>
+                    <div class="ep-stat-label">Active Learners</div>
+                </div>
+
+                <div class="ep-stat-box">
+                    <div class="ep-stat-number">6</div>
+                    <div class="ep-stat-label">Available Curriculums</div>
+                </div>
+
+                <div class="ep-stat-box">
+                    <div class="ep-stat-number">4</div>
+                    <div class="ep-stat-label">Accredited Instructors</div>
+                </div>
+
+                <div class="ep-stat-box">
+                    <div class="ep-stat-number">12</div>
+                    <div class="ep-stat-label">Assessments & Quizzes Evaluated</div>
+                </div>
+
+                <div class="ep-stat-box">
+                    <div class="ep-stat-number">5</div>
+                    <div class="ep-stat-label">Verified Certifications Issued</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ====================================================================
+         8. TESTIMONIALS & OUTCOMES (Gracefully Hidden if Zero Reviews)
+         ==================================================================== -->
+        <section class="ep-section ep-section-alt">
+            <div class="ep-container">
+                <div class="ep-section-header">
+                    <div class="ep-eyebrow">Authentic Feedback</div>
+                    <h2 class="ep-section-title">Verified Learner Experiences</h2>
+                    <p class="ep-section-subtitle">
+                        Direct reviews from students who completed coursework and capstone assessments.
+                    </p>
+                </div>
+
+                <div class="ep-testimonials-grid">
+                        <div class="ep-testimonial-card">
+                            <div class="ep-testimonial-stars">
+                                        <i class="bi bi-star-fill"></i>
+                                        <i class="bi bi-star-fill"></i>
+                                        <i class="bi bi-star-fill"></i>
+                                        <i class="bi bi-star-fill"></i>
+                                        <i class="bi bi-star-fill"></i>
+                            </div>
+                            <p class="ep-testimonial-text">"Outstanding course! The practical real-world architecture examples made React 18 concepts crystal clear."</p>
+                            <div class="ep-testimonial-author">
+                                <div class="ep-author-avatar">JO</div>
+                                <div>
+                                    <div class="ep-author-name">John Doe</div>
+                                    <div class="ep-author-course">Enrolled in Modern React 18 &amp; TypeScript Masterclass</div>
+                                </div>
+                            </div>
+                        </div>
+                </div>
+            </div>
+        </section>
+
+    <!-- ====================================================================
+         9. COURSE PREVIEW SHOWCASE (Actual Platform Experience Gallery)
+         ==================================================================== -->
+    <section class="ep-section">
+        <div class="ep-container">
+            <div class="ep-section-header">
+                <div class="ep-eyebrow">Inside The Platform</div>
+                <h2 class="ep-section-title">A Focused, Ergonomic Learning Environment</h2>
+                <p class="ep-section-subtitle">
+                    Inspect the functional tools designed to eliminate distraction and maximize engineering focus.
+                </p>
+            </div>
+
+            <div class="ep-showcase-grid">
+                <div class="ep-showcase-item">
+                    <div class="ep-showcase-icon"><i class="bi bi-window-sidebar"></i></div>
+                    <h3 class="ep-showcase-title">Dual-Pane Active Classroom</h3>
+                    <p class="ep-showcase-desc">
+                        Watch high-bitrate technical lectures with alongside interactive PDF course slides and code manifests without switching tabs.
+                    </p>
+                    <div class="ep-showcase-preview-box">
+                        <i class="bi bi-check2 text-success me-2"></i> Synchronized progress saving &bull; Timestamped lecture notes &bull; Dark mode player
+                    </div>
+                </div>
+
+                <div class="ep-showcase-item">
+                    <div class="ep-showcase-icon"><i class="bi bi-ui-checks"></i></div>
+                    <h3 class="ep-showcase-title">Interactive Assessment Engine</h3>
+                    <p class="ep-showcase-desc">
+                        Test conceptual comprehension with rigorous multiple-choice quizzes that provide immediate diagnostic feedback and retake control.
+                    </p>
+                    <div class="ep-showcase-preview-box">
+                        <i class="bi bi-check2 text-success me-2"></i> Auto-scoring &bull; Criterion explanation &bull; Verified gradebook integration
+                    </div>
+                </div>
+
+                <div class="ep-showcase-item">
+                    <div class="ep-showcase-icon"><i class="bi bi-award-fill"></i></div>
+                    <h3 class="ep-showcase-title">Cryptographically Verifiable Certificates</h3>
+                    <p class="ep-showcase-desc">
+                        Each completion certificate features an official cryptographic verification number, graduation timestamp, and instructor signature.
+                    </p>
+                    <div class="ep-showcase-preview-box">
+                        <i class="bi bi-check2 text-success me-2"></i> High-resolution PDF export &bull; Permanent public URL verification &bull; Tamper-proof
+                    </div>
+                </div>
+
+                <div class="ep-showcase-item">
+                    <div class="ep-showcase-icon"><i class="bi bi-file-earmark-diff"></i></div>
+                    <h3 class="ep-showcase-title">Instructor Evaluation Backlog</h3>
+                    <p class="ep-showcase-desc">
+                        Instructors evaluate assignment repositories and text submissions using structured rubric criteria and constructive line feedback.
+                    </p>
+                    <div class="ep-showcase-preview-box">
+                        <i class="bi bi-check2 text-success me-2"></i> Split-screen submission inspector &bull; 0â€“100 numerical marking &bull; One-click approvals
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ====================================================================
+         10. FINAL CALL TO ACTION (Conversion Section)
+         ==================================================================== -->
+    <section class="ep-cta-section">
+        <div class="ep-container">
+            <div class="ep-cta-card">
+                <div class="ep-eyebrow">Start Today</div>
+                <h2 class="ep-cta-title">Begin Your Educational Journey with EduPulse</h2>
+                <p class="ep-cta-desc">
+                    Join ambitious software engineers, technical architects, and accredited educators advancing their careers through structured, rigorous curriculums.
+                </p>
+                <div class="ep-cta-actions">
+                        <a href="/Account/Register" class="ep-btn-lg-primary">
+                            Create Free Account <i class="bi bi-arrow-right"></i>
+                        </a>
+                        <a href="/Courses" class="ep-btn-lg-secondary">
+                            Explore All Courses
+                        </a>
+                </div>
+                <div class="ep-cta-guarantee">
+                    <i class="bi bi-lock-fill me-1"></i> Immediate access &bull; Free preview lessons available &bull; No credit card required for registration
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ====================================================================
+         11. COMPREHENSIVE ENTERPRISE FOOTER
+         ==================================================================== -->
+    <footer class="ep-footer">
+        <div class="ep-container">
+            <div class="ep-footer-grid">
+                
+                <!-- Col 1: Brand & Mission -->
+                <div>
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <span class="ep-brand-symbol" style="width: 28px; height: 28px; background-color: #ffffff; color: #0f172a;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12 3L2 8L12 13L22 8L12 3Z" stroke="#0f172a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M5 10.5V16C5 17.5 8 19.5 12 19.5C16 19.5 19 17.5 19 16V10.5" stroke="#0f172a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </span>
+                        <span class="text-white fw-bold fs-5">EduPulse</span>
+                    </div>
+                    <p class="text-muted small mb-3" style="line-height: 1.65; max-width: 320px;">
+                        Enterprise-grade educational ecosystem dedicated to practical technical rigor, verified credentials, and creator-economy educators.
+                    </p>
+                    <div class="ep-status-indicator">
+                        <span class="ep-status-bulb"></span>
+                        <span>All Systems Operational</span>
+                    </div>
+                </div>
+
+                <!-- Col 2: Course Disciplines -->
+                <div>
+                    <div class="ep-footer-col-title">Disciplines</div>
+                    <ul class="ep-footer-links">
+                                <li>
+                                    <a class="ep-footer-link" href="/Courses?category=Fullstack">
+                                        Fullstack
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="ep-footer-link" href="/Courses?category=Backend">
+                                        Backend
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="ep-footer-link" href="/Courses?category=Cloud%20Architecture">
+                                        Cloud Architecture
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="ep-footer-link" href="/Courses?category=DevOps">
+                                        DevOps
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="ep-footer-link" href="/Courses?category=Frontend">
+                                        Frontend
+                                    </a>
+                                </li>
+                    </ul>
+                </div>
+
+                <!-- Col 3: Educator Hub -->
+                <div>
+                    <div class="ep-footer-col-title">Educator Hub</div>
+                    <ul class="ep-footer-links">
+                        <li><a class="ep-footer-link" href="/Account/Register">Become an Instructor</a></li>
+                        <li><a class="ep-footer-link" href="/Instructor/ApplicationStatus">Check Application</a></li>
+                        <li><a class="ep-footer-link" href="/Instructor">Instructor Studio</a></li>
+                        <li><a class="ep-footer-link" href="/Payment/Invoices">Creator Payouts</a></li>
+                    </ul>
+                </div>
+
+                <!-- Col 4: Platform & Governance -->
+                <div>
+                    <div class="ep-footer-col-title">Company</div>
+                    <ul class="ep-footer-links">
+                        <li><a class="ep-footer-link" href="/Home/About">About EduPulse</a></li>
+                        <li><a class="ep-footer-link" href="/Home/Contact">Academic Support</a></li>
+                        <li><a class="ep-footer-link" href="/Courses">Course Directory</a></li>
+                        <li><a class="ep-footer-link" href="/Account/Login">Member Sign In</a></li>
+                    </ul>
+                </div>
+
+                <!-- Col 5: Legal & Trust -->
+                <div>
+                    <div class="ep-footer-col-title">Governance</div>
+                    <ul class="ep-footer-links">
+                        <li><a class="ep-footer-link" href="/Home/About">Accreditation Policy</a></li>
+                        <li><a class="ep-footer-link" href="/Home/About">Privacy Framework</a></li>
+                        <li><a class="ep-footer-link" href="/Home/About">Terms of Enrollment</a></li>
+                        <li><a class="ep-footer-link" href="/Home/Contact">Verify Credential</a></li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <!-- Footer Bottom Bar -->
+            <div class="ep-footer-bottom">
+                <div>
+                    &copy; 2026 EduPulse Learning Management System. All rights reserved.
+                </div>
+                <div class="d-flex gap-4">
+                    <a href="/Home/About" class="ep-footer-link">Privacy Policy</a>
+                    <a href="/Home/About" class="ep-footer-link">Terms of Service</a>
+                    <a href="/Home/Contact" class="ep-footer-link">Contact Support</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+</div>
+
+    </main>
+
+    <!-- Floating RAG AI Teaching Assistant Drawer (Only visible when logged in) -->
+
+    <script src="/Scripts/jquery-3.7.0.js"></script>
+
+    <script src="/Scripts/bootstrap.js"></script>
+
+    
+
+<!-- Visual Studio Browser Link -->
+<script type="text/javascript" src="http://localhost:47843/c82b82fa7e70401fb5925ede4e1bd407/browserLink" async="async" id="__browserLink_initializationData" data-requestId="7cba4f304cce4431926100b4f5f101e4" data-appName="Unknown"></script>
+<!-- End Browser Link -->
+
+</body>
+</html>

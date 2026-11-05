@@ -13,7 +13,22 @@ from rank_bm25 import BM25Okapi
 from vector_store import collection, query_vector_db
 
 
-def tokenize_code_and_text(text: str) -> List[str]:
+STOP_WORDS = {
+    "a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any", "are", 
+    "as", "at", "be", "because", "been", "before", "being", "below", "between", "both", "but", 
+    "by", "can", "did", "do", "does", "doing", "down", "during", "each", "few", "for", "from", 
+    "further", "had", "has", "have", "having", "he", "her", "here", "hers", "herself", "him", 
+    "himself", "his", "how", "i", "if", "in", "into", "is", "it", "its", "itself", "just", 
+    "me", "more", "most", "my", "myself", "no", "nor", "not", "of", "off", "on", "once", "only", 
+    "or", "other", "our", "ours", "ourselves", "out", "over", "own", "s", "same", "she", "should", 
+    "so", "some", "such", "t", "than", "that", "the", "their", "theirs", "them", "themselves", 
+    "then", "there", "these", "they", "this", "those", "through", "to", "too", "under", "until", 
+    "up", "very", "was", "we", "were", "what", "when", "where", "which", "while", "who", "whom", 
+    "why", "will", "with", "would", "you", "your", "yours", "yourself", "yourselves", "tell", "explain"
+}
+
+
+def tokenize_code_and_text(text: str, remove_stopwords: bool = True) -> List[str]:
     """
     Tokenizes text while preserving programming keywords, camelCase words,
     acronyms, and symbols relevant in technical curriculum.
@@ -28,12 +43,14 @@ def tokenize_code_and_text(text: str) -> List[str]:
     # 2. Extract split subwords for camelCase identifiers
     expanded = []
     for tok in raw_tokens:
+        if remove_stopwords and tok in STOP_WORDS:
+            continue
         expanded.append(tok)
         # Split CamelCase or PascalCase subcomponents
         subwords = re.findall(r"[A-Z]?[a-z]+|[A-Z]+(?=[A-Z][a-z]|\d|\W|$)|\d+", text)
         for sw in subwords:
             sw_lower = sw.lower()
-            if len(sw_lower) > 2 and sw_lower != tok:
+            if len(sw_lower) > 2 and sw_lower != tok and (not remove_stopwords or sw_lower not in STOP_WORDS):
                 expanded.append(sw_lower)
                 
     return expanded
