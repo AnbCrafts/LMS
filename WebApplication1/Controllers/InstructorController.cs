@@ -1,3 +1,4 @@
+using Hangfire;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -397,7 +398,7 @@ namespace WebApplication1.Controllers
         // POST: /Instructor/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(Course model)
+        public ActionResult Create(Course model, bool publishImmediately = false)
         {
             int? userId = GetCurrentUserId();
             if (!userId.HasValue || !IsInstructor())
@@ -435,11 +436,27 @@ namespace WebApplication1.Controllers
                 var created = _courseRepo.CreateCourse(model);
                 if (created != null)
                 {
-                    TempData["SuccessMessage"] = $"Course '{created.Title}' created successfully! Now add curriculum modules below.";
+                    if (publishImmediately)
+                    {
+                        string publishError;
+                        bool published = _courseRepo.SetCoursePublishStatus(created.CourseId, true, out publishError);
+                        if (published)
+                        {
+                            TempData["SuccessMessage"] = $"Course '{created.Title}' created and published successfully to the student catalog!";
+                            return RedirectToAction("Modules", new { id = created.CourseId });
+                        }
+                        else
+                        {
+                            TempData["WarningMessage"] = $"Course '{created.Title}' saved as Draft. {publishError}";
+                            return RedirectToAction("Modules", new { id = created.CourseId });
+                        }
+                    }
+
+                    TempData["SuccessMessage"] = $"Course '{created.Title}' saved as Draft! Add at least one module with content below to publish it to students.";
                     return RedirectToAction("Modules", new { id = created.CourseId });
                 }
 
-                ModelState.AddModelError("", "Failed to publish course. Please try again.");
+                ModelState.AddModelError("", "Failed to save course. Please try again.");
                 return View(model);
             }
             catch (Exception ex)
@@ -556,12 +573,15 @@ namespace WebApplication1.Controllers
         // ====================================================================
         // GET: /Instructor/Modules/5
         [HttpGet]
-        public ActionResult Modules(int id)
+        public ActionResult Modules(int? id, int? courseId)
         {
             int? userId = GetCurrentUserId();
             if (!userId.HasValue || !IsInstructor()) return RedirectToAction("Login", "Account");
 
-            var course = _courseRepo.GetCourseById(id);
+            int targetCourseId = id ?? courseId ?? 0;
+            if (targetCourseId <= 0) return RedirectToAction("Index");
+
+            var course = _courseRepo.GetCourseById(targetCourseId);
             if (course == null) return HttpNotFound();
 
             if (course.InstructorId != userId.Value && Session["UserRole"] as string != "Admin")
@@ -571,7 +591,7 @@ namespace WebApplication1.Controllers
             }
 
             ViewBag.Course = course;
-            var modules = _instructorRepo.GetModulesByCourse(id).ToList();
+            var modules = _instructorRepo.GetModulesByCourse(targetCourseId).ToList();
             return View(modules);
         }
 
@@ -668,6 +688,15 @@ namespace WebApplication1.Controllers
                 var result = _instructorRepo.SaveModule(model);
                 if (result.IsSuccess)
                 {
+                    try
+                    {
+                        BackgroundJob.Enqueue(() => WebApplication1.Services.BackgroundJobService.SyncCourseToAiAssistant(model.CourseId));
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine("[Hangfire Enqueue Warning] " + ex.Message);
+                    }
+
                     TempData["SuccessMessage"] = $"Module #{model.ModuleNumber} ('{model.Title}') saved successfully!";
                 }
                 else
@@ -706,6 +735,62 @@ namespace WebApplication1.Controllers
             else
             {
                 TempData["ErrorMessage"] = result.Message;
+            }
+
+            return RedirectToAction("Modules", new { id = courseId });
+        }
+
+        // ====================================================================
+        // COURSE PUBLISHING LIFECYCLE (DRAFT <-> PUBLISHED)
+        // ====================================================================
+        // POST: /Instructor/TogglePublish
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult TogglePublish(int courseId, bool publish, string returnUrl = null)
+        {
+            int? userId = GetCurrentUserId();
+            if (!userId.HasValue || !IsInstructor()) return RedirectToAction("Login", "Account");
+
+            var course = _courseRepo.GetCourseById(courseId);
+            if (course == null) return HttpNotFound("Course not found.");
+
+            if (course.InstructorId != userId.Value && Session["UserRole"] as string != "Admin")
+            {
+                TempData["ErrorMessage"] = "Unauthorized action on course publication status.";
+                return RedirectToAction("Index");
+            }
+
+            string errorMessage;
+            bool success = _courseRepo.SetCoursePublishStatus(courseId, publish, out errorMessage);
+
+            if (success)
+            {
+                if (publish)
+                {
+                    try
+                    {
+                        BackgroundJob.Enqueue(() => WebApplication1.Services.BackgroundJobService.SyncCourseToAiAssistant(courseId));
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine("[Hangfire Enqueue Warning] " + ex.Message);
+                    }
+
+                    TempData["SuccessMessage"] = $"Congratulations! '{course.Title}' is now LIVE and published in the student catalog.";
+                }
+                else
+                {
+                    TempData["SuccessMessage"] = $"'{course.Title}' has been reverted to Draft mode. Students can no longer view or enroll in it.";
+                }
+            }
+            else
+            {
+                TempData["ErrorMessage"] = errorMessage ?? "Unable to update course publication status.";
+            }
+
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                return Redirect(returnUrl);
             }
 
             return RedirectToAction("Modules", new { id = courseId });

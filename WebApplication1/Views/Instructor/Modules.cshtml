@@ -45,6 +45,116 @@
         </div>
     }
 
+    @if (TempData["WarningMessage"] != null)
+    {
+        <div class="alert alert-warning alert-dismissible fade show rounded-3 shadow-sm border-0 mb-4" role="alert">
+            <i class="bi bi-exclamation-circle-fill me-2"></i> @TempData["WarningMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <!-- Course Publication & Catalog Status Banner -->
+    @{
+        bool isPublished = course != null && course.IsPublished;
+        int totalModules = Model != null ? Model.Count() : 0;
+        bool hasContent = Model != null && Model.Any(m =>
+            !string.IsNullOrWhiteSpace(m.ContentMarkdown) ||
+            !string.IsNullOrWhiteSpace(m.VideoOrResourceUrl) ||
+            !string.IsNullOrWhiteSpace(m.AssignmentPrompt) ||
+            !string.IsNullOrWhiteSpace(m.Description));
+        bool canPublish = totalModules > 0 && hasContent;
+    }
+
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 16px; border: 1px solid @(isPublished ? "#86efac" : "#fde68a") !important; background: @(isPublished ? "#f0fdf4" : "#fffbeb");">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div class="d-flex align-items-start gap-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 46px; height: 46px; background: @(isPublished ? "#dcfce7" : "#fef3c7"); color: @(isPublished ? "#16a34a" : "#d97706"); font-size: 1.3rem;">
+                        <i class="bi @(isPublished ? "bi-check-circle-fill" : "bi-journal-bookmark-fill")"></i>
+                    </div>
+                    <div>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <span class="badge @(isPublished ? "bg-success" : "bg-warning text-dark") px-2.5 py-1 font-monospace" style="font-size: 0.72rem;">
+                                @(isPublished ? "LIVE • Published in Catalog" : "DRAFT • Private / Unpublished")
+                            </span>
+                            <span class="text-secondary small font-monospace">Course ID #@(course?.CourseId)</span>
+                        </div>
+                        <h5 class="fw-bold text-dark mb-1">
+                            @(isPublished ? "Course is published and open for student enrollment" : "Course is in Draft mode (hidden from students)")
+                        </h5>
+                        <p class="text-secondary small mb-0" style="max-width: 650px;">
+                            @(isPublished 
+                                ? "Learners can discover this course in the catalog, purchase, and enroll. Changes you save here reflect immediately in classroom view." 
+                                : "Students cannot discover or enroll in this course while it is in Draft. Publishing requires at least 1 curriculum module with content.")
+                        </p>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    @if (isPublished)
+                    {
+                        <a href="@Url.Action("Details", "Courses", new { id = course.CourseId })" target="_blank" class="btn btn-outline-dark btn-sm rounded-pill px-3">
+                            <i class="bi bi-eye me-1"></i> Student View
+                        </a>
+                        using (Html.BeginForm("TogglePublish", "Instructor", FormMethod.Post, new { @class = "d-inline", onsubmit = "return confirm('Are you sure you want to revert this course to Draft? Students will no longer be able to discover or enroll in it.');" }))
+                        {
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="courseId" value="@course.CourseId" />
+                            <input type="hidden" name="publish" value="false" />
+                            <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3">
+                                <i class="bi bi-eye-slash me-1"></i> Move to Draft (Unpublish)
+                            </button>
+                        }
+                    }
+                    else
+                    {
+                        if (canPublish)
+                        {
+                            using (Html.BeginForm("TogglePublish", "Instructor", FormMethod.Post, new { @class = "d-inline" }))
+                            {
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="courseId" value="@course.CourseId" />
+                                <input type="hidden" name="publish" value="true" />
+                                <button type="submit" class="btn btn-success btn-sm rounded-pill px-4 fw-bold shadow-sm">
+                                    <i class="bi bi-rocket-takeoff-fill me-1"></i> Publish Course to Catalog
+                                </button>
+                            }
+                        }
+                        else
+                        {
+                            <button type="button" class="btn btn-secondary btn-sm rounded-pill px-4 disabled opacity-75" 
+                                    title="@(totalModules == 0 ? "Add at least 1 module to unlock publishing" : "Add content to at least 1 module to unlock publishing")">
+                                <i class="bi bi-lock-fill me-1"></i> Publish to Catalog (Locked)
+                            </button>
+                        }
+                    }
+                </div>
+            </div>
+
+            <!-- Publishing Readiness Checklist for Drafts -->
+            @if (!isPublished)
+            {
+                <div class="mt-3 pt-3 border-top border-warning-subtle d-flex align-items-center gap-4 flex-wrap" style="font-size: 0.8rem;">
+                    <span class="fw-semibold text-dark">Publishing Checklist:</span>
+                    <span class="@(totalModules > 0 ? "text-success fw-semibold" : "text-danger")">
+                        <i class="bi @(totalModules > 0 ? "bi-check-circle-fill" : "bi-x-circle-fill") me-1"></i>
+                        At least 1 Curriculum Module (@totalModules added)
+                    </span>
+                    <span class="@(hasContent ? "text-success fw-semibold" : "text-danger")">
+                        <i class="bi @(hasContent ? "bi-check-circle-fill" : "bi-x-circle-fill") me-1"></i>
+                        Lesson content, video, or assignment
+                    </span>
+                    @if (!canPublish)
+                    {
+                        <span class="text-muted fst-italic">
+                            &bull; Add your first module with notes or video links below to enable publishing.
+                        </span>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
     <!-- Modules List -->
     @if (Model != null && Model.Any())
     {

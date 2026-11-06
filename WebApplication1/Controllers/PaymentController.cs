@@ -1,3 +1,4 @@
+using Hangfire;
 using System;
 using System.Web.Mvc;
 using WebApplication1.Models;
@@ -51,6 +52,12 @@ namespace WebApplication1.Controllers
                 return HttpNotFound("Course not found.");
             }
 
+            if (!course.IsPublished)
+            {
+                TempData["WarningMessage"] = "This course is currently in draft mode and undergoing curriculum development. It is not open for checkout.";
+                return RedirectToAction("Details", "Courses", new { id = id });
+            }
+
             // Check if user is the course author / seller!
             if ((course.InstructorId.HasValue && course.InstructorId.Value == userId.Value)
                 || string.Equals(course.InstructorName, Session["UserName"] as string, StringComparison.OrdinalIgnoreCase))
@@ -93,6 +100,17 @@ namespace WebApplication1.Controllers
             if (result.IsSuccess)
             {
                 string invoiceNumber = result.Message;
+
+                // Asynchronously process enrollment post-actions (welcome email, syllabus packet, metrics) via Hangfire
+                try
+                {
+                    BackgroundJob.Enqueue(() => WebApplication1.Services.BackgroundJobService.ProcessEnrollmentPostActions(userId.Value, courseId, invoiceNumber));
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine("[Hangfire Enqueue Warning] " + ex.Message);
+                }
+
                 TempData["SuccessMessage"] = "Payment successful! Your course enrollment is confirmed.";
                 return RedirectToAction("Invoice", new { id = invoiceNumber });
             }

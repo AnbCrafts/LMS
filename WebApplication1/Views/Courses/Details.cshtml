@@ -738,10 +738,19 @@
                 }
                 else if (isOwner)
                 {
-                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 font-monospace" style="font-size: 0.72rem;">
-                        Author Studio Mode
-                    </span>
-                    <a href="@Url.Action("Modules", "Instructor", new { courseId = Model.CourseId })" 
+                    if (ViewBag.IsDraftPreview == true)
+                    {
+                        <span class="badge bg-warning text-dark border border-warning rounded-pill px-3 py-1 font-monospace" style="font-size: 0.72rem;">
+                            Draft (Unpublished)
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-1 font-monospace" style="font-size: 0.72rem;">
+                            Author Studio Mode
+                        </span>
+                    }
+                    <a href="@Url.Action("Modules", "Instructor", new { id = Model.CourseId })" 
                        class="btn btn-sm btn-outline-dark rounded-2 px-3 py-1 font-monospace" style="font-size: 0.75rem;">
                         Manage Curriculum
                     </a>
@@ -749,6 +758,39 @@
             </div>
         </div>
     </div>
+
+    @if (TempData["WarningMessage"] != null)
+    {
+        <div class="container-xl mt-3">
+            <div class="alert alert-warning alert-dismissible fade show rounded-3 shadow-sm border-0" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["WarningMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        </div>
+    }
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="container-xl mt-3">
+            <div class="alert alert-success alert-dismissible fade show rounded-3 shadow-sm border-0" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        </div>
+    }
+    @if (ViewBag.IsDraftPreview == true)
+    {
+        <div class="container-xl mt-3">
+            <div class="alert alert-warning border-warning-subtle d-flex align-items-center justify-content-between flex-wrap gap-2 rounded-3 shadow-sm py-2 px-3 mb-0" style="background: #fffbeb;">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-warning text-dark font-monospace">DRAFT PREVIEW</span>
+                    <span class="small text-dark fw-semibold">This course is currently UNPUBLISHED and hidden from students. Add curriculum modules to publish it.</span>
+                </div>
+                <a href="@Url.Action("Modules", "Instructor", new { id = Model.CourseId })" class="btn btn-sm btn-dark font-monospace py-1 px-3">
+                    Curriculum Builder &rarr;
+                </a>
+            </div>
+        </div>
+    }
 
     @if (isEnrolled && !isOwner)
     {
@@ -1714,15 +1756,34 @@
                                 </span>
                             </div>
 
-                            @if (isOwner)
+                            @if (ViewBag.IsDraftUnavailable == true)
                             {
-                                <div class="alert alert-info py-2 px-3 small rounded-2 mb-3">
-                                    You are the author of this course. You can preview lectures and manage curriculum in Instructor Studio.
+                                <div class="alert alert-warning py-3 px-3 rounded-3 mb-3 text-center border-warning-subtle" style="background: #fffbeb;">
+                                    <div class="fw-bold mb-1 text-dark"><i class="bi bi-cone-striped me-1 text-warning"></i> Course Under Development</div>
+                                    <div class="small text-secondary mb-2">This course is currently in draft mode while curriculum is being created. It is not open for enrollment.</div>
                                 </div>
+                                <a href="@Url.Action("Index", "Courses")" class="ep-btn-secondary w-100 justify-content-center">
+                                    Browse Active Courses
+                                </a>
+                            }
+                            else if (isOwner)
+                            {
+                                if (ViewBag.IsDraftPreview == true)
+                                {
+                                    <div class="alert alert-warning py-2 px-3 small rounded-2 mb-3 border-warning-subtle" style="background: #fffbeb;">
+                                        <strong>Draft Mode:</strong> You are previewing as the author. Students cannot enroll until you publish this course.
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="alert alert-info py-2 px-3 small rounded-2 mb-3">
+                                        You are the author of this course. You can preview lectures and manage curriculum in Instructor Studio.
+                                    </div>
+                                }
                                 <a href="@Url.Action("Learn", "Courses", new { id = Model.CourseId, lesson = 1 })" class="ep-btn-primary w-100 justify-content-center mb-2">
                                     Preview Classroom Player
                                 </a>
-                                <a href="@Url.Action("Modules", "Instructor", new { courseId = Model.CourseId })" class="ep-btn-secondary w-100 justify-content-center">
+                                <a href="@Url.Action("Modules", "Instructor", new { id = Model.CourseId })" class="ep-btn-secondary w-100 justify-content-center">
                                     Edit Course Modules
                                 </a>
                             }

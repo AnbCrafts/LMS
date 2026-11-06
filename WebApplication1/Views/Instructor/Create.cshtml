@@ -1,7 +1,7 @@
 @model WebApplication1.Models.Course
 
 @{
-    ViewBag.Title = "Publish New Course";
+    ViewBag.Title = "Create New Course";
 }
 
 <a href="@Url.Action("Index", "Instructor")" class="lms-back-btn">
@@ -12,8 +12,22 @@
     <div class="col-12 col-lg-8">
         <div class="card border-0 shadow-sm p-4 p-md-5" style="border-radius: 20px; border: 1px solid #e2e8f0 !important;">
             <div class="mb-4">
-                <h2 class="fw-bold text-dark">Create New Course</h2>
-                <p class="text-muted small">Fill out the course curriculum details, category & pricing to publish to the catalog</p>
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill font-monospace" style="font-size: 0.72rem;">
+                        <i class="bi bi-pencil me-1"></i> Draft Lifecycle
+                    </span>
+                </div>
+                <h2 class="fw-bold text-dark mb-1">Create New Course</h2>
+                <p class="text-muted small mb-0">Define course basics, category, and pricing. New courses are created in <strong>Draft Mode</strong> so you can build curriculum modules before publishing to students.</p>
+            </div>
+
+            <!-- Quality & Publishing Gate Policy Banner -->
+            <div class="alert alert-light border border-info-subtle rounded-3 p-3 mb-4 d-flex align-items-start gap-3" style="background: #f0f9ff;">
+                <i class="bi bi-info-circle-fill text-primary fs-5 mt-0.5"></i>
+                <div class="small text-secondary">
+                    <strong class="text-dark d-block mb-1">EduPulse Quality Assurance &amp; Publishing Policy</strong>
+                    Courses start in <strong>Draft Mode</strong> and will NOT appear in the student catalog until published. To publish, a course must have <strong>at least one module with content</strong> (lesson notes, study materials, or video links).
+                </div>
             </div>
 
             @if (!ViewData.ModelState.IsValid)
@@ -82,12 +96,22 @@
                     @Html.ValidationMessageFor(m => m.Description, "", new { @class = "text-danger small" })
                 </div>
 
+                <div class="form-check form-switch mb-4 p-3 bg-light rounded-3 border">
+                    <input class="form-check-input ms-0 me-2" type="checkbox" id="publishImmediately" name="publishImmediately" value="true" />
+                    <label class="form-check-label fw-semibold text-dark small" for="publishImmediately">
+                        Attempt to publish immediately after creation
+                    </label>
+                    <div class="text-muted small ps-4" style="font-size: 0.74rem;">
+                        Note: The course will only publish if at least one module with content already exists; otherwise it remains safely in Draft mode.
+                    </div>
+                </div>
+
                 <div class="d-flex justify-content-end gap-2">
                     <a href="@Url.Action("Index", "Instructor")" class="btn btn-light px-4 py-2 border rounded-3 fw-semibold">
                         Cancel
                     </a>
                     <button type="submit" class="lms-cta-btn px-4 py-2">
-                        <i class="bi bi-cloud-arrow-up-fill me-1"></i> Publish Course
+                        <i class="bi bi-arrow-right-circle-fill me-1"></i> Save as Draft &amp; Add Curriculum
                     </button>
                 </div>
             }

@@ -77,7 +77,9 @@ BEGIN
         Level NVARCHAR(50) NOT NULL DEFAULT 'Beginner',
         Category NVARCHAR(50) NOT NULL DEFAULT 'Frontend',
         Price DECIMAL(18,2) NOT NULL DEFAULT 0.00,
-        CreatedAt DATETIME NOT NULL DEFAULT GETDATE()
+        CreatedAt DATETIME NOT NULL DEFAULT GETDATE(),
+        IsPublished BIT NOT NULL DEFAULT 0,
+        Status NVARCHAR(50) NOT NULL DEFAULT 'Draft'
     );
 END
 ELSE
@@ -86,6 +88,10 @@ BEGIN
         ALTER TABLE LMS.Courses ADD Category NVARCHAR(50) NOT NULL DEFAULT 'Frontend';
     IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('LMS.Courses') AND name = 'Price')
         ALTER TABLE LMS.Courses ADD Price DECIMAL(18,2) NOT NULL DEFAULT 0.00;
+    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('LMS.Courses') AND name = 'IsPublished')
+        ALTER TABLE LMS.Courses ADD IsPublished BIT NOT NULL DEFAULT 0;
+    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('LMS.Courses') AND name = 'Status')
+        ALTER TABLE LMS.Courses ADD Status NVARCHAR(50) NOT NULL DEFAULT 'Draft';
 END;
 
 -- 4. Ensure LMS.Enrollments Table

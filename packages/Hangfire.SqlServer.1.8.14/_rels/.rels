@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Type="http://schemas.microsoft.com/packaging/2010/07/manifest" Target="/Hangfire.SqlServer.nuspec" Id="R0CE2C69B1AF85E88" />
+  <Relationship Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="/package/services/metadata/core-properties/299c720390c5436581149c3455ee3bfa.psmdcp" Id="R3995556EDA3E3B9F" />
+</Relationships>

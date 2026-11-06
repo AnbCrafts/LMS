@@ -13,5 +13,7 @@ namespace WebApplication1.Repositories
         Course CreateCourse(Course course);
         bool UpdateCourse(Course course);
         bool DeleteCourse(int courseId);
+        bool SetCoursePublishStatus(int courseId, bool isPublished, out string errorMessage);
+        bool CanCourseBePublished(int courseId, out int moduleCount, out string errorMessage);
     }
 }

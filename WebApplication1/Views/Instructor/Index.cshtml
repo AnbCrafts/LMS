@@ -9,6 +9,8 @@
     int profileScore = profile != null ? profile.CompletionPercentage : 0;
 
     int totalCourses = Model != null ? Model.Count() : 0;
+    int publishedCoursesCount = Model != null ? Model.Count(x => x.IsPublished) : 0;
+    int draftCoursesCount = Model != null ? Model.Count(x => !x.IsPublished) : 0;
     int totalStudents = Model != null ? Model.Sum(x => x.TotalEnrolled) : 0;
 
     decimal grossRevenue = ViewBag.GrossRevenue != null ? (decimal)ViewBag.GrossRevenue : 0m;
@@ -583,21 +585,41 @@
             </div>
 
             <!-- Action 3: Curriculum Completeness -->
+            @{
+                var draftOrEmptyCourse = Model != null ? Model.FirstOrDefault(c => !c.IsPublished || (courseModuleCounts.ContainsKey(c.CourseId) && courseModuleCounts[c.CourseId] == 0)) : null;
+                int draftModCount = (draftOrEmptyCourse != null && courseModuleCounts.ContainsKey(draftOrEmptyCourse.CourseId)) ? courseModuleCounts[draftOrEmptyCourse.CourseId] : 0;
+            }
             <div class="ep-action-card">
                 <div class="d-flex align-items-center gap-3">
                     <div class="ep-action-icon" style="background: #eff6ff; color: #2563eb;">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
                     </div>
                     <div>
-                        <div class="ep-action-card-title">Curriculum Modules Needed</div>
-                        <div class="ep-action-card-desc">Course 3: Next.js & Microservices has 0 modules</div>
+                        @if (draftOrEmptyCourse != null)
+                        {
+                            <div class="ep-action-card-title">Curriculum Modules Needed</div>
+                            <div class="ep-action-card-desc">Course @draftOrEmptyCourse.CourseId: @draftOrEmptyCourse.Title has @draftModCount modules (Draft)</div>
+                        }
+                        else
+                        {
+                            <div class="ep-action-card-title">All Curriculums Complete</div>
+                            <div class="ep-action-card-desc">All courses have modules and content published</div>
+                        }
                     </div>
                 </div>
-                <a href="@Url.Action("Modules", "Instructor", new { courseId = 3 })" class="ep-btn-subtle text-primary border-primary-subtle fw-bold text-nowrap">
-                    Add Module &rarr;
-                </a>
+                @if (draftOrEmptyCourse != null)
+                {
+                    <a href="@Url.Action("Modules", "Instructor", new { id = draftOrEmptyCourse.CourseId })" class="ep-btn-subtle text-primary border-primary-subtle fw-bold text-nowrap">
+                        Add Module &rarr;
+                    </a>
+                }
+                else
+                {
+                    <a href="@Url.Action("Create", "Instructor")" class="ep-btn-subtle text-success border-success-subtle fw-bold text-nowrap">
+                        + New Course
+                    </a>
+                }
             </div>
-        </div>
     </div>
 
     <!-- 3. Compact 8-Metric Performance Grid -->
@@ -640,12 +662,11 @@
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
                 </span>
             </div>
-            <div class="ep-metric-number">@totalCourses</div>
+            <div class="ep-metric-number">@publishedCoursesCount</div>
             <div class="ep-metric-footer">
-                <span>Across 3 Disciplines</span>
+                <span>@(draftCoursesCount > 0 ? $"{draftCoursesCount} in draft" : $"{totalCourses} total created")</span>
             </div>
         </div>
-
         <!-- Metric 4: Pending Grading -->
         <div class="ep-metric-card" style="border-left: 3px solid @(pendingSubmissionsCount > 0 ? "#ef4444" : "#10b981");">
             <div class="ep-metric-top">
@@ -731,7 +752,7 @@
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
                             <span>Course Performance &amp; Curriculums</span>
                         </h2>
-                        <span class="badge bg-light text-secondary border font-monospace" style="font-size: 0.7rem;">@totalCourses Active</span>
+                        <span class="badge bg-light text-secondary border font-monospace" style="font-size: 0.7rem;">@publishedCoursesCount Published &bull; @draftCoursesCount Draft</span>
                     </div>
 
                     @if (isApproved && canUploadCourse)
@@ -756,9 +777,18 @@
                                         <div class="d-flex align-items-center gap-2 mb-1">
                                             <span class="ep-course-badge">@course.Category</span>
                                             <span class="text-secondary small font-monospace" style="font-size: 0.725rem;">ID #@course.CourseId</span>
-                                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill font-monospace" style="font-size: 0.65rem;">
-                                                Published
-                                            </span>
+                                            @if (course.IsPublished)
+                                            {
+                                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill font-monospace" style="font-size: 0.65rem;">
+                                                    Published
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill font-monospace" style="font-size: 0.65rem;">
+                                                    Draft
+                                                </span>
+                                            }
                                         </div>
                                         <h3 class="ep-course-title">@course.Title</h3>
                                     </div>
@@ -766,7 +796,9 @@
                                         <div class="fw-bold text-dark" style="font-size: 1.1rem;">
                                             @(course.Price > 0 ? $"${course.Price:F2}" : "Free Access")
                                         </div>
-                                        <div class="text-secondary small" style="font-size: 0.7rem;">Published @course.CreatedAt.ToString("MMM yyyy")</div>
+                                        <div class="text-secondary small" style="font-size: 0.7rem;">
+                                            @(course.IsPublished ? $"Published {course.CreatedAt:MMM yyyy}" : $"Draft • Created {course.CreatedAt:MMM yyyy}")
+                                        </div>
                                     </div>
                                 </div>
 
@@ -794,7 +826,7 @@
 
                                 <!-- Action Toolbar -->
                                 <div class="ep-course-actions">
-                                    <a href="@Url.Action("Modules", "Instructor", new { courseId = course.CourseId })" class="ep-btn-subtle" title="Manage Lessons, Slides, and Quizzes">
+                                    <a href="@Url.Action("Modules", "Instructor", new { id = course.CourseId })" class="ep-btn-subtle" title="Manage Lessons, Slides, and Quizzes">
                                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1"><polyline points="9 18 15 12 9 6"></polyline></svg>
                                         Curriculum (@modCount)
                                     </a>
@@ -806,10 +838,35 @@
                                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
                                         Edit Details
                                     </a>
-                                    <a href="@Url.Action("Details", "Courses", new { id = course.CourseId })" target="_blank" class="ep-btn-subtle text-secondary" title="View Public Course Page">
-                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-                                        Student View
-                                    </a>
+                                    @if (course.IsPublished)
+                                    {
+                                        <a href="@Url.Action("Details", "Courses", new { id = course.CourseId })" target="_blank" class="ep-btn-subtle text-secondary" title="View Public Course Page">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                                            Student View
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        if (modCount > 0)
+                                        {
+                                            using (Html.BeginForm("TogglePublish", "Instructor", FormMethod.Post, new { @class = "d-inline" }))
+                                            {
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="courseId" value="@course.CourseId" />
+                                                <input type="hidden" name="publish" value="true" />
+                                                <input type="hidden" name="returnUrl" value="@Request.RawUrl" />
+                                                <button type="submit" class="ep-btn-subtle text-success border-success-subtle fw-semibold" title="Publish this course to the catalog">
+                                                    <i class="bi bi-rocket-takeoff-fill me-1"></i> Publish
+                                                </button>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <a href="@Url.Action("Modules", "Instructor", new { id = course.CourseId })" class="ep-btn-subtle text-warning-emphasis border-warning-subtle fw-semibold" title="Add modules to publish">
+                                                <i class="bi bi-plus-circle me-1"></i> Add Modules
+                                            </a>
+                                        }
+                                    }
                                 </div>
                             </div>
                         }

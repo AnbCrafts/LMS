@@ -45,6 +45,15 @@ namespace WebApplication1.Models
 
         [Display(Name = "Total Enrolled")]
         public int TotalEnrolled { get; set; } = 0;
+
+        [Display(Name = "Published")]
+        public bool IsPublished { get; set; } = false;
+
+        [Display(Name = "Status")]
+        public string Status { get; set; } = "Draft"; // "Draft", "Published"
+
+        [Display(Name = "Modules")]
+        public int ModuleCount { get; set; } = 0;
     }
 
     public class StudyMaterialItem
