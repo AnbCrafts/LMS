@@ -9,6 +9,9 @@ namespace WebApplication1.Data
     {
         private static string GetConnectionString()
         {
+            string envConn = Services.EnvConfig.SqlConnectionString;
+            if (!string.IsNullOrWhiteSpace(envConn)) return envConn;
+
             if (ConfigurationManager.ConnectionStrings["LmsConnection"] != null &&
                 !string.IsNullOrWhiteSpace(ConfigurationManager.ConnectionStrings["LmsConnection"].ConnectionString))
             {

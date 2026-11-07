@@ -11,9 +11,9 @@ namespace WebApplication1.Services
 {
     public static class CloudinaryService
     {
-        private static string ApiKey => ConfigurationManager.AppSettings["Cloudinary:ApiKey"] ?? "534968466568819";
-        private static string ApiSecret => ConfigurationManager.AppSettings["Cloudinary:ApiSecret"] ?? "ywZbqE8MBDtLFW80a2au_R_rTf4";
-        private static string CloudName => ConfigurationManager.AppSettings["Cloudinary:CloudName"] ?? "";
+        private static string ApiKey => EnvConfig.CloudinaryApiKey;
+        private static string ApiSecret => EnvConfig.CloudinaryApiSecret;
+        private static string CloudName => EnvConfig.CloudinaryCloudName;
 
         /// <summary>
         /// Uploads an image file to Cloudinary

@@ -665,7 +665,7 @@ namespace WebApplication1.Controllers
                                         formContent.Add(new System.Net.Http.StringContent(capturedCourseId.ToString()), "course_id");
                                         formContent.Add(new System.Net.Http.StringContent("student"), "visibility");
                                         formContent.Add(new System.Net.Http.StringContent("lecture_notes"), "doc_type");
-                                        await ragClient.PostAsync("http://127.0.0.1:8000/api/ingest-study-material", formContent);
+                                        await ragClient.PostAsync(WebApplication1.Services.EnvConfig.AiMicroserviceUrl + "api/ingest-study-material", formContent);
                                     }
                                 }
                             }
@@ -970,7 +970,7 @@ namespace WebApplication1.Controllers
                             content.Add(new StringContent(topic), "topic");
                         }
 
-                        var response = await client.PostAsync("http://127.0.0.1:8000/api/generate-quiz-from-pdf", content);
+                        var response = await client.PostAsync(WebApplication1.Services.EnvConfig.AiMicroserviceUrl + "api/generate-quiz-from-pdf", content);
                         string jsonResult = await response.Content.ReadAsStringAsync();
 
                         if (!response.IsSuccessStatusCode)

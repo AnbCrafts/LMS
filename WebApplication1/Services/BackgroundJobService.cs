@@ -120,7 +120,7 @@ namespace WebApplication1.Services
                 var content = new StringContent(json, Encoding.UTF8, "application/json");
 
                 // Ping Python RAG microservice
-                var response = _httpClient.PostAsync("http://127.0.0.1:8000/embed", content).GetAwaiter().GetResult();
+                var response = _httpClient.PostAsync(EnvConfig.AiMicroserviceUrl + "embed", content).GetAwaiter().GetResult();
                 
                 if (response.IsSuccessStatusCode)
                 {

@@ -17,19 +17,16 @@ namespace WebApplication1.Services
         {
             try
             {
-                var configurationOptions = new ConfigurationOptions
-                {
-                    EndPoints = { "localhost:6379" },
-                    AbortOnConnectFail = false,
-                    ConnectTimeout = 3000,
-                    SyncTimeout = 3000,
-                    ConnectRetry = 2,
-                    KeepAlive = 60,
-                    ClientName = "EduPulse_LMS_Web"
-                };
+                var configurationOptions = ConfigurationOptions.Parse(EnvConfig.RedisConnectionString);
+                configurationOptions.AbortOnConnectFail = false;
+                configurationOptions.ConnectTimeout = 3000;
+                configurationOptions.SyncTimeout = 3000;
+                configurationOptions.ConnectRetry = 2;
+                configurationOptions.KeepAlive = 60;
+                configurationOptions.ClientName = "EduPulse_LMS_Web";
 
                 var multiplexer = ConnectionMultiplexer.Connect(configurationOptions);
-                Debug.WriteLine("[RedisCacheService] Successfully connected to Redis on localhost:6379");
+                Debug.WriteLine($"[RedisCacheService] Successfully connected to Redis on {EnvConfig.RedisEndpoint}");
                 return multiplexer;
             }
             catch (Exception ex)
@@ -199,7 +196,7 @@ namespace WebApplication1.Services
             var status = new RedisHealthStatus
             {
                 IsConnected = IsConnected,
-                Endpoint = "localhost:6379"
+                Endpoint = EnvConfig.RedisEndpoint
             };
 
             if (IsConnected)

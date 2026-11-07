@@ -14,7 +14,7 @@ namespace WebApplication1.Controllers
 
         private static readonly HttpClient _httpClient = new HttpClient
         {
-            BaseAddress = new Uri("http://127.0.0.1:8000/"),
+            BaseAddress = new Uri(WebApplication1.Services.EnvConfig.AiMicroserviceUrl),
             Timeout = TimeSpan.FromSeconds(45)
         };
 
@@ -179,7 +179,7 @@ namespace WebApplication1.Controllers
                 return Json(new
                 {
                     success = false,
-                    message = "Could not connect to the Python RAG Assistant microservice on port 8000. Please ensure 'python api.py' is running in the Rag_Service directory."
+                    message = $"Could not connect to the Python RAG Assistant microservice ({WebApplication1.Services.EnvConfig.AiMicroserviceUrl}). Please ensure the service is running."
                 });
             }
             catch (Exception ex)
