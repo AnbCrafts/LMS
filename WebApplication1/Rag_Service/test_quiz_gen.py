@@ -2,10 +2,10 @@ import os, io, json, pypdf
 import google.generativeai as genai
 from dotenv import load_dotenv
 
-load_dotenv("D:/Anubhaw/Projects/Assignments/LMSPractice/WebApplication1/Rag_Service/.env")
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"), transport="rest")
 
-reader = pypdf.PdfReader("D:/Anubhaw/Projects/Assignments/LMSPractice/WebApplication1/Uploads/CourseMaterials/Course2_ASPNET_MVC5_Enterprise_Architecture.pdf")
+reader = pypdf.PdfReader(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "Uploads", "CourseMaterials", "Course2_ASPNET_MVC5_Enterprise_Architecture.pdf")))
 pdf_text = "\n".join([p.extract_text() for p in reader.pages if p.extract_text()])
 
 prompt = f"""You are an expert curriculum designer and university examiner.

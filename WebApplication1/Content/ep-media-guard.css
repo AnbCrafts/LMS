@@ -1,0 +1,139 @@
+/**
+ * ep-media-guard.css
+ * Enterprise Digital Rights & Content Protection for EduPulse LMS
+ * Prevents unauthorized copying, saving, printing, and dragging of course media (PDFs, Videos, Images).
+ */
+
+/* 1. Prevent Text & Asset Drag/Selection on Protected Media */
+img,
+video,
+canvas,
+.ep-pdf-viewer-card,
+.secure-media-container,
+.secure-media-element {
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+    user-select: none !important;
+    -webkit-user-drag: none !important;
+    -webkit-touch-callout: none !important;
+}
+
+/* 2. Interactive Video Element Protection */
+video.secure-media-element {
+    outline: none;
+}
+video.secure-media-element::-webkit-media-controls-enclosure {
+    overflow: hidden;
+}
+/* Hide native download buttons on browsers that support it */
+video::-internal-media-controls-download-button {
+    display: none !important;
+}
+video::-webkit-media-controls-download-button {
+    display: none !important;
+}
+
+/* 3. Forensic Dynamic Watermark Overlay */
+.secure-watermark-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: repeating-linear-gradient(
+        -45deg,
+        rgba(255, 255, 255, 0.02) 0px,
+        rgba(255, 255, 255, 0.02) 80px,
+        rgba(0, 0, 0, 0.04) 80px,
+        rgba(0, 0, 0, 0.04) 160px
+    );
+    overflow: hidden;
+}
+
+.secure-watermark-text {
+    color: rgba(148, 163, 184, 0.18);
+    font-size: 0.85rem;
+    font-weight: 700;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    transform: rotate(-25deg);
+    white-space: nowrap;
+    user-select: none;
+    pointer-events: none;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* 4. Canvas Security Wrapper */
+.secure-canvas-wrapper {
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+}
+
+.secure-canvas-shield {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: auto;
+    background: transparent;
+}
+
+/* 5. Anti-Print Protection: Blank out view and show copyright notice when printing */
+@media print {
+    body {
+        visibility: hidden !important;
+        background: #ffffff !important;
+    }
+    
+    body::before {
+        visibility: visible !important;
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 40px;
+        background: #ffffff;
+        color: #0f172a;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        content: "EduPulse Content Protection: This curriculum material, video stream, and lecture PDF are protected intellectual property. Printing or saving to PDF is prohibited by platform security policy.";
+        font-size: 1.25rem;
+        font-weight: 600;
+        line-height: 1.6;
+        z-index: 9999999;
+    }
+}
+
+/* 6. Protection Warning Toast */
+.ep-drm-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #0f172a;
+    color: #ffffff;
+    border: 1px solid #334155;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+    padding: 12px 20px;
+    border-radius: 9999px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 100000;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.ep-drm-toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}

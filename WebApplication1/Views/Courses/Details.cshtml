@@ -1354,9 +1354,9 @@
                     <section class="ep-card" aria-label="Course Resources and Downloads">
                         <div class="ep-card-header">
                             <div>
-                                <h3 class="ep-card-title">Resources, Cheatsheets &amp; Downloads</h3>
+                                <h3 class="ep-card-title">Curriculum Reference Materials &amp; Cheatsheets (Protected View)</h3>
                                 <div class="ep-card-sub">
-                                    Official instructor lecture slides, architecture cheatsheets, and starter code repositories
+                                    Official instructor lecture slides, architecture cheatsheets, and verified study guides. Offline saving and local downloading are disabled.
                                 </div>
                             </div>
                             <div style="min-width: 220px;">
@@ -1381,12 +1381,21 @@
                                             </div>
                                         </div>
                                         <div class="d-flex align-items-center gap-2 flex-shrink-0">
-                                            <a href="@Url.Content(mat.Url)" target="_blank" class="btn btn-sm btn-outline-secondary rounded-2 px-3 py-1 font-monospace" style="font-size: 0.75rem;">
-                                                Full Tab
-                                            </a>
-                                            <a href="@Url.Content(mat.Url)" download class="btn btn-sm btn-dark rounded-2 px-3 py-1 font-monospace" style="font-size: 0.75rem;">
-                                                Download
-                                            </a>
+                                            <span class="badge bg-light text-secondary border px-2 py-1 font-monospace" style="font-size: 0.72rem;">
+                                                <i class="bi bi-shield-lock-fill text-warning me-1"></i> Protected
+                                            </span>
+                                            @if (isEnrolled)
+                                            {
+                                                <a href="@Url.Action("Learn", "Courses", new { id = Model.CourseId })" class="btn btn-sm btn-outline-primary rounded-2 px-3 py-1 font-monospace" style="font-size: 0.75rem;">
+                                                    <i class="bi bi-eye-fill me-1"></i> Read in Classroom
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-light text-muted border px-2 py-1 font-monospace" style="font-size: 0.72rem;">
+                                                    <i class="bi bi-lock-fill me-1"></i> Enroll to View
+                                                </span>
+                                            }
                                         </div>
                                     </div>
                                 }
