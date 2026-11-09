@@ -250,7 +250,8 @@ def get_target_submission(instructor_id: int, params: Dict[str, Any]) -> Optiona
         file_content = ""
         file_url = row[11]
         if file_url and file_url.startswith("/Uploads/"):
-            local_path = os.path.join(r"D:\Anubhaw\Projects\Assignments\LMSPractice\WebApplication1", file_url.lstrip("/\\"))
+            base_web_app = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+            local_path = os.path.join(base_web_app, file_url.lstrip("/\\"))
             if os.path.exists(local_path) and local_path.lower().endswith(".pdf"):
                 try:
                     import pypdf

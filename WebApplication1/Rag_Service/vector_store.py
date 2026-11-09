@@ -8,7 +8,7 @@ import os
 import chromadb
 import google.generativeai as genai
 from dotenv import load_dotenv
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 # Load configuration from .env
 ENV_PATH = os.path.join(os.path.dirname(__file__), ".env")

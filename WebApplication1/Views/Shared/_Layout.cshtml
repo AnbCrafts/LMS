@@ -17,6 +17,7 @@
     <title>@(ViewBag.Title != null ? ViewBag.Title + " | EduPulse" : "EduPulse - Professional Learning Platform")</title>
     @Styles.Render("~/Content/css")
     <link href="~/Content/Site.css?v=@DateTime.UtcNow.Ticks" rel="stylesheet" type="text/css" />
+    <link href="~/Content/ep-media-guard.css?v=@DateTime.UtcNow.Ticks" rel="stylesheet" type="text/css" />
     @Scripts.Render("~/bundles/modernizr")
 </head>
 <body>
@@ -170,6 +171,7 @@
 
     @Scripts.Render("~/bundles/jquery")
     @Scripts.Render("~/bundles/bootstrap")
+    <script src="~/Scripts/ep-media-guard.js?v=@DateTime.UtcNow.Ticks"></script>
     @RenderSection("scripts", required: false)
 </body>
 </html>

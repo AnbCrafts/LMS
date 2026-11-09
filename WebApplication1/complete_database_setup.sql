@@ -1,4 +1,4 @@
-﻿-- ============================================================================
+-- ============================================================================
 -- EduPulse LMS - Complete Database Setup Script
 -- Target Database: Practice
 -- Description: Sets up Schema, all Tables, Constraints, Stored Procedures,
@@ -6,14 +6,7 @@
 -- ============================================================================
 
 -- 1. Ensure Database Exists
-IF NOT EXISTS (SELECT 1 FROM sys.databases WHERE name = 'Practice')
-BEGIN
-    CREATE DATABASE Practice;
-END;
-GO
-
-USE Practice;
-GO
+-- Database context is already active on host (db78790)
 
 -- 2. Ensure Schema Exists
 IF NOT EXISTS (SELECT 1 FROM sys.schemas WHERE name = 'LMS')
@@ -37,6 +30,7 @@ BEGIN
         Role NVARCHAR(50) NOT NULL CONSTRAINT DF_Users_Role DEFAULT 'Student',
         IsApproved BIT NOT NULL CONSTRAINT DF_Users_IsApproved DEFAULT 1,
         ApprovalStatus NVARCHAR(50) NOT NULL CONSTRAINT DF_Users_ApprovalStatus DEFAULT 'Approved',
+        AdminFeedback NVARCHAR(MAX) NULL,
         CreatedAt DATETIME NOT NULL CONSTRAINT DF_Users_CreatedAt DEFAULT GETDATE()
     );
 END
@@ -48,6 +42,8 @@ BEGIN
         ALTER TABLE LMS.Users ADD IsApproved BIT NOT NULL CONSTRAINT DF_Users_IsApproved DEFAULT 1;
     IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('LMS.Users') AND name = 'ApprovalStatus')
         ALTER TABLE LMS.Users ADD ApprovalStatus NVARCHAR(50) NOT NULL CONSTRAINT DF_Users_ApprovalStatus DEFAULT 'Approved';
+    IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('LMS.Users') AND name = 'AdminFeedback')
+        ALTER TABLE LMS.Users ADD AdminFeedback NVARCHAR(MAX) NULL;
     IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('LMS.Users') AND name = 'CreatedAt')
         ALTER TABLE LMS.Users ADD CreatedAt DATETIME NOT NULL CONSTRAINT DF_Users_CreatedAt DEFAULT GETDATE();
 END;
@@ -593,6 +589,26 @@ BEGIN
         DATEADD(day, -10, GETDATE())
     );
 END;
+
+IF NOT EXISTS (SELECT 1 FROM LMS.Courses WHERE Title LIKE '%Python Data Science%')
+BEGIN
+    INSERT INTO LMS.Courses (Title, Description, InstructorId, InstructorName, DurationWeeks, Level, Category, Price, CreatedAt)
+    VALUES (
+        'Python Data Science, Pandas & Machine Learning',
+        'Applied machine learning, neural networks with PyTorch, exploratory data analysis using Pandas, and production model serving.',
+        (SELECT TOP 1 UserId FROM LMS.Users WHERE Email = 'nkapoor@lms.com'),
+        'Neha Kapoor', 10, 'Intermediate', 'Data Science', 69.99, DATEADD(day, -8, GETDATE()));
+END;
+
+IF NOT EXISTS (SELECT 1 FROM LMS.Courses WHERE Title LIKE '%Multi-Cloud Architecture%')
+BEGIN
+    INSERT INTO LMS.Courses (Title, Description, InstructorId, InstructorName, DurationWeeks, Level, Category, Price, CreatedAt)
+    VALUES (
+        'Multi-Cloud Architecture on AWS and GCP',
+        'Designing interconnected network topologies, Terraform automation, and federated Kubernetes across AWS and GCP.',
+        (SELECT TOP 1 UserId FROM LMS.Users WHERE Email = 'vsen@lms.com'),
+        'Dr. Vikram Sen', 8, 'Advanced', 'Cloud & DevOps', 89.99, DATEADD(day, -5, GETDATE()));
+END;
 GO
 
 -- 5.6 Seed Sample Quiz Questions for Course 1 (Modern React 18)
@@ -626,8 +642,7 @@ PRINT 'EduPulse LMS Database setup completed successfully!';
 PRINT '=======================================================';
 
 
-USE Practice;
-GO
+-- USE Practice;
 
 -- ============================================================================
 -- 1. Create LMS.InstructorProfiles Table
@@ -658,11 +673,17 @@ BEGIN
         LinkedInUrl NVARCHAR(250) NULL,
         GitHubOrPortfolioUrl NVARCHAR(250) NULL,
         CompletionPercentage INT NOT NULL DEFAULT 0,
+        AdminFeedback NVARCHAR(MAX) NULL,
+        ReviewedAt DATETIME NULL,
+        ReviewedBy INT NULL,
         UpdatedAt DATETIME NOT NULL DEFAULT GETDATE(),
         CONSTRAINT FK_InstructorProfiles_User FOREIGN KEY (UserId) REFERENCES LMS.Users(UserId) ON DELETE CASCADE
     );
 END;
 GO
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('LMS.InstructorProfiles') AND name = 'AdminFeedback') ALTER TABLE LMS.InstructorProfiles ADD AdminFeedback NVARCHAR(MAX) NULL;
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('LMS.InstructorProfiles') AND name = 'ReviewedAt') ALTER TABLE LMS.InstructorProfiles ADD ReviewedAt DATETIME NULL;
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('LMS.InstructorProfiles') AND name = 'ReviewedBy') ALTER TABLE LMS.InstructorProfiles ADD ReviewedBy INT NULL;
 
 -- ============================================================================
 -- 2. Create LMS.CourseModules Table
@@ -1049,8 +1070,7 @@ PRINT 'Instructor Architecture DB migration successfully executed!';
 
 
 
-USE Practice;
-GO
+-- USE Practice;
 
 -- ============================================================================
 -- 1. Create LMS.StudentQuizAttempts Table
@@ -1202,8 +1222,7 @@ PRINT 'Student Gradebook & Quiz Attempts DB migration successfully executed!';
 -- Enforces strictly no duplicate / re-submissions for the same student assignment
 -- ============================================================================
 
-USE Practice;
-GO
+-- USE Practice;
 
 SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;
@@ -1231,8 +1250,7 @@ GO
 -- Adds Admin Seller Verification, Review Feedback & Status Lookup Support
 -- ============================================================================
 
-USE Practice;
-GO
+-- USE Practice;
 
 SET ANSI_NULLS ON;
 SET QUOTED_IDENTIFIER ON;

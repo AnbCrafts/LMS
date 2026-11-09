@@ -14,7 +14,7 @@ namespace WebApplication1
         public void Configuration(IAppBuilder app)
         {
             // Read connection string for Hangfire storage (our local SQL Server Practice database)
-            string connectionString = ConfigurationManager.ConnectionStrings["LmsConnection"].ConnectionString;
+            string connectionString = Services.EnvConfig.SqlConnectionString;
 
             GlobalConfiguration.Configuration
                 .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)

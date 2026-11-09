@@ -23,7 +23,7 @@ namespace WebApplication1.Controllers
 
         private static readonly HttpClient _ragHttpClient = new HttpClient
         {
-            BaseAddress = new Uri("http://127.0.0.1:8000/"),
+            BaseAddress = new Uri(WebApplication1.Services.EnvConfig.AiMicroserviceUrl),
             Timeout = TimeSpan.FromSeconds(45)
         };
 
@@ -271,7 +271,7 @@ namespace WebApplication1.Controllers
                 return Json(new
                 {
                     success = false,
-                    message = "Could not reach the AI Advisor microservice on port 8000. Please ensure the Python service is active."
+                    message = $"Could not reach the AI Advisor microservice ({WebApplication1.Services.EnvConfig.AiMicroserviceUrl}). Please ensure the Python service is active."
                 });
             }
             catch (Exception ex)

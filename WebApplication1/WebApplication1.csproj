@@ -374,6 +374,7 @@
     <Content Include="Scripts\jquery-3.7.0.slim.min.map" />
     <Content Include="Scripts\jquery-3.7.0.min.map" />
     <Compile Include="Startup.cs" />
+    <Compile Include="Services\EnvConfig.cs" />
     <Compile Include="Services\RedisCacheService.cs" />
     <Compile Include="Services\BackgroundJobService.cs" />
   </ItemGroup>

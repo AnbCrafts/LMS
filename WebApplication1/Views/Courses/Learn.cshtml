@@ -117,7 +117,7 @@
                 if (isDirectVideo)
                 {
                     <div class="p-0 bg-black text-center position-relative">
-                        <video controls class="w-100" style="max-height: 480px; object-fit: contain;">
+                        <video controls controlsList="nodownload nofullscreen noremoteplayback" disablePictureInPicture oncontextmenu="return false;" class="w-100 secure-media-element" style="max-height: 480px; object-fit: contain;">
                             <source src="@mediaUrl" type="video/mp4">
                             Your browser does not support HTML5 video streaming.
                         </video>
@@ -168,24 +168,16 @@
                                 </button>
                             </div>
 
-                            <!-- Right: External Actions -->
+                            <!-- Right: Security Badge & Fullscreen Reader -->
                             <div class="d-flex align-items-center gap-2">
-                                <a href="@Url.Content(mediaUrl)" target="_blank" class="btn btn-sm btn-outline-secondary rounded-2 px-3 py-1 font-monospace" style="font-size: 0.75rem;" title="Open in dedicated browser tab">
-                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1">
-                                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                                        <polyline points="15 3 21 3 21 9"></polyline>
-                                        <line x1="10" y1="14" x2="21" y2="3"></line>
-                                    </svg>
-                                    Full Tab
-                                </a>
-                                <a href="@Url.Content(mediaUrl)" download class="btn btn-sm btn-dark rounded-2 px-3 py-1 font-monospace" style="font-size: 0.75rem;" title="Download PDF file">
-                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1">
-                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                        <polyline points="7 10 12 15 17 10"></polyline>
-                                        <line x1="12" y1="15" x2="12" y2="3"></line>
-                                    </svg>
-                                    Download
-                                </a>
+                                <span class="badge bg-light text-secondary border px-2 py-1 font-monospace" style="font-size: 0.72rem;" title="Content protected against local downloading">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" class="me-1"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                    Protected &bull; No Download
+                                </span>
+                                <button type="button" class="btn btn-sm btn-outline-secondary rounded-2 px-3 py-1 font-monospace" id="pdfToggleFullscreen" style="font-size: 0.75rem;" title="Expand reader to fullscreen">
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+                                    Fullscreen
+                                </button>
                             </div>
                         </div>
 
@@ -207,13 +199,17 @@
                                 <h6 class="fw-bold text-dark mb-1">Inline Preview Unavailable</h6>
                                 <p class="text-secondary small mb-3">You can open the original PDF in a new tab or download it directly to view.</p>
                                 <div class="d-flex justify-content-center gap-2">
-                                    <a href="@Url.Content(mediaUrl)" target="_blank" class="btn btn-sm btn-outline-dark rounded-2">Open Full Tab</a>
-                                    <a href="@Url.Content(mediaUrl)" download class="btn btn-sm btn-dark rounded-2">Download PDF</a>
+                                    <button type="button" class="btn btn-sm btn-dark rounded-2" onclick="location.reload();">Reload Classroom Reader</button>
                                 </div>
                             </div>
 
-                            <!-- PDF Canvas -->
-                            <canvas id="pdfViewerCanvas" style="display: none; max-width: 100%; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.3); border-radius: 4px; background: #ffffff;"></canvas>
+                            <!-- PDF Canvas & Watermark Wrapper -->
+                            <div class="secure-canvas-wrapper position-relative text-center w-100 d-flex justify-content-center">
+                                <canvas id="pdfViewerCanvas" class="secure-canvas" style="display: none; max-width: 100%; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.3); border-radius: 4px; background: #ffffff;"></canvas>
+                                <div class="secure-watermark-overlay" style="border-radius: 4px;">
+                                    <span class="secure-watermark-text">EduPulse &bull; Protected Slide &bull; @(Session["UserName"] ?? "Student") &bull; @(Session["UserEmail"] ?? "")</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 }
@@ -360,9 +356,9 @@
                                                     <div class="text-secondary" style="font-size: 0.725rem;">Verified Study PDF &bull; @mat.FileSizeKb KB</div>
                                                 </div>
                                             </div>
-                                            <a href="@mat.Url" target="_blank" download class="btn btn-sm btn-outline-dark rounded-2 px-3 flex-shrink-0" style="font-size: 0.75rem;">
-                                                <i class="bi bi-download me-1"></i> Download
-                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-primary rounded-2 px-3 flex-shrink-0" onclick="loadProtectedPdfInViewer('@mat.Url', '@mat.DisplayName')" style="font-size: 0.75rem;">
+                                                <i class="bi bi-eye-fill me-1"></i> Read in Classroom
+                                            </button>
                                         </div>
                                     </div>
                                 }
@@ -850,6 +846,44 @@
                         });
                     });
                 }
+
+                // Fullscreen reader handler
+                var fsBtn = document.getElementById('pdfToggleFullscreen');
+                if (fsBtn) {
+                    fsBtn.addEventListener('click', function () {
+                        var card = document.querySelector('.ep-pdf-viewer-card');
+                        if (!card) return;
+                        if (!document.fullscreenElement) {
+                            card.requestFullscreen().catch(function () {});
+                        } else {
+                            document.exitFullscreen().catch(function () {});
+                        }
+                    });
+                }
+
+                // Global document switcher for study materials
+                window.loadProtectedPdfInViewer = function (newUrl, newTitle) {
+                    if (!newUrl || !window.pdfjsLib) return;
+                    pdfUrl = newUrl;
+                    pageNum = 1;
+                    if (spinner) spinner.style.display = 'block';
+                    if (canvas) canvas.style.display = 'none';
+                    if (errorBox) errorBox.style.display = 'none';
+
+                    pdfjsLib.getDocument(pdfUrl).promise.then(function (pdf) {
+                        pdfDoc = pdf;
+                        if (totalPagesEl) totalPagesEl.textContent = pdf.numPages;
+                        renderPage(pageNum);
+                        var containerEl = document.getElementById('pdfViewportContainer');
+                        if (containerEl) {
+                            containerEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    }).catch(function (error) {
+                        console.error('PDF.js reload error:', error);
+                        if (spinner) spinner.style.display = 'none';
+                        if (errorBox) errorBox.style.display = 'block';
+                    });
+                };
 
                 pdfjsLib.getDocument(pdfUrl).promise.then(function (pdf) {
                     pdfDoc = pdf;

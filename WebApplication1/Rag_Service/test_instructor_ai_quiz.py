@@ -47,7 +47,7 @@ has_ai_btn = "Generate Quiz from PDF (AI)" in quiz_page.text
 print(f"  ManageQuiz contains 'Generate Quiz from PDF (AI)' button: {has_ai_btn}")
 
 # Step 4: Call /Instructor/GenerateQuizFromPdf with Course2 PDF
-pdf_path = "D:/Anubhaw/Projects/Assignments/LMSPractice/WebApplication1/Uploads/CourseMaterials/Course2_ASPNET_MVC5_Enterprise_Architecture.pdf"
+pdf_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "Uploads", "CourseMaterials", "Course2_ASPNET_MVC5_Enterprise_Architecture.pdf"))
 with open(pdf_path, "rb") as f:
     files = {"quizPdf": ("Course2_ASPNET_MVC5_Enterprise_Architecture.pdf", f, "application/pdf")}
     data = {
